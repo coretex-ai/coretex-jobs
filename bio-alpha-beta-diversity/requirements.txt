@@ -1,0 +1,2 @@
+coretex
+py3nvml

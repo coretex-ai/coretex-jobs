@@ -1,0 +1,221 @@
+--- Template description ---
+
+Bodysite Classifier - LSPIN project template uses a neural network architecture
+based on the paper "Locally Sparse Neural Networks for Tabular Biomedical Data”,
+which is a multilayer perceptron with gating layers.
+
+This template takes BioInformatics sequence taxonomic compositions
+and traines a model which is capable of predicting body site (from which the
+sample originates) based on the sample taxonomic composition.
+
+Data provided to the model can be in either of these two formats:
+    - MBA (Microbe Atlas)
+    - ForBiome (Forensics Microbiome Database, maintained by Microbiome Forensics Institute Zurich)
+
+Input of the model is a 2D matrix with input shape [samples, uniqueTaxons] where:
+samples: number of samples in the dataset
+uniqueTaxons: number of unique taxons in the dataset
+
+Output of the model is a 1D array with integers representing different bodysites.
+
+Expected experiment runtime on GPU with 1GB of MBA data is ~30 minutes.
+
+System specifications on which the experiments were run:
+    - CPU: AMD Ryzen 7 1800X Eight-Core Processor
+    - GPU: Nvidia GeForce GTX 1080 Ti 12 GB VRAM
+    - RAM: 32 GB 2666 MHz DDR4
+
+Experiment parameters:
+Batch size: 512
+Buffer size: 512
+HIdden layers: [256, 256, 128]
+Activation function: tanh
+Batch norm: False
+Cache: False
+Enviromnment: Clean
+
+----------------------------
+
+--- Template parameters description ---
+
+--- dataset description ---
+A dataset which contains OTU abundance data. Supported dataset formats are:
+    - MBA (Microbe Atlas): Dataset must contain one Coretex.ai sample
+      with "samples.env.info" file, and one or more Coretex.ai samples
+      which contain a single ".mapped" file (file with ".mapped" extension)
+    - ForBiome (Forensics Microbiome Database, maintained by Microbiome Forensics
+      Institute Zurich): Dataset must contain BioInformatics samples in json
+      format as defined by "Microbiome Forensics Institute Zurich". Coretex.ai
+      sample must contain only a single json file which contains data for a
+      single BioInformatics sample.
+---------------------------
+
+--- validation description ---
+Defines if experiment will be run in training or validation mode.
+If the value is set to false (unchecked) training mode will run,
+and if the value is set to true (checked) then validation mode will be run.
+
+If training mode is selected following parameters must be provided:
+    - dataset
+    - validation (value: false)
+    - datasetType
+    - taxonomicLevel
+    - sampleOrigin
+    - sequencingTechnique
+    - batchSize
+    - bufferSize
+    - hiddenLayers
+    - learningRate
+    - lambda
+    - activationFunction
+    - epochs
+    - displayStep
+    - validationSplit
+    - batchNorm
+    - randomSeed
+    - cache
+
+If validation mode is selected following parameters must be provided:
+    - dataset
+    - validation (value: true)
+    - trainedModel
+    - datasetType
+    - taxonomicLevel
+    - sampleOrigin
+    - quantize
+    - sequencingTechnique
+    - batchSize
+    - cache
+------------------------------
+
+--- trainedModel description ---
+Id of the model on which the validation will run.
+If validation mode is selected this parameter must be provided,
+and if training mode is selected this parameter will be ignored.
+--------------------------------
+
+--- datasetType description ---
+Type of the provided dataset. Possible values are:
+    - MBA (Microbe Atlas)
+    - ForBiome (Microbiome Forensics Institute Zurich)
+
+For more details see "dataset" parameter.
+-------------------------------
+
+--- taxonomicLevel description ---
+Taxonomic level used for creating OTU (feature) tables used as
+the input of the model. Expected value is a non-negative integer.
+
+Expected values for taxon "B16S;90_3084;96_8430;97_10076":
+    - Level 1: "B16S"
+    - Level 2: "B16S;90_3084"
+    - Level 3: "B16S;90_3084;96_8430"
+----------------------------------
+
+--- sampleOrigin description ---
+Information on where sample originates from, the environment from
+which the sample was collected from.
+
+Example values are: animal, plant, aquatic, human, soil, field, etc.
+--------------------------------
+
+--- sequencingTechnique description ---
+Sample sequencing techniques which were used to seqeuence the samples.
+Possible values are:
+    - AMPLICON
+    - SHOTGUN
+    - WGS
+
+If value is set to "AMPLICON" then all samples which were sequenced using
+that method will be used for further processing.
+---------------------------------------
+
+--- batchSize description ---
+The model will be trained on data in batches rather then all at once.
+This parameter dictates the numner of samples that will be in one batch.
+------------------------------
+
+--- bufferSize description ---
+The model will place samples in a buffer of limited capacity (usualy less
+then the total number of samples), and then randomly choose the next samples
+to train on from that buffer, new samples replacing the chosen ones.
+(a higher value can impove accuracy, but makes the shuffling take more time)
+------------------------------
+
+--- hiddenLayers description ---
+A list in which each integer represents the number of nodes in that hidden layer.
+The number of hidden layers depends on the number of elements in the list
+(a larger model can learn a more complex representation of the training data,
+thereby possibly increasing accuracy, but is more prone to overfit
+and needs longer to train)
+--------------------------------
+
+--- learningRate description ---
+Learning rate of the gradiend boosting algorithm. Prefered range of values
+is 10^-6 (0,000001) - 1.0. Higher learning rates allow model to train faster,
+but at the cost of final model accuracy. Lower learning rates make
+model train significantly slower, but in a more optimal manner.
+--------------------------------
+
+--- lambda description ---
+The L0 regularization parameter
+(a higher value can reduce overfitting, but risks weakening the model)
+--------------------------
+
+--- activationFunction ---
+The activation function used in the hidden layers of the prediction network.
+The result of each nodes calculation will be passed through this function.
+
+Possible functions:
+    - "relu" (only positive tensors pass, negative tensors become 0),
+    - "tanh" (tensors get squished between -1 and 1),
+    - "sigmoid" (tensors get squished between 0 and 1),
+    - "linear" (no actiavtion, i.e. x = x, hidden layers have no effect with this function)
+--------------------------
+
+--- epochs description ---
+Number of passes that the model will make through the dataset while
+training. Higher values increase training time and accuracy, while lower
+values decrease training time, but they might also decrease accuracy.
+--------------------------
+
+--- displayStep ---
+This integer will dictate how often training progress is printed.
+It will print progress every n epochs, e.g. if 5 the metrics will
+be displayed on epochs 5, 10, 15...
+-------------------
+
+--- validationSplit description ---
+Percentage of dataset which will be used for validation. Prefered value range is
+0.1 - 0.9, while the optimal value is 0.2. If values are close or equal to 0, or
+close or equal to 1 unexpected errors can appear.
+
+If value for "validationSplit" is 0.2, then that means that 20% of the dataset
+will go for validation, while the rest (80%) will go for training.
+-----------------------------------
+
+--- batchNorm ---
+Wheather to use batch normalization (batch norm) between the prediction layers.
+Batch normalization applies a transformation that maintains the mean output
+close to 0 and the output standard deviation close to 1 (depending on the data
+this could imporve training performance, make training faster and slightly
+reduce overfitting)
+-----------------
+
+--- randomSeed ---
+The seed that will be used for random processes such as parameter initialization
+and shuffling between epochs (this allows for reproducible results by making
+randomization deterministic)
+------------------
+
+--- cache ---
+If set to true (checked) processed dataset will be cached to speed up the
+following runs of the experiment which uses the same dataset and parameter
+configurations.
+
+Caching is only implemented for MBA (Microbe Atlas) data. After the dataset
+has been seperated into files for each sample, to work with TF dataset,
+they are uploaded to coretex.
+-------------
+
+------------------------------

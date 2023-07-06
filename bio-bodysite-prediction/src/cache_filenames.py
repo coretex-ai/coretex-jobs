@@ -1,0 +1,7 @@
+INPUT_MATRIX = "inputMatrix"
+OUTPUT_MATRIX = "outputMatrix"
+SAMPLE_ID_LIST = "sampleIdList"
+UNIQUE_BODYSITE = "uniqueBodySite"
+UNIQUE_TAXONS = "uniqueTaxons"
+SAMPLE_DATA = "sampleData"
+SELECT_PERCENTILE = "selectPercentile"

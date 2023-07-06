@@ -1,0 +1,65 @@
+--- Template description ---
+
+Demultiplexing sequences project template is based on Qiime2 Moving Pictures
+tutorial (https://docs.qiime2.org/2023.2/tutorials/moving-pictures/#demultiplexing-sequences).
+Qiime2 is a software tool used for processing BioInformatics sequences.
+
+Sequences may contain multiple samples inside them. This was done so multiple samples could be
+sequenced together. To differentiate between these samples, each of them had a unique
+barcode injected into them before sequencing them.
+
+Before doing any kind of analysis on sequence data, you first need to extract
+the sample data from sequences associated with every of the barcodes. This template
+is used for doing that, and for this reason it is marked as "Step #1".
+
+Input data can be multiplexed sequences in "fastq" format, alongside
+their barcodes which are also represented in "fastq", and a third file which contains
+information about samples (sample ID, and metadata about samples) in "csv" format.
+
+Output data is demultiplexed sequences which contains a separate "fastq" file
+for every sample.
+
+In case your data is already demultiplexed this template can be used to import that data
+into the coretex bioinformatics pipeline, and make it compatible with the templates
+that follow this one.
+
+----------------------------
+
+--- Template parameters description ---
+
+--- dataset description ---
+A dataset which contains multiplexed or demultiplexed fastq sequences.
+Dataset format must match this structure in case of multiplexed data:
+    - sequences (folder)
+        - sequences.fastq
+        - barcodes.fastq
+    - Sequence metadata file: expected format is tsv (tab seperated values)
+Dataset format must macth this sturcture in case of demultiplexed data:
+    1 Sample:
+        - Sequence metadata file: expected format is tsv
+    N Samples:
+        - {sample-id}.fastq
+---------------------------
+
+--- sequenceType description ---
+Type of the sequences contained in the dataset. Supported options are:
+    For multiplexed sequences:
+        - "EMPSingleEndSequences"
+    For demultiplexed sequences:
+        - "SingleEndFastqManifestPhred33V2"
+
+Coming soon:
+    - EMPPairedEndSequences
+--------------------------------
+
+--- barcodesFileName description ---
+Name of the sequence metadata file from the dataset.
+------------------------------------
+
+--- barcodeColumn description ---
+Column from sequence metadata file which containes IDs for samples.
+The values of this column are used to match sample sequences with their
+corresponding barcode. Only used with multiplexed data.
+---------------------------------
+
+------------------------------

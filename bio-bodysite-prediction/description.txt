@@ -1,0 +1,193 @@
+--- Template description ---
+
+Body site prediction project template is based on XGBoost (gradient
+boosting) algorithm.
+
+This template takes BioInformatics sequence taxonomic compositions
+and traines a model which is capable of predicting body site (from which the
+sample originates) based on the sample taxonomic composition.
+
+Data provided to the model can be in either of these two formats:
+    - MBA (Microbe Atlas)
+    - ForBiome (Forensics Microbiome Database, maintained by Microbiome Forensics Institute Zurich)
+ 
+Input of the model is a 2D matrix with input shape [samples, uniqueTaxons] where:
+    - samples: number of samples in the dataset,
+    - uniqueTaxons: number of unique taxons in the dataset
+
+Output of the model is a 1D array with integers representing different bodysites.
+
+Expected experiment runtime on CPU with ~1 GB of MBA data is ~4m 22s.
+Expected experiment runtime on GPU with ~1 GB of MBA data is ~3m 19s.
+
+System specifications on which the experiments were run:
+    - CPU: AMD Ryzen 7 1800X Eight-Core Processor
+    - GPU: Nvidia GeForce GTX 1080 Ti 12 GB VRAM
+    - RAM: 32 GB 2666 MHz DDR4
+
+Experiment parameters:
+    - Percentile: 100
+    - Quantize: False
+    - Epochs: 100
+    - Early stopping: 0
+    - Cache: False
+    - Enviromnment: Clean
+
+----------------------------
+
+--- Template parameters description ---
+
+--- dataset description ---
+A dataset which contains OTU abundance data. Supported dataset formats are:
+    - MBA (Microbe Atlas): Dataset must contain one Coretex.ai sample
+      with "samples.env.info" file, and one or more Coretex.ai samples
+      which contain a single ".mapped" file (file with ".mapped" extension)
+    - ForBiome (Forensics Microbiome Database, maintained by Microbiome Forensics
+      Institute Zurich): Dataset must contain BioInformatics samples in json
+      format as defined by "Microbiome Forensics Institute Zurich". Coretex.ai
+      sample must contain only a single json file which contains data for a
+      single BioInformatics sample.
+---------------------------
+
+--- validation description ---
+Defines if experiment will be run in training or validation mode.
+If the value is set to false (unchecked) training mode will run,
+and if the value is set to true (checked) then validation mode will be run.
+
+If training mode is selected following parameters must be provided:
+    - dataset
+    - validation (value: false)
+    - datasetType
+    - taxonomicLevel
+    - sampleOrigin
+    - percentile
+    - quantize
+    - sequencingTechnique
+    - learningRate
+    - epochs
+    - earlyStopping
+    - validationSplit
+    - useGpu
+    - cache
+
+If validation mode is selected following parameters must be provided:
+    - dataset
+    - validation (value: true)
+    - trainedModel
+    - datasetType
+    - taxonomicLevel
+    - sampleOrigin
+    - quantize
+    - sequencingTechnique
+    - cache
+------------------------------
+
+--- trainedModel description ---
+Id of the model on which the validation will run.
+If validation mode is selected this parameter must be provided,
+and if training mode is selected this parameter will be ignored.
+--------------------------------
+
+--- datasetType description ---
+Type of the provided dataset. Possible values are:
+    - MBA (Microbe Atlas)
+    - ForBiome (Microbiome Forensics Institute Zurich)
+
+For more details see "dataset" parameter.
+-------------------------------
+
+--- taxonomicLevel description ---
+Taxonomic level used for creating OTU (feature) tables used as
+the input of the model. Expected value is a non-negative integer.
+
+Expected values for taxon "B16S;90_3084;96_8430;97_10076":
+    - Level 1: "B16S"
+    - Level 2: "B16S;90_3084"
+    - Level 3: "B16S;90_3084;96_8430"
+----------------------------------
+
+--- sampleOrigin description ---
+Information on where sample originates from, the environment from
+which the sample was collected from.
+
+Example values are: animal, plant, aquatic, human, soil, field, etc.
+--------------------------------
+
+--- percentile description ---
+Amount of features which are kept for training. Value of the parameter is
+expressed in percents (%) from 1 - 100. The most representative features are kept.
+------------------------------
+
+--- quantize description ---
+If set to true (checked) then lower precision (uint16 instead of int32) will
+be used for storing taxon count. Setting this value to true can improve model
+performance, but it can decrease model accuracy.
+----------------------------
+
+--- sequencingTechnique description ---
+Sample sequencing techniques which were used to seqeuence the samples.
+Possible values are:
+    - AMPLICON
+    - SHOTGUN
+    - WGS
+
+If value is set to "AMPLICON" then all samples which were sequenced using
+that method will be used for further processing.
+---------------------------------------
+
+--- learningRate description ---
+Learning rate of the gradiend boosting algorithm. Prefered range of values
+is 10^-6 (0,000001) - 1.0. Higher learning rates allow model to train faster,
+but at the cost of final model accuracy. Lower learning rates make
+model train significantly slower, but in a more optimal manner.
+--------------------------------
+
+--- epochs description ---
+Number of passes that the model will make through the dataset while
+training. Higher values increase training time and accuracy, while lower
+values decrease training time, but they might also decrease accuracy.
+--------------------------
+
+--- earlyStopping description ---
+Defines how many consecutive epochs should pass during which the model hasn't
+learned anything (loss reduction was minimal or non-existent) before the training
+will stop.
+
+After the training has stopped this way, the final model will be picked from the
+last N (defined by earlyStopping value) epochs, taking the model (weights) from
+the epoch which had the highest learning rate (lowest loss).
+---------------------------------
+
+--- validationSplit description ---
+Percentage of dataset which will be used for validation. Prefered value range is
+0.1 - 0.9, while the optimal value is 0.2. If values are close or equal to 0, or
+close or equal to 1 unexpected errors can appear.
+
+If value for "validationSplit" is 0.2, then that means that 20% of the dataset
+will go for validation, while the rest (80%) will go for training.
+-----------------------------------
+
+--- useGpu ---
+If set to true (checked) the GPU will be used for training, otherwise CPU
+will be used.
+
+Using GPU for training can decrease training time significantly.
+--------------
+
+--- cache ---
+If set to true (checked) processed dataset will be cached to speed up the
+following runs of the experiment which uses the same dataset and parameter
+configurations.
+
+Caching is only implemented for MBA (Microbe Atlas) data. It is done in
+two steps:
+    1. MBA data is loaded into python objects which are then pickled and
+       uploaded to Coretex.ai as a dataset. This cache depends on
+       "sampleOrigin" and "sequencingTechnique" parameters.
+    2. Processed model input and output data is pickled and uploaded to
+       Coretex.ai just before training has started. This cache depends on
+       the same parameters as the 1st step cache, as well as "quantize" and
+       "percentile" parameters
+-------------
+
+------------------------------

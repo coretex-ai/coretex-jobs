@@ -1,0 +1,11 @@
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.8.15
+  - pip=22.3.1
+  - r-base=4.2.2
+  - r-reticulate
+  - pip:
+    - -r requirements.txt
