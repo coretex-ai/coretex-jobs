@@ -437,9 +437,9 @@ def loadDataAtlas(
 
     logging.info(f">> [MicrobiomeForensics] Loaded data in: {(time.time() - startTime):.1f}s")
 
-    if useCache and isJsonCacheValid(experiment):
+    if useCache and isJsonCacheValid(cacheNameJson):
         experiment.updateStatus(ExperimentStatus.inProgress, "Saving assembled dataset to cache")
-        cacheJson(experiment, sampleData, uniqueTaxons, uniqueBodySite, experiment.spaceId)
+        cacheJson(cacheNameJson, sampleData, uniqueTaxons, uniqueBodySite, experiment.spaceId)
 
     if validate:
         sampleData = removeBadSamples(sampleData, uniqueTaxons, uniqueBodySite)
@@ -484,7 +484,7 @@ def prepareForTrainingAtlas(
 
     experiment.updateStatus(ExperimentStatus.inProgress, "Preparing data for training")
 
-    sampleIdList: list[int] = []
+    sampleIdList: list[str] = []
     rowIndices: list[int] = []
     columnIndices: list[int] = []
     matrixData: list[int] = []
