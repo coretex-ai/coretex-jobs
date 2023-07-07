@@ -10,7 +10,7 @@ from sklearn.feature_selection import SelectPercentile
 
 import numpy as np
 
-from coretex import CustomDataset, CustomSample, Experiment
+from coretex import CustomDataset, CustomSample
 from coretex.folder_management import FolderManager
 
 from . import cache_filenames as cf
@@ -69,14 +69,14 @@ def loadMatrixCache(cacheName: str, validation: bool) -> MatrixTuple:
 
     logging.info(">> [MicrobiomeForensics] Processed data loaded from cache")
 
-    return inputMatrix, outputMatrix, sampleIdList, uniqueBodySite, uniqueTaxons
+    return MatrixTuple(inputMatrix, outputMatrix, sampleIdList, uniqueBodySite, uniqueTaxons)
 
 
 def cacheMatrix(
     cacheName: str,
     inputMatrix: sparse.csr_matrix,
     outputMatrix: np.ndarray,
-    sampleIdList: list[int],
+    sampleIdList: list[str],
     uniqueBodySite: dict[str, int],
     uniqueTaxons: dict[str, int],
     percentileModel: SelectPercentile,

@@ -5,11 +5,11 @@ import pickle
 import zipfile
 import logging
 
-from coretex import CustomDataset, CustomSample, Experiment
+from coretex import CustomDataset, CustomSample
 from coretex.folder_management import FolderManager
 
 from . import cache_filenames as cf
-from .objects import JsonTuple
+from .objects import JsonTuple, Sample
 
 
 def getJsonName(datasetId: int, sampleOrigin: list[str], sequencingTechnique: list[str]) -> str:
@@ -43,14 +43,14 @@ def loadJsonCache(cacheName: str) -> JsonTuple:
 
     logging.info(">> [MicrobiomeForensics] Assembled dataset loaded from cache")
 
-    return sampleData, uniqueTaxons, uniqueBodySite
+    return JsonTuple(sampleData, uniqueTaxons, uniqueBodySite)
 
 
 def cacheJson(
     cacheName: str,
-    sampleData: list[dict[str, Any]],
-    uniqueTaxons: list[str],
-    uniqueBodySite: list[str],
+    sampleData: list[Sample],
+    uniqueTaxons: dict[str, int],
+    uniqueBodySite: dict[str, int],
     spaceId: int
 ) -> None:
 
