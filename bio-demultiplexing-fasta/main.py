@@ -3,7 +3,7 @@ from pathlib import Path
 from coretex import CustomDataset, Experiment
 from coretex.project import initializeProject
 from coretex.folder_management import FolderManager
-from coretex.qiime2.utils import getFastqMPSamples, getFastqDPSamples, getMetadataSample
+from coretex.bioinformatics.qiime2.utils import getFastqMPSamples, getFastqDPSamples, getMetadataSample
 
 from src.multiplexed import demultiplexing
 from src.demultiplexed import importDemultiplexedSamples

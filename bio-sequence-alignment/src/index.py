@@ -9,8 +9,9 @@ import requests
 from coretex import Experiment, CustomDataset, CustomSample
 from coretex.folder_management import FolderManager
 from coretex.utils.file import isGzip, gzipDecompress
+from coretex.bioinformatics.sequence_alignment import indexCommand
 
-from .utils import indexCommand
+from .filepaths import BWA
 
 
 def saveCache(cacheName: str, temp: Path, genomeIndexDir: Path, spaceId: int) -> None:
@@ -37,7 +38,7 @@ def saveCache(cacheName: str, temp: Path, genomeIndexDir: Path, spaceId: int) ->
     logging.info(">> [Sequence Alignment] Indexed reference genome has been successfuly uploaded to coretex")
 
 
-def loadCache(cache: CustomDataset, filename: str) -> Path:
+def loadCache(cache: CustomDataset) -> Path:
     logging.info(">> [Sequence Alignment] Downloading indexed genome cache")
     cache.download()
     logging.info(">> [Sequence Alignment] Download successful")
@@ -45,10 +46,10 @@ def loadCache(cache: CustomDataset, filename: str) -> Path:
     sample = cache.samples[0]
     sample.unzip()
 
-    return Path(sample.path).joinpath(filename)
+    return list(Path(sample.path).iterdir())[0]
 
 
-def isCacheValid(cache: CustomDataset) -> bool:
+def isCacheValid(cache: Optional[CustomDataset]) -> bool:
     if cache is None:
         return True
 
@@ -58,7 +59,7 @@ def isCacheValid(cache: CustomDataset) -> bool:
 def getCache(cacheName: str) -> Optional[CustomDataset]:
     cacheDatasetList = CustomDataset.fetchAll(queryParameters = [f"name={cacheName}", "include_sessions=1"])
     if len(cacheDatasetList) > 1:
-        raise ValueError(">> [Sequence Alignment] Found more then one cache of indexed genome")
+        logging.warning(">> [Sequence Alignment] Found more then one cache of indexed genome")
 
     return cacheDatasetList[0] if len(cacheDatasetList) != 0 else None
 
@@ -85,34 +86,47 @@ def downloadGenome(genomeUrl: str, downloadPath: Path, retryCount: int = 0) -> b
         return r.ok
 
 
-def index(experiment: Experiment[CustomDataset]) -> Path:
-    genomeUrl: str = experiment.parameters["genomeUrl"]
+def loadGenome(dataset: CustomDataset) -> Path:
+    dataset.download()
+    sample = dataset.samples[0]
+    sample.unzip()
 
+    return list(Path(sample.path).iterdir())[0]
+
+
+def index(experiment: Experiment[CustomDataset]) -> Path:
     temp = Path(FolderManager.instance().temp)
     genomeIndexDir = Path(FolderManager.instance().createTempFolder("genome"))
 
-    downloadPath = temp / genomeUrl.split("/")[-1]
-    filename = downloadPath.stem if downloadPath.suffix == ".gz" else downloadPath
+    genomeUrl: str = experiment.parameters["genomeUrl"]
+    if genomeUrl is not None:
+        downloadPath = temp / genomeUrl.split("/")[-1]
+        filename = downloadPath.stem if downloadPath.suffix == ".gz" else downloadPath.name
+        cacheName = f"{genomeUrl}_genomeCache"
 
-    cacheName = f"{genomeUrl}_genomeCache"
+    else:
+        referenceDataset = experiment.parameters["referenceDataset"]
+        cacheName = f"{referenceDataset.id}_genomeCache"
+
     cache = getCache(cacheName)
     if cache is not None and isCacheValid(cache):
-        return loadCache(cache, filename)
-    # After dataset deletion on coretex is activated, a check to see if the cache has
-    # been unsuccessfuly created on a previous run (dataset has 0 samples) should be conducted
-    # and that dataset removed if true to allow for the creation of a functional cache.
-    # For now we use isCacheValid to ignore unsuccessfuly created cache
+        return loadCache(cache)
 
-    genomePath = temp / filename
-    retryCount = 0
+    if genomeUrl is not None:
+        retryCount = 0
+        while not downloadGenome(genomeUrl, downloadPath, retryCount):
+            retryCount += 1
 
-    while not downloadGenome(genomeUrl, downloadPath, retryCount):
-        retryCount += 1
+        genomePath = temp / filename
+
+    else:
+        genomePath = loadGenome(referenceDataset)
+        filename = genomePath.name
 
     logging.info(">> [Sequence Alignment] Starting reference genome indexing with BWA. This may take a while")
 
     genomePrefix = genomeIndexDir / filename
-    indexCommand(genomePath, genomePrefix)
+    indexCommand(Path(BWA), genomePath, genomePrefix)
 
     logging.info(">> [Sequence Alignment] Reference genome succesfully indexed")
 

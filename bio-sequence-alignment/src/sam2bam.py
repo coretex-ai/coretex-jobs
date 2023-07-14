@@ -5,8 +5,9 @@ import logging
 
 from coretex import Experiment, CustomDataset, CustomSample
 from coretex.folder_management import FolderManager
+from coretex.bioinformatics.sequence_alignment import sam2bamCommand
 
-from .utils import sam2bamCommand
+from .filepaths import SAMTOOLS
 
 
 def loadData(dataset: CustomDataset) -> list[Path]:
@@ -43,7 +44,7 @@ def sam2bam(experiment: Experiment[CustomDataset], samDir: Path) -> None:
     for path in samDir.iterdir():
         outputPath = bamDir / path.name.replace(path.suffix, ".bam")
 
-        sam2bamCommand(path, outputPath)
+        sam2bamCommand(Path(SAMTOOLS), path, outputPath)
 
         zipSam = temp / f"{outputPath.name}.zip"
         with ZipFile(zipSam , "w", ZIP_DEFLATED) as archive:

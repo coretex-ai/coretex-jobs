@@ -4,7 +4,7 @@ from zipfile import ZipFile
 from coretex import CustomDataset, CustomSample, Experiment, qiime2 as ctx_qiime2
 from coretex.project import initializeProject
 from coretex.folder_management import FolderManager
-from coretex.qiime2.utils import createSample, sampleNumber, getDemuxSamples
+from coretex.bioinformatics.qiime2.utils import createSample, sampleNumber, getDemuxSamples
 
 
 def dada2DenoiseSingleSample(sample: CustomSample, denoiseAlgorithm: str, trimLeft: int, truncLen: int, outputDir: Path) -> Path:

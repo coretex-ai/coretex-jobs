@@ -5,7 +5,7 @@ from zipfile import ZipFile
 import csv
 
 from coretex import CustomDataset, CustomSample, Experiment, qiime2 as ctx_qiime2
-from coretex.qiime2.utils import createSample
+from coretex.bioinformatics.qiime2.utils import createSample
 
 from .utils import summarizeSample
 

@@ -5,24 +5,9 @@ import logging
 
 from coretex import Experiment, CustomDataset, CustomSample
 from coretex.folder_management import FolderManager
+from coretex.bioinformatics.sequence_alignment import alignCommand, loadFa
 
-from .utils import alignCommand
-
-
-def loadData(dataset: CustomDataset) -> list[Path]:
-    sequencePaths: list[Path] = []
-
-    for sample in dataset.samples:
-        sample.unzip()
-
-        for file in Path(sample.path).iterdir():
-            if file.suffix == ".fasta" or file.suffix == ".fastq":
-                sequencePaths.append(file)
-
-    if len(sequencePaths) == 0:
-        raise ValueError(">> [Sequence Alignment] No sequence reads found")
-
-    return sequencePaths
+from .filepaths import BWA
 
 
 def sequeneAlignment(experiment: Experiment[CustomDataset], genomePrefix: Path) -> Path:
@@ -33,7 +18,7 @@ def sequeneAlignment(experiment: Experiment[CustomDataset], genomePrefix: Path) 
     experiment.dataset.download()
 
     logging.info(">> [Sequence Alignment] Dataset downloaded")
-    sequencePaths = loadData(experiment.dataset)
+    sequencePaths = loadFa(experiment.dataset)
 
     samDataset = CustomDataset.createDataset(
         f"{experiment.id} - Sequence alignment: SAM",
@@ -49,7 +34,7 @@ def sequeneAlignment(experiment: Experiment[CustomDataset], genomePrefix: Path) 
     for path in sequencePaths:
         outputPath = samDir / path.name.replace(path.suffix, ".sam")
 
-        alignCommand(genomePrefix, path, outputPath)
+        alignCommand(Path(BWA), genomePrefix, path, outputPath)
 
         zipSam = temp / f"{outputPath.name}.zip"
         with ZipFile(zipSam , "w", ZIP_DEFLATED) as archive:

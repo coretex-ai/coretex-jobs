@@ -4,7 +4,7 @@ from zipfile import ZipFile
 
 from coretex import CustomDataset, CustomSample, Experiment, qiime2 as ctx_qiime2
 from coretex.folder_management import FolderManager
-from coretex.qiime2.utils import compressGzip, createSample
+from coretex.bioinformatics.qiime2.utils import compressGzip, createSample
 
 from .utils import summarizeSample
 

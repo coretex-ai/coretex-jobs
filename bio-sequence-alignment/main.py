@@ -4,11 +4,11 @@ import logging
 
 from coretex import Experiment, CustomDataset
 from coretex.project import initializeProject
+from coretex.bioinformatics.sequence_alignment import chmodX
 
 from src.index import index
 from src.sequence_alignment import sequeneAlignment
 from src.sam2bam import sam2bam
-from src.utils import chmodX
 from src.filepaths import BWA, SAMTOOLS
 
 
