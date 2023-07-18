@@ -3,7 +3,7 @@ from io import BufferedWriter
 
 import logging
 
-from coretex.bioinformatics.sequence_alignment import extractData
+from coretex.bioinformatics import sequence_alignment as sa
 
 from .filepaths import SAMTOOLS
 
@@ -33,7 +33,7 @@ def separate(bamDir: Path, inputFile: Path, groups: list[Path], thresholds: list
 
     logging.info(">> [Sequence Alignment] Extracting data from BAM")
     for filePath in bamDir.iterdir():
-        score, pos, lengths = extractData(Path(SAMTOOLS), filePath)
+        score, pos, lengths = sa.extractData(Path(SAMTOOLS), filePath)
         scores.append(score)
         positions.append(pos)
 

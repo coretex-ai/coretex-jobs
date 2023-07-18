@@ -1,10 +1,10 @@
 from pathlib import Path
 from zipfile import ZipFile
 
-from coretex import CustomDataset, CustomSample, Experiment, qiime2 as ctx_qiime2
+from coretex import CustomDataset, CustomSample, Experiment
 from coretex.project import initializeProject
 from coretex.folder_management import FolderManager
-from coretex.bioinformatics.qiime2.utils import createSample, sampleNumber, getDemuxSamples
+from coretex.bioinformatics import qiime2 as ctx_qiime2
 
 
 def dada2DenoiseSingleSample(sample: CustomSample, denoiseAlgorithm: str, trimLeft: int, truncLen: int, outputDir: Path) -> Path:
@@ -83,7 +83,7 @@ def processSample(
         sampleOutputDir
     )
 
-    denoisedSample = createSample(f"{index}-denoise", outputDataset.id, denoiseOutput, experiment, "Step 2: Denoising")
+    denoisedSample = ctx_qiime2.createSample(f"{index}-denoise", outputDataset.id, denoiseOutput, experiment, "Step 2: Denoising")
 
     # Second step:
     # Generate visualization artifacts for the denoised data
@@ -91,7 +91,7 @@ def processSample(
     denoisedSample.unzip()
 
     visualizationPath = metadataTabulateSample(denoisedSample, sampleOutputDir)
-    createSample(f"{index}-metadata-tabulate", outputDataset.id, visualizationPath, experiment, "Step 2: Denoising")
+    ctx_qiime2.createSample(f"{index}-metadata-tabulate", outputDataset.id, visualizationPath, experiment, "Step 2: Denoising")
 
     # Third step:
     # Summarize how many sequences are associated with each sample and with each feature,
@@ -99,19 +99,19 @@ def processSample(
     metadataPath = Path(importedSample.path) / experiment.parameters["barcodesFileName"]
     featureTableSummaryPath = featureTableSummarizeSample(denoisedSample, metadataPath, sampleOutputDir)
 
-    createSample(f"{index}-feature-table-summarize", outputDataset.id, featureTableSummaryPath, experiment, "Step 2: Denoising")
+    ctx_qiime2.createSample(f"{index}-feature-table-summarize", outputDataset.id, featureTableSummaryPath, experiment, "Step 2: Denoising")
 
     # Fourth step:
     # Provide a mapping of feature IDs to sequences,
     # and provide links to easily BLAST each sequence against the NCBI nt database
     featureTableMapPath = featureTableTabulateSeqsSample(denoisedSample, sampleOutputDir)
-    createSample(f"{index}-feature-table-tabulate-seqs", outputDataset.id, featureTableMapPath, experiment, "Step 2: Denoising")
+    ctx_qiime2.createSample(f"{index}-feature-table-tabulate-seqs", outputDataset.id, featureTableMapPath, experiment, "Step 2: Denoising")
 
 
 def main(experiment: Experiment[CustomDataset]):
     experiment.dataset.download()
 
-    demuxSamples = getDemuxSamples(experiment.dataset)
+    demuxSamples = ctx_qiime2.getDemuxSamples(experiment.dataset)
     if len(demuxSamples) == 0:
         raise ValueError(">> [Workspace] Dataset has 0 demultiplexed samples")
 
@@ -127,7 +127,7 @@ def main(experiment: Experiment[CustomDataset]):
     for sample in demuxSamples:
         sample.unzip()
 
-        index = sampleNumber(sample)
+        index = ctx_qiime2.sampleNumber(sample)
 
         importedSample = experiment.dataset.getSample(f"{index}-import")
         if importedSample is None:

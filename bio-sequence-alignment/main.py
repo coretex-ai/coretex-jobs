@@ -4,7 +4,7 @@ import logging
 
 from coretex import Experiment, CustomDataset
 from coretex.project import initializeProject
-from coretex.bioinformatics.sequence_alignment import chmodX
+from coretex.bioinformatics import sequence_alignment as sa
 
 from src.index import index
 from src.sequence_alignment import sequeneAlignment
@@ -13,8 +13,8 @@ from src.filepaths import BWA, SAMTOOLS
 
 
 def main(experiment: Experiment[CustomDataset]) -> None:
-    chmodX(Path(BWA))
-    chmodX(Path(SAMTOOLS))
+    sa.chmodX(Path(BWA))
+    sa.chmodX(Path(SAMTOOLS))
 
     logging.info(">> [Sequence Alignment] 1: Index reference genome")
     genomePrefix = index(experiment)

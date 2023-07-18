@@ -5,7 +5,7 @@ import logging
 from coretex import Experiment, CustomDataset
 from coretex.folder_management import FolderManager
 from coretex.project import initializeProject
-from coretex.bioinformatics.sequence_alignment import loadFa, chmodX
+from coretex.bioinformatics import sequence_alignment as sa
 
 from src.index import index
 from src.sequence_alignment import alignToRefDatabase, sam2bam
@@ -22,15 +22,15 @@ def main(experiment: Experiment[CustomDataset]) -> None:
     groupNames: list[str] = experiment.parameters["separationGroups"]
     thresholds: list[int] = experiment.parameters["separationThresholds"]
 
-    chmodX(Path(BWA))
-    chmodX(Path(SAMTOOLS))
+    sa.chmodX(Path(BWA))
+    sa.chmodX(Path(SAMTOOLS))
 
     if experiment.parameters["useBacteriaLib"]:
         raise NotImplementedError(">> [Sequence Alignment] useBacteriaLib has not been implemented yet, use dataset 7153 with referenceDatasetIndexed as True insted")
 
     logging.info(">> [Sequence Alignment] Downloading dataset")
     experiment.dataset.download()
-    inputFiles = loadFa(experiment.dataset)
+    inputFiles = sa.loadFa(experiment.dataset)
 
     if not experiment.parameters["referenceDatasetIndexed"]:
         logging.info(">> [Sequence Alignment] Index reference genome")

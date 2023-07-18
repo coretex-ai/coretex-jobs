@@ -4,7 +4,7 @@ import logging
 
 from coretex import CustomDataset
 from coretex.folder_management import FolderManager
-from coretex.bioinformatics.sequence_alignment import indexCommand, loadFa
+from coretex.bioinformatics import sequence_alignment as sa
 
 from .filepaths import BWA
 
@@ -14,7 +14,7 @@ def index(dataset: CustomDataset) -> list[Path]:
 
     logging.info(">> [Sequence Alignment] Downloading dataset")
     dataset.download()
-    referenceSequences = loadFa(dataset)
+    referenceSequences = sa.loadFa(dataset)
 
     for sequence in referenceSequences:
         name = sequence.stem
@@ -22,7 +22,7 @@ def index(dataset: CustomDataset) -> list[Path]:
         prefix = indexDir / name
 
         indexDir.mkdir()
-        indexCommand(Path(BWA), sequence, prefix)
+        sa.indexCommand(Path(BWA), sequence, prefix)
 
     logging.info(">> [Sequence Alignment] Reference sequences succesfully indexed")
 

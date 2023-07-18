@@ -2,7 +2,7 @@ from pathlib import Path
 
 import logging
 
-from coretex.bioinformatics.sequence_alignment import alignCommand, sam2bamCommand
+from coretex.bioinformatics import sequence_alignment as sa
 
 from .filepaths import BWA, SAMTOOLS
 
@@ -13,7 +13,7 @@ def alignToRefDatabase(filePath: Path, referenceDir: list[Path], outDir: Path) -
         prefix = dir / name
         outputPath = outDir / (name + ".sam")
 
-        alignCommand(Path(BWA), prefix, filePath, outputPath)
+        sa.alignCommand(Path(BWA), prefix, filePath, outputPath)
         logging.info(f">> [Sequence Alignments] Alignment for {filePath.name} with {name} has been completed")
 
     logging.info(f">> [Sequence Alignments] All alignments for {filePath.name} have been completed")
@@ -23,5 +23,5 @@ def sam2bam(samDir: Path, outDir: Path) -> None:
     for file in samDir.iterdir():
         outFile = outDir / (file.stem + ".bam")
 
-        sam2bamCommand(Path(SAMTOOLS), file, outFile)
+        sa.sam2bamCommand(Path(SAMTOOLS), file, outFile)
         logging.info(f">> [Sequence Alignments] {file.name} converted to bam")

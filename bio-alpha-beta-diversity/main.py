@@ -4,10 +4,10 @@ from zipfile import ZipFile
 import os
 import logging
 
-from coretex import CustomDataset, CustomSample, Experiment, qiime2 as ctx_qiime2
+from coretex import CustomDataset, CustomSample, Experiment
 from coretex.project import initializeProject
 from coretex.folder_management import FolderManager
-from coretex.bioinformatics.qiime2.utils import sampleNumber, createSample, getPhylogeneticTreeSamples
+from coretex.bioinformatics import qiime2 as ctx_qiime2
 
 
 def diversityCoreMetricsPhylogeneticSample(
@@ -52,7 +52,7 @@ def diversityAlphaGroupSignificance(
         str(outputPath)
     )
 
-    createSample(
+    ctx_qiime2.createSample(
         f"{sampleIndex}-{outputPath.stem}",
         outputDatasetId,
         outputPath,
@@ -79,7 +79,7 @@ def diversityBetaGroupSignificance(
         True
     )
 
-    createSample(
+    ctx_qiime2.createSample(
         f"{sampleIndex}-{outputPath.stem}",
         outputDatasetId,
         outputPath,
@@ -104,7 +104,7 @@ def emperorPlot(
         str(outputPath)
     )
 
-    createSample(
+    ctx_qiime2.createSample(
         f"{sampleIndex}-{outputPath.stem}",
         outputDatasetId,
         outputPath,
@@ -131,7 +131,7 @@ def diversityAlphaRarefaction(
         str(outputPath)
     )
 
-    createSample(
+    ctx_qiime2.createSample(
         f"{sampleIndex}-{outputPath.stem}",
         outputDatasetId,
         outputPath,
@@ -173,7 +173,7 @@ def processSample(
         sampleOutputDir
     )
 
-    coreMetricsSample = createSample(
+    coreMetricsSample = ctx_qiime2.createSample(
         f"{index}-core-metrics-phylogenetic",
         outputDataset.id,
         coreMetricsPath,
@@ -296,7 +296,7 @@ def main(experiment: Experiment[CustomDataset]):
 
     experiment.dataset.download()
 
-    phylogeneticTreeSamples = getPhylogeneticTreeSamples(experiment.dataset)
+    phylogeneticTreeSamples = ctx_qiime2.getPhylogeneticTreeSamples(experiment.dataset)
     if len(phylogeneticTreeSamples) == 0:
         raise ValueError(">> [Microbiome analysis] Dataset has 0 phylogenetic tree samples")
 
@@ -316,7 +316,7 @@ def main(experiment: Experiment[CustomDataset]):
         raise ValueError(">> [Microbiome analysis] Failed to create output dataset")
 
     for sample in phylogeneticTreeSamples:
-        index = sampleNumber(sample)
+        index = ctx_qiime2.sampleNumber(sample)
 
         importedSample = importedDataset.getSample(f"{index}-import")
         if importedSample is None:

@@ -9,7 +9,7 @@ import requests
 from coretex import Experiment, CustomDataset, CustomSample
 from coretex.folder_management import FolderManager
 from coretex.utils.file import isGzip, gzipDecompress
-from coretex.bioinformatics.sequence_alignment import indexCommand
+from coretex.bioinformatics import sequence_alignment as sa
 
 from .filepaths import BWA
 
@@ -98,12 +98,11 @@ def index(experiment: Experiment[CustomDataset]) -> Path:
     temp = Path(FolderManager.instance().temp)
     genomeIndexDir = Path(FolderManager.instance().createTempFolder("genome"))
 
-    genomeUrl: str = experiment.parameters["genomeUrl"]
+    genomeUrl: Optional[str] = experiment.parameters["genomeUrl"]
     if genomeUrl is not None:
         downloadPath = temp / genomeUrl.split("/")[-1]
         filename = downloadPath.stem if downloadPath.suffix == ".gz" else downloadPath.name
         cacheName = f"{genomeUrl}_genomeCache"
-
     else:
         referenceDataset = experiment.parameters["referenceDataset"]
         cacheName = f"{referenceDataset.id}_genomeCache"
@@ -118,7 +117,6 @@ def index(experiment: Experiment[CustomDataset]) -> Path:
             retryCount += 1
 
         genomePath = temp / filename
-
     else:
         genomePath = loadGenome(referenceDataset)
         filename = genomePath.name
@@ -126,11 +124,11 @@ def index(experiment: Experiment[CustomDataset]) -> Path:
     logging.info(">> [Sequence Alignment] Starting reference genome indexing with BWA. This may take a while")
 
     genomePrefix = genomeIndexDir / filename
-    indexCommand(Path(BWA), genomePath, genomePrefix)
+    sa.indexCommand(Path(BWA), genomePath, genomePrefix)
 
     logging.info(">> [Sequence Alignment] Reference genome succesfully indexed")
 
-    if isCacheValid(cache):
+    if cache is None or not isCacheValid(cache):
         saveCache(cacheName, temp, genomeIndexDir, experiment.spaceId)
 
     return genomePrefix

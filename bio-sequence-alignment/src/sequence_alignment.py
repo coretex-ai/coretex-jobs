@@ -5,7 +5,7 @@ import logging
 
 from coretex import Experiment, CustomDataset, CustomSample
 from coretex.folder_management import FolderManager
-from coretex.bioinformatics.sequence_alignment import alignCommand, loadFa
+from coretex.bioinformatics import sequence_alignment as sa
 
 from .filepaths import BWA
 
@@ -18,7 +18,7 @@ def sequeneAlignment(experiment: Experiment[CustomDataset], genomePrefix: Path) 
     experiment.dataset.download()
 
     logging.info(">> [Sequence Alignment] Dataset downloaded")
-    sequencePaths = loadFa(experiment.dataset)
+    sequencePaths = sa.loadFa(experiment.dataset)
 
     samDataset = CustomDataset.createDataset(
         f"{experiment.id} - Sequence alignment: SAM",
@@ -34,7 +34,7 @@ def sequeneAlignment(experiment: Experiment[CustomDataset], genomePrefix: Path) 
     for path in sequencePaths:
         outputPath = samDir / path.name.replace(path.suffix, ".sam")
 
-        alignCommand(Path(BWA), genomePrefix, path, outputPath)
+        sa.alignCommand(Path(BWA), genomePrefix, path, outputPath)
 
         zipSam = temp / f"{outputPath.name}.zip"
         with ZipFile(zipSam , "w", ZIP_DEFLATED) as archive:

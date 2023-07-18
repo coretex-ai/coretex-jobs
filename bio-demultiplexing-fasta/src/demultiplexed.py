@@ -4,8 +4,8 @@ from zipfile import ZipFile
 
 import csv
 
-from coretex import CustomDataset, CustomSample, Experiment, qiime2 as ctx_qiime2
-from coretex.bioinformatics.qiime2.utils import createSample
+from coretex import CustomDataset, CustomSample, Experiment
+from coretex.bioinformatics import qiime2 as ctx_qiime2
 
 from .utils import summarizeSample
 
@@ -63,13 +63,13 @@ def importDemultiplexedSamples(
     createManifest(fastqSamples, manifestPath)
 
     demuxZipPath = importSample(manifestPath, experiment.parameters["sequenceType"], outputDir)
-    demuxSample = createSample("0-demux", outputDataset.id, demuxZipPath, experiment, "Step 1: Demultiplexing")
+    demuxSample = ctx_qiime2.createSample("0-demux", outputDataset.id, demuxZipPath, experiment, "Step 1: Demultiplexing")
 
     metadataZipPath = importMetadata(metadata, outputDir)
-    createSample("0-import", outputDataset.id, metadataZipPath, experiment, "Step 1: Demultiplexing")
+    ctx_qiime2.createSample("0-import", outputDataset.id, metadataZipPath, experiment, "Step 1: Demultiplexing")
 
     demuxSample.download()
     demuxSample.unzip()
 
     visualizationPath = summarizeSample(demuxSample, outputDir)
-    createSample("0-summary", outputDataset.id, visualizationPath, experiment, "Step 1: Demultiplexing")
+    ctx_qiime2.createSample("0-summary", outputDataset.id, visualizationPath, experiment, "Step 1: Demultiplexing")
