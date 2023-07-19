@@ -14,9 +14,9 @@ def alignToRefDatabase(filePath: Path, referenceDir: list[Path], outDir: Path) -
         outputPath = outDir / (name + ".sam")
 
         sa.alignCommand(Path(BWA), prefix, filePath, outputPath)
-        logging.info(f">> [Sequence Alignments] Alignment for {filePath.name} with {name} has been completed")
+        logging.info(f">> [Region Separation] Alignment for {filePath.name} with {name} has been completed")
 
-    logging.info(f">> [Sequence Alignments] All alignments for {filePath.name} have been completed")
+    logging.info(f">> [Region Separation] All alignments for {filePath.name} have been completed")
 
 
 def sam2bam(samDir: Path, outDir: Path) -> None:
@@ -24,4 +24,4 @@ def sam2bam(samDir: Path, outDir: Path) -> None:
         outFile = outDir / (file.stem + ".bam")
 
         sa.sam2bamCommand(Path(SAMTOOLS), file, outFile)
-        logging.info(f">> [Sequence Alignments] {file.name} converted to bam")
+        logging.info(f">> [Region Separation] {file.name} converted to bam")

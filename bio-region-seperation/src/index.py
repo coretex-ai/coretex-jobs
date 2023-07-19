@@ -12,7 +12,7 @@ from .filepaths import BWA
 def index(dataset: CustomDataset) -> list[Path]:
     referencesDir = Path(FolderManager.instance().createTempFolder("reference"))
 
-    logging.info(">> [Sequence Alignment] Downloading dataset")
+    logging.info(">> [Region Separation] Downloading dataset")
     dataset.download()
     referenceSequences = sa.loadFa(dataset)
 
@@ -24,6 +24,6 @@ def index(dataset: CustomDataset) -> list[Path]:
         indexDir.mkdir()
         sa.indexCommand(Path(BWA), sequence, prefix)
 
-    logging.info(">> [Sequence Alignment] Reference sequences succesfully indexed")
+    logging.info(">> [Region Separation] Reference sequences succesfully indexed")
 
     return list(referencesDir.iterdir())

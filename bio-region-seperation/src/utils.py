@@ -11,7 +11,7 @@ from coretex.folder_management import FolderManager
 def loadIndexed(dataset: CustomDataset) -> list[Path]:
     dataset.download()
     if len(dataset.samples) != 1:
-        raise ValueError(">> [Sequence Alignment] The indexed reference dataset should only contain a single sample with everything inside")
+        raise ValueError(">> [Region Separation] The indexed reference dataset should only contain a single sample with everything inside")
 
     datasetSample = dataset.samples[0]
     datasetSample.unzip()
@@ -48,12 +48,12 @@ def uploadToCoretex(experiment: Experiment[CustomDataset], groups: list[Path]) -
         if CustomSample.createCustomSample(groupZip.name, dataset.id, groupZip) is None:
             raise RuntimeError(">> [SequenceSeparation] Failed to upload sample")
 
-    logging.warning(f">> [Sequence Alignment] Output files have been uploaded to dataset {dataset.id}: \"{dataset.name}\"")
+    logging.info(f">> [Region Separation] Output files have been uploaded to dataset {dataset.id}: \"{dataset.name}\"")
 
 
 def prepareGroups(groupNames: list[str], thresholds: list[int], outDir: Path) -> tuple[list[Path], list[int]]:
     if len(groupNames) != len(thresholds) + 1:
-        raise ValueError(">> [Sequence Alignment] The number of entered thresholds has to be one less then the number of groups")
+        raise ValueError(">> [Region Separation] The number of entered thresholds has to be one less then the number of groups")
 
     groups: list[Path] = []
     for groupName in groupNames:

@@ -18,20 +18,23 @@ def splitToFiles(inputFile: Path, readClasses: list[int], groups: list[Path], in
         outFiles.append(open(group / inputFile.name, "a"))
 
     readIndex = -1
+    readClass = 0
+
     with inputFile.open("rb") as inFile:
         for line in inFile:
             decodedLine = line.decode("utf-8")
             if decodedLine.startswith(indicator):
                 readIndex += 1
+                readClass = readClasses[readIndex]
 
-            outFiles[readClasses[readIndex]].write(decodedLine)
+            outFiles[readClass].write(decodedLine)
 
 
 def separate(bamDir: Path, inputFile: Path, groups: list[Path], thresholds: list[int], indicator: str) -> None:
     scores: list[list[int]] = []
     positions: list[list[int]] = []
 
-    logging.info(">> [Sequence Alignment] Extracting data from BAM")
+    logging.info(">> [Region Separation] Extracting data from BAM")
     for filePath in bamDir.iterdir():
         score, pos, lengths = sa.extractData(Path(SAMTOOLS), filePath)
         scores.append(score)
@@ -39,13 +42,13 @@ def separate(bamDir: Path, inputFile: Path, groups: list[Path], thresholds: list
 
     finalPositions: list[int] = []
 
-    logging.info(">> [Sequence Alignment] Determining read positions")
+    logging.info(">> [Region Separation] Determining read positions")
     for readScores, readPositions in zip(list(zip(*scores)), list(zip(*positions))):
         finalPositions.append(readPositions[argmax(list(readScores))])
 
     readClasses: list[int] = []
 
-    logging.info(">> [Sequence Alignment] Calculating group identity")
+    logging.info(">> [Region Separation] Calculating group identity")
     for position, length in zip(finalPositions, lengths):
         overlapIndices = range(position, position + length)
         regionScores: list[int] = []
@@ -61,5 +64,5 @@ def separate(bamDir: Path, inputFile: Path, groups: list[Path], thresholds: list
 
         readClasses.append(argmax(regionScores))
 
-    logging.info(">> [Sequence Alignment] Splitting file into separate folder")
+    logging.info(">> [Region Separation] Splitting file into separate folder")
     splitToFiles(inputFile, readClasses, groups, indicator)

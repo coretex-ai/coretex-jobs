@@ -1,2 +1,2 @@
-BWA = "./tools/bwa-mac"
-SAMTOOLS = "./tools/samtools-mac"
+BWA = "./tools/bwa"
+SAMTOOLS = "./tools/samtools"

@@ -26,30 +26,30 @@ def main(experiment: Experiment[CustomDataset]) -> None:
     sa.chmodX(Path(SAMTOOLS))
 
     if experiment.parameters["useBacteriaLib"]:
-        raise NotImplementedError(">> [Sequence Alignment] useBacteriaLib has not been implemented yet, use dataset 7153 with referenceDatasetIndexed as True insted")
+        raise NotImplementedError(">> [Region Separation] useBacteriaLib has not been implemented yet, use dataset 7153 with referenceDatasetIndexed as True insted")
 
-    logging.info(">> [Sequence Alignment] Downloading dataset")
+    logging.info(">> [Region Separation] Downloading dataset")
     experiment.dataset.download()
     inputFiles = sa.loadFa(experiment.dataset)
 
     if not experiment.parameters["referenceDatasetIndexed"]:
-        logging.info(">> [Sequence Alignment] Index reference genome")
+        logging.info(">> [Region Separation] Index reference genome")
         referenceDirs = index(experiment.parameters["referenceDataset"])
 
     else:
-        logging.info(">> [Sequence Alignment] Loading indexed reference dataset")
+        logging.info(">> [Region Separation] Loading indexed reference dataset")
         referenceDirs = loadIndexed(experiment.parameters["referenceDataset"])
 
     groups, thresholds = prepareGroups(groupNames, thresholds, outDir)
 
     for inputFile in inputFiles:
-        logging.info(f">> [Sequence Alignment] Starting alignment for {inputFile.name}")
+        logging.info(f">> [Region Separation] Starting alignment for {inputFile.name}")
         alignToRefDatabase(inputFile, referenceDirs, samDir)
 
-        logging.info(f">> [Sequence Alignment] Starting conversion to binary format for {inputFile.name}")
+        logging.info(f">> [Region Separation] Starting conversion to binary format for {inputFile.name}")
         sam2bam(samDir, bamDir)
 
-        logging.info(f">> [Sequence Alignment] Starting read separation into groups for {inputFile.name}")
+        logging.info(f">> [Region Separation] Starting read separation into groups for {inputFile.name}")
         separate(bamDir, inputFile, groups, thresholds, experiment.parameters["newReadIndicator"])
 
         clearDirectory(samDir)
