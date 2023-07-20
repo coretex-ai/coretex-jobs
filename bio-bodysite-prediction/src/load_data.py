@@ -12,8 +12,7 @@ from sklearn.feature_selection import SelectPercentile, f_classif
 
 import numpy as np
 
-from coretex import Experiment, CustomDataset, ExperimentStatus
-from coretex.folder_management import FolderManager
+from coretex import Experiment, CustomDataset, ExperimentStatus, folder_manager
 
 from .cache_json import loadJsonCache, jsonCacheExists, cacheJson, isJsonCacheValid, getJsonName
 from .cache_matrix import loadMatrixCache, matrixCacheExists, cacheMatrix, isMatrixCacheValid, getMatrixName
@@ -268,7 +267,7 @@ def selectPercentile(
     percentileFileName = "selectPercentile.pkl"
 
     if validate:
-        trainedModelPath = Path(FolderManager.instance().modelsFolder) / str(trainedModelId) / percentileFileName
+        trainedModelPath = folder_manager.modelsFolder / str(trainedModelId) / percentileFileName
 
         if trainedModelPath.exists():
             with open(trainedModelPath , "rb") as file:
@@ -278,7 +277,7 @@ def selectPercentile(
         else:
             return inputMatrix, None
 
-    modelPath = Path(FolderManager.instance().getTempFolder("modelFolder"))
+    modelPath = folder_manager.temp / "modelFolder"
 
     selectPercentile = SelectPercentile(score_func = f_classif, percentile = percentile)
     selectPercentile = selectPercentile.fit(inputMatrix, outputMatrix)
@@ -376,7 +375,7 @@ def loadDataAtlas(
 
     if validate:
         # In the case of validation the same dictionaries will be used as during training
-        modelPath = Path(FolderManager.instance().modelsFolder) / str(experiment.parameters["trainedModel"])
+        modelPath = folder_manager.modelsFolder / str(experiment.parameters["trainedModel"])
 
         with open(modelPath / "uniqueTaxons.pkl", "rb") as f:
             uniqueTaxons = pickle.load(f)

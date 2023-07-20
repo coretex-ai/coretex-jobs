@@ -4,9 +4,8 @@ from zipfile import ZipFile
 import os
 import logging
 
-from coretex import CustomDataset, CustomSample, Experiment, qiime2 as ctx_qiime2
+from coretex import CustomDataset, CustomSample, Experiment, qiime2 as ctx_qiime2, folder_manager
 from coretex.project import initializeProject
-from coretex.folder_management import FolderManager
 from coretex.qiime2.utils import sampleNumber, createSample, getPhylogeneticTreeSamples
 
 
@@ -306,7 +305,7 @@ def main(experiment: Experiment[CustomDataset]):
     denoisedDataset: CustomDataset = experiment.parameters["denoisedDataset"]
     denoisedDataset.download()
 
-    outputDir = Path(FolderManager.instance().createTempFolder("qiime_output"))
+    outputDir = folder_manager.createTempFolder("qiime_output")
     outputDataset = CustomDataset.createDataset(
         f"{experiment.id} - Step 4: Alpha & Beta diversity",
         experiment.spaceId

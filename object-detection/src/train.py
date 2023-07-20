@@ -34,8 +34,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import SGD, lr_scheduler
 # from tqdm.auto import tqdm
 
-from coretex import ComputerVisionDataset, Experiment
-from coretex.folder_management import FolderManager
+from coretex import ComputerVisionDataset, Experiment, folder_manager
 from coretex import cache
 
 
@@ -59,7 +58,7 @@ def getWeightsPath(weightsUrl: str) -> str:
     cachePath = cache.getPath(weightsUrl)
 
     with ZipFile(cachePath, "r") as zipFile:
-        zipFile.extractall(FolderManager.instance().cache)
+        zipFile.extractall(folder_manager.cache)
 
     return cachePath.with_suffix('.pt')
 
