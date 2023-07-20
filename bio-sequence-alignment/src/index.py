@@ -49,10 +49,7 @@ def loadCache(cache: CustomDataset) -> Path:
     return list(Path(sample.path).iterdir())[0]
 
 
-def isCacheValid(cache: Optional[CustomDataset]) -> bool:
-    if cache is None:
-        return True
-
+def isCacheValid(cache: CustomDataset) -> bool:
     return len(cache.samples) != 0
 
 
