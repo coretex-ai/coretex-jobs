@@ -1,12 +1,10 @@
-import os
 import logging
 import pickle
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
-from coretex import CustomDataset, Experiment, Model
-from coretex.folder_management import FolderManager
+from coretex import CustomDataset, Experiment, Model, folder_manager
 from coretex.project import initializeProject
 
 from src.dataset import extractTestTrainData, loadDataset
@@ -14,7 +12,7 @@ from src.dataset import extractTestTrainData, loadDataset
 
 def saveModel(experiment: Experiment[CustomDataset], accuracy: float, trainColumnCount: int, labels: list[str]):
     model = Model.createModel(experiment.name, experiment.id, accuracy, {})
-    modelPath = FolderManager.instance().getTempFolder("model")
+    modelPath = folder_manager.temp / "model"
 
     model.saveModelDescriptor(modelPath, {
         "project_task": experiment.spaceTask,
@@ -44,7 +42,7 @@ def saveModel(experiment: Experiment[CustomDataset], accuracy: float, trainColum
 
 
 def main(experiment: Experiment[CustomDataset]):
-    FolderManager.instance().createTempFolder("model")
+    modelPath = folder_manager.createTempFolder("model")
 
     train, test, labels = loadDataset(
         experiment.dataset,
@@ -79,15 +77,14 @@ def main(experiment: Experiment[CustomDataset]):
 
     logging.info(f">> [Tabular Data Diagnostics] Model acc score: {accuracy_score(yTest, yPred)}")
 
-    modelName = os.path.join(FolderManager.instance().getTempFolder("model"), "finalized_model.sav")
-
-    validationDfPath = os.path.join(FolderManager.instance().temp, "validation.csv")
+    modelName = modelPath / "finalized_model.sav"
+    validationDfPath = folder_manager.temp / "validation.csv"
 
     test = test.assign(Prediction = yPred)
     test.to_csv(validationDfPath, index = True)
 
     logging.info(f">> [Tabular Data Diagnostics] Creating validation.csv in artifacts...")
-    experiment.createArtifact(validationDfPath, os.path.basename(validationDfPath))
+    experiment.createArtifact(validationDfPath, validationDfPath.name)
 
     with open(modelName, 'wb') as modelFile:
         pickle.dump(classifier, modelFile, -1)

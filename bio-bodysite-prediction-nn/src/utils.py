@@ -10,8 +10,7 @@ from numpy.typing import ArrayLike
 import numpy as np
 import matplotlib.pyplot as plt
 
-from coretex import CustomDataset, Experiment, Model
-from coretex.folder_management import FolderManager
+from coretex import CustomDataset, Experiment, Model, folder_manager
 
 
 def jsonPretty(data, savePath) -> None:
@@ -20,7 +19,7 @@ def jsonPretty(data, savePath) -> None:
 
 
 def saveModel(experiment: Experiment[CustomDataset], accuracy: float, uniqueBodySites: dict[str, int], lenOfData: int, numOfUniqueTaxons: int) -> None:
-    modelPath = FolderManager.instance().getTempFolder("modelFolder")
+    modelPath = folder_manager.temp / "modelFolder"
 
     labels = list(uniqueBodySites.keys())
 
@@ -117,7 +116,7 @@ def savePredictionFile(
     zPred: list
 ) -> None:
 
-    with open(Path(FolderManager.instance().temp) / "body_site_predictions.csv", "a+") as f:
+    with folder_manager.temp.joinpath("body_site_predictions.csv").open("a+") as f:
         z = 0
         i = 0
         writer = csv.writer(f)
@@ -165,9 +164,8 @@ def plots(experiment: Experiment[CustomDataset], classDistribution: dict[str, in
             The number of samples in the dataset
     """
 
-    tempPath = Path(FolderManager.instance().temp)
-    taxonDistributionSavePath = tempPath / "taxon_histogram.png"
-    classDistributionSavePath = tempPath / "body_site_histogram.png"
+    taxonDistributionSavePath = folder_manager.temp / "taxon_histogram.png"
+    classDistributionSavePath = folder_manager.temp / "body_site_histogram.png"
 
     taxonDistributionValues = list(taxonDistribution.values())
     taxonDistribution = {k:v for k, v in taxonDistribution.items() if v > (max(taxonDistributionValues)/10)}

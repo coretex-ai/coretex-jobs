@@ -6,8 +6,7 @@ import time
 
 from sklearn.metrics import accuracy_score
 
-from coretex import Experiment, CustomDataset, ExperimentStatus
-from coretex.folder_management import FolderManager
+from coretex import Experiment, CustomDataset, ExperimentStatus, folder_manager
 
 from .utils import savePredictionFile
 from .model import Model
@@ -15,8 +14,8 @@ from .dataset import loadDataset, createBatches
 
 
 def train(experiment: Experiment[CustomDataset], datasetPath: Path, uniqueBodySites: dict[str, int], uniqueTaxons: dict[str, int]) -> float:
-    savePredictionFilePath = Path(FolderManager.instance().temp) / "body_site_predictions.csv"
-    modelPath = Path(FolderManager.instance().getTempFolder("modelFolder"))
+    savePredictionFilePath = folder_manager.temp / "body_site_predictions.csv"
+    modelPath = folder_manager.temp / "modelFolder"
 
     experiment.updateStatus(ExperimentStatus.inProgress, "Training LSPIN model")
 

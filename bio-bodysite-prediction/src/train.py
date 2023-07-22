@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import logging
 import pickle
 import time
@@ -13,8 +11,7 @@ from scipy import sparse
 import numpy as np
 import xgboost as xgb
 
-from coretex import Experiment, CustomDataset, ExperimentStatus
-from coretex.folder_management import FolderManager
+from coretex import Experiment, CustomDataset, ExperimentStatus, folder_manager
 
 from .utils import savePredictionFile
 
@@ -69,8 +66,8 @@ def train(
     sampleIdList: list
 ) -> float:
 
-    savePredictionFilePath = Path(FolderManager.instance().temp) / "body_site_predictions.csv"
-    modelPath = Path(FolderManager.instance().getTempFolder("modelFolder"))
+    savePredictionFilePath = folder_manager.temp / "body_site_predictions.csv"
+    modelPath = folder_manager.temp / "modelFolder"
 
     experiment.updateStatus(ExperimentStatus.inProgress, "Training XGBoost model")
 

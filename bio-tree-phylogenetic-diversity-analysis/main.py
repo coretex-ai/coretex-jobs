@@ -1,9 +1,8 @@
 from pathlib import Path
 from zipfile import ZipFile
 
-from coretex import CustomDataset, CustomSample, Experiment, qiime2 as ctx_qiime2
+from coretex import CustomDataset, CustomSample, Experiment, qiime2 as ctx_qiime2, folder_manager
 from coretex.project import initializeProject
-from coretex.folder_management import FolderManager
 from coretex.qiime2.utils import sampleNumber, createSample, getDenoisedSamples
 
 
@@ -58,7 +57,7 @@ def main(experiment: Experiment[CustomDataset]):
     if len(denoisedSamples) == 0:
         raise ValueError(">> [Workspace] Dataset has 0 denoised samples")
 
-    outputDir = Path(FolderManager.instance().createTempFolder("qiime_output"))
+    outputDir = folder_manager.createTempFolder("qiime_output")
     outputDataset = CustomDataset.createDataset(
         f"{experiment.id} - Step 3: Phylogenetic tree",
         experiment.spaceId
