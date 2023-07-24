@@ -5,8 +5,7 @@ import pickle
 import zipfile
 import logging
 
-from coretex import CustomDataset, CustomSample
-from coretex.folder_management import FolderManager
+from coretex import CustomDataset, CustomSample, folder_manager
 
 from . import cache_filenames as cf
 from .objects import JsonTuple, Sample
@@ -56,7 +55,7 @@ def cacheJson(
 
     logging.info(">> [MicrobiomeForensics] Saving assembled dataset to cache")
 
-    cachePath = Path(FolderManager.instance().temp)
+    cachePath = folder_manager.temp
     zipPath = cachePath.joinpath("jsonCache.zip")
 
     cachedItems = [sampleData, uniqueTaxons, uniqueBodySite]

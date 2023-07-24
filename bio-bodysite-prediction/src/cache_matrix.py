@@ -10,8 +10,7 @@ from sklearn.feature_selection import SelectPercentile
 
 import numpy as np
 
-from coretex import CustomDataset, CustomSample
-from coretex.folder_management import FolderManager
+from coretex import CustomDataset, CustomSample, folder_manager
 
 from . import cache_filenames as cf
 from .objects import MatrixTuple
@@ -63,7 +62,7 @@ def loadMatrixCache(cacheName: str, validation: bool) -> MatrixTuple:
         selectPercentile = pickle.load(f)
 
     if not validation:
-        modelPath = Path(FolderManager.instance().getTempFolder("modelFolder"))
+        modelPath = folder_manager.temp / "modelFolder"
         with open(modelPath / f"{cf.SELECT_PERCENTILE}.pkl", "wb") as file:
             pickle.dump(selectPercentile, file)
 
@@ -85,7 +84,7 @@ def cacheMatrix(
 
     logging.info(">> [MicrobiomeForensics] Uploading processed data to cache")
 
-    cachePath = Path(FolderManager.instance().temp)
+    cachePath = folder_manager.temp
     zipPath = cachePath.joinpath("preparedCache.zip")
 
     cachedItems = [inputMatrix, outputMatrix, sampleIdList, uniqueBodySite, uniqueTaxons, percentileModel]

@@ -2,8 +2,7 @@ from typing import List
 from pathlib import Path
 from zipfile import ZipFile
 
-from coretex import CustomDataset, CustomSample, Experiment
-from coretex.folder_management import FolderManager
+from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.bioinformatics import qiime2 as ctx_qiime2
 
 from .utils import summarizeSample
@@ -102,7 +101,7 @@ def demultiplexing(
     outputDir: Path
 ):
 
-    dataDir = Path(FolderManager.instance().createTempFolder("data_dir"))
+    dataDir = folder_manager.createTempFolder("data_dir")
     sequencesPath = dataDir / "sequences.fastq"
     barcodesPath = dataDir / "barcodes.fastq"
 

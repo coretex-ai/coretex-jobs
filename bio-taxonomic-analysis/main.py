@@ -1,9 +1,8 @@
 from pathlib import Path
 from zipfile import ZipFile
 
-from coretex import CustomDataset, CustomSample, Experiment, cache
+from coretex import CustomDataset, CustomSample, Experiment, cache, folder_manager
 from coretex.project import initializeProject
-from coretex.folder_management import FolderManager
 from coretex.bioinformatics import qiime2 as ctx_qiime2
 
 
@@ -98,7 +97,7 @@ def main(experiment: Experiment[CustomDataset]):
     importedDataset: CustomDataset = experiment.parameters["importedDataset"]
     importedDataset.download()
 
-    outputDir = Path(FolderManager.instance().createTempFolder("qiime_output"))
+    outputDir = folder_manager.createTempFolder("qiime_output")
     outputDataset = CustomDataset.createDataset(
         f"{experiment.id} - Step 5: Taxonomic analysis",
         experiment.spaceId

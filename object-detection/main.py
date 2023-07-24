@@ -4,9 +4,8 @@ import logging
 
 import numpy as np
 
-from coretex import ComputerVisionDataset, Experiment, Model, augmentDataset, Metric, MetricType
+from coretex import ComputerVisionDataset, Experiment, Model, augmentDataset, Metric, MetricType, folder_manager
 from coretex.project import initializeProject
-from coretex.folder_management import FolderManager
 
 import src.train as train
 import src.detect as detect
@@ -15,7 +14,7 @@ import src.export as export
 
 def prepareModelForUpload(source: str, destination: str):
     os.rename(source, destination)
-    shutil.move(destination, FolderManager.instance().getTempFolder("model"))
+    shutil.move(destination, folder_manager.temp / "model")
 
 
 def hasAnnotations(dataset: ComputerVisionDataset, excludedClasses: list[str]) -> bool:
@@ -37,7 +36,7 @@ def main(experiment: Experiment[ComputerVisionDataset]):
         Metric.create("mAP@0.5:0.95", "epoch", MetricType.int, "value", MetricType.float, [0, epochs], [0, 1])
     ])
 
-    modelDirPath = FolderManager.instance().createTempFolder("model")
+    modelDirPath = folder_manager.createTempFolder("model")
 
     excludedClasses: list[str] = experiment.parameters["excludedClasses"]
     logging.info(f">> [Workspace] Excluding classes: {excludedClasses}")

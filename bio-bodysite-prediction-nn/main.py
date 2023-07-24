@@ -1,10 +1,7 @@
-from pathlib import Path
-
 import logging
 import pickle
 
-from coretex import CustomDataset, Experiment, Model, MetricType, Metric, ExperimentStatus
-from coretex.folder_management import FolderManager
+from coretex import CustomDataset, Experiment, Model, MetricType, Metric, folder_manager
 from coretex.project import initializeProject
 
 from src.train import train
@@ -24,12 +21,12 @@ def validation(experiment: Experiment[CustomDataset]) -> None:
 
     logging.info(f">> [MicrobiomeForensics] Fetching pretrained model from Coretex. Model id: {experiment.parameters['trainedModel']}")
 
-    datasetPath = Path(FolderManager.instance().createTempFolder("processedDataset"))
+    datasetPath = folder_manager.createTempFolder("processedDataset")
     trainedModel = Model.fetchById(trainedModelId)
     trainedModel.download()
 
     # The same dictionaries will be used as during training
-    modelPath = Path(FolderManager.instance().modelsFolder) / str(experiment.parameters["trainedModel"])
+    modelPath = folder_manager.modelsFolder / str(experiment.parameters["trainedModel"])
 
     with modelPath.joinpath("uniqueBodySites.pkl").open("rb") as f:
         validBodysites = pickle.load(f)
@@ -76,8 +73,8 @@ def training(experiment: Experiment[CustomDataset]) -> None:
         Metric.create("valid_accuracy", "epoch", MetricType.int, "accuracy", MetricType.float, [0, epochs], [0, 1])
     ])
 
-    FolderManager.instance().createTempFolder("modelFolder")
-    datasetPath = Path(FolderManager.instance().createTempFolder("processedDataset"))
+    folder_manager.createTempFolder("modelFolder")
+    datasetPath = folder_manager.createTempFolder("processedDataset")
 
     if experiment.parameters["datasetType"] == 1:
         logging.info(">> [MicrobiomeForensics] Standard data selected")
