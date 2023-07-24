@@ -19,7 +19,7 @@ from .objects import MatrixTuple
 
 
 def getMatrixName(
-    datasetName: int,
+    datasetName: str,
     sampleOrigin: list[str],
     sequencingTechnique: list[str],
     percentile: int,
