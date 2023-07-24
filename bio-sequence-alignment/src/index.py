@@ -8,6 +8,7 @@ import requests
 
 from coretex import Experiment, CustomDataset, CustomSample, folder_manager
 from coretex.utils.file import isGzip, gzipDecompress
+from coretex.utils.hash import hashCacheName
 from coretex.bioinformatics import sequence_alignment as sa
 
 from .filepaths import BWA
@@ -97,7 +98,7 @@ def index(experiment: Experiment[CustomDataset]) -> Path:
     if genomeUrl is not None:
         downloadPath = folder_manager.temp / genomeUrl.split("/")[-1]
         filename = downloadPath.stem if downloadPath.suffix == ".gz" else downloadPath.name
-        cacheName = f"{genomeUrl}_genomeCache"
+        cacheName = hashCacheName(filename, genomeUrl)
     else:
         referenceDataset = experiment.parameters["referenceDataset"]
         cacheName = f"{referenceDataset.id}_genomeCache"

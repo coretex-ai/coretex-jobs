@@ -11,28 +11,26 @@ from sklearn.feature_selection import SelectPercentile
 import numpy as np
 
 from coretex import CustomDataset, CustomSample, folder_manager
+from coretex.utils.hash import hashCacheName
 
 from . import cache_filenames as cf
 from .objects import MatrixTuple
 
 
 def getMatrixName(
-    datasetId: int,
+    datasetName: str,
     sampleOrigin: list[str],
     sequencingTechnique: list[str],
     percentile: int,
     quantize: bool
 ) -> str:
 
-    origins: str = ""
-    for origin in sampleOrigin:
-        origins = f"{origins}.{origin}"
+    origins = ".".join(sampleOrigin)
+    techniques = ".".join(sequencingTechnique)
 
-    techniques: str = ""
-    for technique in sequencingTechnique:
-        techniques = f"{techniques}.{technique}"
+    suffix = f"{origins}_{techniques}_{percentile}_{quantize}"
 
-    return f"microbiome_{datasetId}_{origins}_{techniques}_{percentile}_{quantize}_cache"
+    return hashCacheName(datasetName, suffix)
 
 
 def loadMatrixCache(cacheName: str, validation: bool) -> MatrixTuple:

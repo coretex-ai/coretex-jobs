@@ -7,15 +7,18 @@ import pickle
 import time
 
 from coretex import Experiment, CustomDataset, CustomSample, folder_manager
+from coretex.utils.hash import hashCacheName
 
 from .utils import plots
 
 
-def getCacheName(datasetId: int, sampleOrigin: list[str], sequencingTechnique: list[str]) -> str:
+def getCacheName(datasetName: str, sampleOrigin: list[str], sequencingTechnique: list[str]) -> str:
     origins = ".".join(sampleOrigin)
     techniques = ".".join(sequencingTechnique)
 
-    return f"microbiome_{datasetId}_{origins}_{techniques}_nn_cache"
+    suffix = f"{origins}_{techniques}"
+
+    return hashCacheName(datasetName + "_nn", suffix)
 
 
 def getCache(cacheName: str) -> Optional[CustomDataset]:
