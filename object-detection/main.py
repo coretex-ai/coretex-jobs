@@ -132,7 +132,7 @@ def main(experiment: Experiment[ComputerVisionDataset]):
 
         model.download()
         weightsPath = Path(FolderManager.instance().modelsFolder) / f"{modelId}/model.pt"
-        print(weightsPath)
+
         detect.run(experiment, imgsz = (imageSize, imageSize), weights = weightsPath)
 
 

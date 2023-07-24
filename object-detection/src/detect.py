@@ -86,6 +86,7 @@ def run(
     # Directories
     if weights is None:
         weights = Path("./weights/best.pt")
+
     save_dir = Path("./weights")
     pred_dir = FolderManager.instance().createTempFolder("predictions")
     save_dir.mkdir(parents=True, exist_ok=True)
