@@ -23,6 +23,7 @@ Usage - formats:
                                          yolov5s.tflite             # TensorFlow Lite
                                          yolov5s_edgetpu.tflite     # TensorFlow Edge TPU
 """
+from typing import Optional
 
 import os
 import sys
@@ -54,6 +55,7 @@ from coretex.folder_management import FolderManager
 @torch.no_grad()
 def run(
     experiment: Experiment[ComputerVisionDataset],
+    weights: Optional[Path],
     imgsz=(640, 640),  # inference size (height, width)
     conf_thres=0.25,  # confidence threshold
     iou_thres=0.45,  # NMS IOU threshold
@@ -82,7 +84,8 @@ def run(
     # webcam = False
 
     # Directories
-    weights = Path("./weights/best.pt")
+    if weights is None:
+        weights = Path("./weights/best.pt")
     save_dir = Path("./weights")
     pred_dir = FolderManager.instance().createTempFolder("predictions")
     save_dir.mkdir(parents=True, exist_ok=True)
