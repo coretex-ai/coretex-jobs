@@ -7,8 +7,7 @@ import logging
 import time
 import pickle
 
-from coretex import Experiment, CustomDataset, ExperimentStatus
-from coretex.folder_management import FolderManager
+from coretex import Experiment, CustomDataset, ExperimentStatus, folder_manager
 
 from .cache import cacheExists, cacheDataset, loadCache, getCacheName, isCacheValid
 from .utils import getBodySite, plots, validateDataset
@@ -332,7 +331,7 @@ def loadDataAtlas(
 
     if useCache and isCacheValid(cacheName):
         experiment.updateStatus(ExperimentStatus.inProgress, "Saving assembled dataset to cache")
-        cachePath = Path(FolderManager.instance().createTempFolder("tempCache"))
+        cachePath = folder_manager.createTempFolder("tempCache")
         cacheDataset(
             cacheName,
             datasetPath,

@@ -7,8 +7,7 @@ from sklearn.metrics import accuracy_score
 
 import numpy as np
 
-from coretex import Experiment, ExperimentStatus, CustomDataset
-from coretex.folder_management import FolderManager
+from coretex import Experiment, ExperimentStatus, CustomDataset, folder_manager
 
 from .utils import getKey
 from .model import Model
@@ -16,7 +15,7 @@ from .dataset import loadDataset, createBatches
 
 
 def savePredictionFile(experiment: Experiment[CustomDataset], predictions: np.ndarray, trueLabels: np.ndarray, sampleIds: list, uniqueBodySite: dict[str, int]) -> None:
-    predictionFilePath = Path(FolderManager.instance().temp) / "body_site_predictions.csv"
+    predictionFilePath = folder_manager.temp / "body_site_predictions.csv"
 
     with predictionFilePath.open("a+") as f:
         writer = csv.writer(f)
@@ -28,7 +27,7 @@ def savePredictionFile(experiment: Experiment[CustomDataset], predictions: np.nd
 
 
 def validate(experiment: Experiment[CustomDataset], datasetPath: Path, uniqueBodySites: dict[str, int], uniqueTaxons: dict[str, int], trainedModelId: int) -> None:
-    trainedModelPath = Path(FolderManager.instance().modelsFolder) / str(trainedModelId)
+    trainedModelPath = folder_manager.modelsFolder / str(trainedModelId)
 
     experiment.updateStatus(ExperimentStatus.inProgress, "Running validation with pretrained LSPIN model")
 

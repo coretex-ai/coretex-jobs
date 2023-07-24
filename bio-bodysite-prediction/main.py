@@ -1,7 +1,6 @@
 import logging
 
-from coretex import CustomDataset, Experiment, Model, MetricType, Metric
-from coretex.folder_management import FolderManager
+from coretex import CustomDataset, Experiment, Model, MetricType, Metric, folder_manager
 from coretex.project import initializeProject
 
 from src.train import train
@@ -35,7 +34,7 @@ def training(experiment: Experiment[CustomDataset]) -> None:
         Metric.create("accuracy", "epoch", MetricType.int, "accuracy", MetricType.float, [0, epochs], [0, 1])
     ])
 
-    FolderManager.instance().createTempFolder("modelFolder")
+    folder_manager.createTempFolder("modelFolder")
 
     if experiment.parameters["datasetType"] == 1:
         logging.info(">> [MicrobiomeForensics] Standard data selected")
