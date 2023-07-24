@@ -322,7 +322,7 @@ def loadDataAtlas(
     validate = experiment.parameters["validation"]
 
     cacheNameMatrix = getMatrixName(
-        dataset.id,
+        dataset.name,
         sampleOrigin,
         sequencingTechnique,
         experiment.parameters["percentile"],
@@ -335,7 +335,7 @@ def loadDataAtlas(
         return loadMatrixCache(cacheNameMatrix, validate)
 
     cacheNameJson = getJsonName(
-        dataset.id,
+        dataset.name,
         sampleOrigin,
         sequencingTechnique
     )

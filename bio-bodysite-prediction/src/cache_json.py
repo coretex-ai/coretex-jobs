@@ -7,21 +7,19 @@ import logging
 
 from coretex import CustomDataset, CustomSample
 from coretex.folder_management import FolderManager
+from coretex.utils.hash import hashCachName
 
 from . import cache_filenames as cf
 from .objects import JsonTuple, Sample
 
 
-def getJsonName(datasetId: int, sampleOrigin: list[str], sequencingTechnique: list[str]) -> str:
-    origins: str = ""
-    for origin in sampleOrigin:
-        origins = f"{origins}.{origin}"
+def getJsonName(datasetName: str, sampleOrigin: list[str], sequencingTechnique: list[str]) -> str:
+    origins = ".".join(sampleOrigin)
+    techniques = ".".join(sequencingTechnique)
 
-    techniques: str = ""
-    for technique in sequencingTechnique:
-        techniques = f"{techniques}.{technique}"
+    suffix = f"{origins}_{techniques}"
 
-    return f"microbiome_{datasetId}_{origins}_{techniques}_cache"
+    return hashCachName(datasetName, suffix)
 
 
 def loadJsonCache(cacheName: str) -> JsonTuple:

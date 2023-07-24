@@ -213,7 +213,7 @@ def loadDataAtlas(
             The number of samples in the dataset after processing
     """
 
-    cacheName = getCacheName(dataset.id, sampleOrigin, sequencingTechnique)
+    cacheName = getCacheName(dataset.name, sampleOrigin, sequencingTechnique)
     if useCache and cacheExists(cacheName) and isCacheValid(cacheName):
         experiment.updateStatus(ExperimentStatus.inProgress, "Loading assembled dataset from cache")
         return loadCache(experiment, cacheName)

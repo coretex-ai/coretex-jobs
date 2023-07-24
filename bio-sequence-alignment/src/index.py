@@ -9,6 +9,7 @@ import requests
 from coretex import Experiment, CustomDataset, CustomSample
 from coretex.folder_management import FolderManager
 from coretex.utils.file import isGzip, gzipDecompress
+from coretex.utils.hash import hashCacheName
 
 from .utils import indexCommand
 
@@ -92,9 +93,9 @@ def index(experiment: Experiment[CustomDataset]) -> Path:
     genomeIndexDir = Path(FolderManager.instance().createTempFolder("genome"))
 
     downloadPath = temp / genomeUrl.split("/")[-1]
-    filename = downloadPath.stem if downloadPath.suffix == ".gz" else downloadPath
+    filename = downloadPath.stem if downloadPath.suffix == ".gz" else downloadPath.name
 
-    cacheName = f"{genomeUrl}_genomeCache"
+    cacheName = hashCacheName(filename, genomeUrl)
     cache = getCache(cacheName)
     if cache is not None and isCacheValid(cache):
         return loadCache(cache, filename)

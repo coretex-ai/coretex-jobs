@@ -8,15 +8,18 @@ import time
 
 from coretex import Experiment, CustomDataset, CustomSample
 from coretex.folder_management import FolderManager
+from coretex.utils.hash import hashCachName
 
 from .utils import plots
 
 
-def getCacheName(datasetId: int, sampleOrigin: list[str], sequencingTechnique: list[str]) -> str:
+def getCacheName(datasetName: str, sampleOrigin: list[str], sequencingTechnique: list[str]) -> str:
     origins = ".".join(sampleOrigin)
     techniques = ".".join(sequencingTechnique)
 
-    return f"microbiome_{datasetId}_{origins}_{techniques}_nn_cache"
+    suffix = f"{origins}_{techniques}"
+
+    return hashCachName(datasetName + "_nn", suffix)
 
 
 def getCache(cacheName: str) -> Optional[CustomDataset]:
