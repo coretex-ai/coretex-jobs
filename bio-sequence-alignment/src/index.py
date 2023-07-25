@@ -6,9 +6,9 @@ import logging
 
 import requests
 
-from coretex import Experiment, CustomDataset, CustomSample
-from coretex.folder_management import FolderManager
+from coretex import Experiment, CustomDataset, CustomSample, folder_manager
 from coretex.utils.file import isGzip, gzipDecompress
+from coretex.utils.hash import hashCacheName
 
 from .utils import indexCommand
 
@@ -88,13 +88,12 @@ def downloadGenome(genomeUrl: str, downloadPath: Path, retryCount: int = 0) -> b
 def index(experiment: Experiment[CustomDataset]) -> Path:
     genomeUrl: str = experiment.parameters["genomeUrl"]
 
-    temp = Path(FolderManager.instance().temp)
-    genomeIndexDir = Path(FolderManager.instance().createTempFolder("genome"))
+    genomeIndexDir = folder_manager.createTempFolder("genome")
 
-    downloadPath = temp / genomeUrl.split("/")[-1]
-    filename = downloadPath.stem if downloadPath.suffix == ".gz" else downloadPath
+    downloadPath = folder_manager.temp / genomeUrl.split("/")[-1]
+    filename = downloadPath.stem if downloadPath.suffix == ".gz" else downloadPath.name
 
-    cacheName = f"{genomeUrl}_genomeCache"
+    cacheName = hashCacheName(filename, genomeUrl)
     cache = getCache(cacheName)
     if cache is not None and isCacheValid(cache):
         return loadCache(cache, filename)
@@ -103,7 +102,7 @@ def index(experiment: Experiment[CustomDataset]) -> Path:
     # and that dataset removed if true to allow for the creation of a functional cache.
     # For now we use isCacheValid to ignore unsuccessfuly created cache
 
-    genomePath = temp / filename
+    genomePath = folder_manager.temp / filename
     retryCount = 0
 
     while not downloadGenome(genomeUrl, downloadPath, retryCount):
@@ -117,6 +116,6 @@ def index(experiment: Experiment[CustomDataset]) -> Path:
     logging.info(">> [Sequence Alignment] Reference genome succesfully indexed")
 
     if isCacheValid(cache):
-        saveCache(cacheName, temp, genomeIndexDir, experiment.spaceId)
+        saveCache(cacheName, folder_manager.temp, genomeIndexDir, experiment.spaceId)
 
     return genomePrefix

@@ -8,9 +8,8 @@ import tensorflowjs as tfjs
 import tensorflow as tf
 import coremltools
 
-from coretex import Model, Dataset, cache, Experiment
+from coretex import Model, Dataset, cache, Experiment, folder_manager
 from coretex.project import initializeProject
-from coretex.folder_management import FolderManager
 
 
 classes = [
@@ -40,13 +39,13 @@ def fetchModelFile(modelUrl: str, fileName: str) -> str:
 
     cachePath = cache.getPath(modelUrl)
     with ZipFile(cachePath, "r") as zipFile:
-        zipFile.extractall(FolderManager.instance().cache)
+        zipFile.extractall(folder_manager.cache)
 
-    return str(FolderManager.instance().cache / Path(fileName).stem)
+    return str(folder_manager.cache / Path(fileName).stem)
 
 
-def saveTfLiteModel(savedModelPath: str):
-    modelPath = FolderManager.instance().getTempFolder("model")
+def saveTfLiteModel(savedModelPath: str) -> None:
+    modelPath = folder_manager.temp / "model"
     converter = tf.lite.TFLiteConverter.from_saved_model(savedModelPath)
     converter.target_spec.supported_ops = [
         tf.lite.OpsSet.TFLITE_BUILTINS,  # enable TensorFlow Lite ops.
@@ -58,13 +57,13 @@ def saveTfLiteModel(savedModelPath: str):
         f.write(tflite_model)
 
 
-def saveCoremlModel(savedModelPath: str):
-    modelPath = FolderManager.instance().getTempFolder("model")
+def saveCoremlModel(savedModelPath: str) -> None:
+    modelPath = folder_manager.temp / "model"
     model = coremltools.converters.convert(savedModelPath)
     model.save(f"{modelPath}/model.mlmodel")
 
 
-def saveJSModel(loadModelPath: str, modelPath: str, modelTfjsPath: str, experiment: Experiment[Dataset], coretexModel: Model):
+def saveJSModel(loadModelPath: str, modelPath: Path, modelTfjsPath: str, experiment: Experiment[Dataset], coretexModel: Model) -> None:
     tfjs.converters.convert_tf_saved_model(
         loadModelPath,
         modelTfjsPath
@@ -116,8 +115,8 @@ def saveJSModel(loadModelPath: str, modelPath: str, modelTfjsPath: str, experime
     })
 
 
-def main(experiment: Experiment[Dataset]):
-    modelPath = FolderManager.instance().createTempFolder("model")
+def main(experiment: Experiment[Dataset]) -> None:
+    modelPath = folder_manager.createTempFolder("model")
 
     tfjsModelUrl = experiment.parameters["tfjsModelUrl"]
     tfjsFilename = "multipose_tfjs.zip"

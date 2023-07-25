@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import csv
 import logging
 
@@ -8,8 +6,7 @@ from sklearn.metrics import accuracy_score
 
 import numpy as np
 
-from coretex import Experiment, ExperimentStatus
-from coretex.folder_management import FolderManager
+from coretex import Experiment, ExperimentStatus, folder_manager
 
 from .utils import getKey
 
@@ -22,7 +19,7 @@ def savePredictionFile(
     uniqueBodySite: dict[str, int]
 ) -> None:
 
-    predictionFilePath = Path(FolderManager.instance().temp) / "body_site_predictions.csv"
+    predictionFilePath = folder_manager.temp / "body_site_predictions.csv"
 
     with open(predictionFilePath, "a+") as f:
         writer = csv.writer(f)
@@ -46,7 +43,7 @@ def validate(
     trainedModelId: int
 ) -> None:
 
-    trainedModelPath = Path(FolderManager.instance().modelsFolder) / str(trainedModelId)
+    trainedModelPath = folder_manager.modelsFolder / str(trainedModelId)
 
     experiment.updateStatus(ExperimentStatus.inProgress, "Running validation with pretrained XGBoost model")
     logging.info(">> [MicrobiomeForensics] Starting validation with pretrained XGBClassifier model")

@@ -3,8 +3,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 import logging
 
-from coretex import Experiment, CustomDataset, CustomSample
-from coretex.folder_management import FolderManager
+from coretex import Experiment, CustomDataset, CustomSample, folder_manager
 
 from .utils import sam2bamCommand
 
@@ -26,8 +25,7 @@ def loadData(dataset: CustomDataset) -> list[Path]:
 
 
 def sam2bam(experiment: Experiment[CustomDataset], samDir: Path) -> None:
-    temp = Path(FolderManager.instance().temp)
-    bamDir = Path(FolderManager.instance().createTempFolder("BAM"))
+    bamDir = folder_manager.createTempFolder("BAM")
 
     bamDataset = CustomDataset.createDataset(
         f"{experiment.id} - Sequence alignment: BAM",
@@ -45,7 +43,7 @@ def sam2bam(experiment: Experiment[CustomDataset], samDir: Path) -> None:
 
         sam2bamCommand(path, outputPath)
 
-        zipSam = temp / f"{outputPath.name}.zip"
+        zipSam = folder_manager.temp / f"{outputPath.name}.zip"
         with ZipFile(zipSam , "w", ZIP_DEFLATED) as archive:
             archive.write(outputPath, outputPath.name)
 

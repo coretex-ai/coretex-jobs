@@ -10,14 +10,12 @@ use_condaenv(condaEnvironmentPath)
 os <- import("os")
 logging <- import("logging")
 ctxProject <- import("coretex.project")
-ctxFolderManagement <- import("coretex.folder_management")
+ctxFolderManager <- import("coretex.folder_manager")
 
 main <- function(experiment) {
-    # FolderManager class is used for working with files and directories
-    folderManager <- ctxFolderManagement$FolderManager$instance()
     # FolderManager.temp is used for temporary file storage
     # temp directory is cleared when the experiment execution is finished
-    plotPath <- os$path$join(folderManager$temp, "plot.png")
+    plotPath <- os$path$join(ctxFolderManager$temp, "plot.png")
 
     # Experiment.parameters contain parameters entered when the experiment
     # was created on Coretex.ai

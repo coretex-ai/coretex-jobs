@@ -6,9 +6,8 @@ import os
 import json
 import logging
 
-from coretex import CustomSample, cache, Experiment
+from coretex import CustomSample, cache, Experiment, folder_manager
 from coretex.nlp import Token
-from coretex.folder_management import FolderManager
 
 from .occurence import NamedEntityRecognitionResult
 
@@ -21,7 +20,7 @@ def createTranscriptionArtfacts(
     coretexAudioResult: Optional[NamedEntityRecognitionResult] = None
 ) -> None:
 
-    tempFolder = FolderManager.instance().createTempFolder(f"{sample.id}")
+    tempFolder = folder_manager.createTempFolder(f"{sample.id}")
 
     textPath = os.path.join(tempFolder, "transcription.txt")
     transcriptionPath = os.path.join(tempFolder, "transcription.json")
@@ -57,6 +56,6 @@ def fetchModelFile(modelUrl: str, modelName: str, modelSuffix: str) -> Path:
     modelPath = cache.getPath(modelUrl)
 
     with ZipFile(modelPath, "r") as zipFile:
-        zipFile.extractall(FolderManager.instance().cache)
+        zipFile.extractall(folder_manager.cache)
 
     return modelPath.with_suffix(modelSuffix)

@@ -48,8 +48,7 @@ from utils.general import (LOGGER, check_img_size, check_requirements, colorstr,
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, time_sync
 
-from coretex import ComputerVisionDataset, Experiment
-from coretex.folder_management import FolderManager
+from coretex import ComputerVisionDataset, Experiment, folder_manager
 
 
 @torch.no_grad()
@@ -88,7 +87,7 @@ def run(
         weights = Path("./weights/best.pt")
 
     save_dir = Path("./weights")
-    pred_dir = FolderManager.instance().createTempFolder("predictions")
+    pred_dir = folder_manager.createTempFolder("predictions")
     save_dir.mkdir(parents=True, exist_ok=True)
 
     # Load model

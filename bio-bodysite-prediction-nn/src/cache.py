@@ -6,17 +6,19 @@ import zipfile
 import pickle
 import time
 
-from coretex import Experiment, CustomDataset, CustomSample
-from coretex.folder_management import FolderManager
+from coretex import Experiment, CustomDataset, CustomSample, folder_manager
+from coretex.utils.hash import hashCacheName
 
 from .utils import plots
 
 
-def getCacheName(datasetId: int, sampleOrigin: list[str], sequencingTechnique: list[str]) -> str:
+def getCacheName(datasetName: str, sampleOrigin: list[str], sequencingTechnique: list[str]) -> str:
     origins = ".".join(sampleOrigin)
     techniques = ".".join(sequencingTechnique)
 
-    return f"microbiome_{datasetId}_{origins}_{techniques}_nn_cache"
+    suffix = f"{origins}_{techniques}"
+
+    return hashCacheName(datasetName + "_nn", suffix)
 
 
 def getCache(cacheName: str) -> Optional[CustomDataset]:
@@ -43,12 +45,10 @@ def cacheDataset(
     if cacheDataset is None:
         raise RuntimeError(">> [MicrobiomeForensics] Failed to create coretex dataset for cache")
 
-    tempPath = Path(FolderManager.instance().temp)
-
     cachedItems = [taxonDistribution, classDistribution]
     cachedItemNames = ["taxonDistribution", "classDistribution"]
     for cachedItem, cachedItemName in zip(cachedItems, cachedItemNames):
-        picklePath = tempPath / cachedItemName
+        picklePath = folder_manager.temp / cachedItemName
         with picklePath.open("wb") as cacheFile:
             pickle.dump(cachedItem, cacheFile)
 
@@ -73,7 +73,7 @@ def loadCache(experiment: Experiment[CustomDataset], cacheName: str) -> tuple[Pa
     logging.info(">> [MicrobiomeForensics] Loading assembled dataset to cache")
     start = time.time()
 
-    datasetPath = Path(FolderManager.instance().getTempFolder("processedDataset"))
+    datasetPath = folder_manager.temp / "processedDataset"
     datasetPath.mkdir(parents = True, exist_ok = True)
 
     cache = getCache(cacheName)

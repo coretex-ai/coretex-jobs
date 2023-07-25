@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import os
 import json
 import glob
@@ -7,8 +5,7 @@ import logging
 
 import numpy as np
 
-from coretex import Experiment, CustomDataset, ExperimentStatus
-from coretex.folder_management import FolderManager
+from coretex import Experiment, CustomDataset, ExperimentStatus, folder_manager
 
 from .utils import savePlotFig
 
@@ -20,10 +17,8 @@ def loadDataStd(dataset: CustomDataset, experiment: Experiment[CustomDataset]) -
 
     experiment.updateStatus(ExperimentStatus.inProgress, "Loading data")
 
-    tempPath = Path(FolderManager.instance().temp)
-
-    taxonDistributionSavePath = tempPath / "taxon_histogram.png"
-    classDistributionSavePath = tempPath / "body_site_histogram.png"
+    taxonDistributionSavePath = folder_manager.temp / "taxon_histogram.png"
+    classDistributionSavePath = folder_manager.temp / "body_site_histogram.png"
 
     datasetLen = len(experiment.dataset.samples)
     if datasetLen < 10:

@@ -1,8 +1,5 @@
-from pathlib import Path
-
-from coretex import CustomDataset, Experiment
+from coretex import CustomDataset, Experiment, folder_manager
 from coretex.project import initializeProject
-from coretex.folder_management import FolderManager
 from coretex.qiime2.utils import getFastqMPSamples, getFastqDPSamples, getMetadataSample
 
 from src.multiplexed import demultiplexing
@@ -20,7 +17,7 @@ def main(experiment: Experiment[CustomDataset]):
         if len(fastqSamples) == 0:
             raise ValueError(">> [Workspace] Dataset has 0 fastq samples")
 
-    outputDir = Path(FolderManager.instance().createTempFolder("qiime_output"))
+    outputDir = folder_manager.createTempFolder("qiime_output")
     outputDataset = CustomDataset.createDataset(
         f"{experiment.id} - Step 1: Demux",
         experiment.spaceId
