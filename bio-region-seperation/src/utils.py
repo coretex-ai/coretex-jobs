@@ -4,8 +4,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 import logging
 
-from coretex import CustomDataset, Experiment, CustomSample
-from coretex.folder_management import FolderManager
+from coretex import CustomDataset, Experiment, CustomSample, folder_manager
 
 
 def loadIndexed(dataset: CustomDataset) -> list[Path]:
@@ -33,7 +32,7 @@ def clearDirectory(directory: Path) -> None:
 
 
 def uploadToCoretex(experiment: Experiment[CustomDataset], groups: list[Path]) -> None:
-    zipOut = Path(FolderManager.instance().createTempFolder("zipOut"))
+    zipOut = Path(folder_manager.createTempFolder("zipOut"))
 
     dataset = CustomDataset.createDataset(f"{experiment.id} - Separated Sequences", experiment.spaceId)
     if dataset is None:

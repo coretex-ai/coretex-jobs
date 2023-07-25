@@ -2,8 +2,7 @@ from pathlib import Path
 
 import logging
 
-from coretex import Experiment, CustomDataset
-from coretex.folder_management import FolderManager
+from coretex import Experiment, CustomDataset, folder_manager
 from coretex.project import initializeProject
 from coretex.bioinformatics import sequence_alignment as sa
 
@@ -15,9 +14,9 @@ from src.filepaths import BWA, SAMTOOLS
 
 
 def main(experiment: Experiment[CustomDataset]) -> None:
-    outDir = Path(FolderManager.instance().createTempFolder("output"))
-    samDir = Path(FolderManager.instance().createTempFolder("sam"))
-    bamDir = Path(FolderManager.instance().createTempFolder("bam"))
+    outDir = Path(folder_manager.createTempFolder("output"))
+    samDir = Path(folder_manager.createTempFolder("sam"))
+    bamDir = Path(folder_manager.createTempFolder("bam"))
 
     groupNames: list[str] = experiment.parameters["separationGroups"]
     thresholds: list[int] = experiment.parameters["separationThresholds"]

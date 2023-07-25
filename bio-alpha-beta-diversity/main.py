@@ -6,8 +6,7 @@ import logging
 
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.project import initializeProject
-from coretex.folder_management import FolderManager
-from coretex.bioinformatics import qiime2 as ctx_qiime2
+from coretex.bioinformatics import CommandException, qiime2 as ctx_qiime2
 
 
 def diversityCoreMetricsPhylogeneticSample(
@@ -195,7 +194,7 @@ def processSample(
             sampleOutputDir / "faith-pd-group-significance.qzv",
             experiment
         )
-    except ctx_qiime2.QiimeCommandException:
+    except CommandException:
         logging.error(">> [Microbiome analysis] Failed to create faith_pd_vector.qza")
 
     try:
@@ -207,7 +206,7 @@ def processSample(
             sampleOutputDir / "evenness-group-significance.qzv",
             experiment
         )
-    except ctx_qiime2.QiimeCommandException:
+    except CommandException:
         logging.error(">> [Microbiome analysis] Failed to create evenness_vector.qza")
 
     # Third step:
@@ -226,7 +225,7 @@ def processSample(
             sampleOutputDir / "unweighted-unifrac-body-site-significance.qzv",
             experiment
         )
-    except ctx_qiime2.QiimeCommandException:
+    except CommandException:
         logging.error(">> [Microbiome analysis] Failed to create unweighted_unifrac_distance_matrix.qza")
 
     try:
@@ -239,7 +238,7 @@ def processSample(
             sampleOutputDir / "unweighted-unifrac-subject-group-significance.qzv",
             experiment
         )
-    except ctx_qiime2.QiimeCommandException:
+    except CommandException:
         logging.error(">> [Microbiome analysis] Failed to create unweighted_unifrac_distance_matrix.qza")
 
     # Fourth step:

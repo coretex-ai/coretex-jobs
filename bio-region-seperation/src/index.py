@@ -2,15 +2,14 @@ from pathlib import Path
 
 import logging
 
-from coretex import CustomDataset
-from coretex.folder_management import FolderManager
+from coretex import CustomDataset, folder_manager
 from coretex.bioinformatics import sequence_alignment as sa
 
 from .filepaths import BWA
 
 
 def index(dataset: CustomDataset) -> list[Path]:
-    referencesDir = Path(FolderManager.instance().createTempFolder("reference"))
+    referencesDir = Path(folder_manager.createTempFolder("reference"))
 
     logging.info(">> [Region Separation] Downloading dataset")
     dataset.download()
