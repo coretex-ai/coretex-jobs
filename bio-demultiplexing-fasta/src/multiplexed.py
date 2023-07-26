@@ -2,8 +2,8 @@ from typing import List
 from pathlib import Path
 from zipfile import ZipFile
 
-from coretex import CustomDataset, CustomSample, Experiment, qiime2 as ctx_qiime2, folder_manager
-from coretex.qiime2.utils import compressGzip, createSample
+from coretex import CustomDataset, CustomSample, Experiment, folder_manager
+from coretex.bioinformatics import qiime2 as ctx_qiime2
 
 from .utils import summarizeSample
 
@@ -61,11 +61,11 @@ def processSample(
 
     if not sequencesPath.exists():
         source = sequenceFolderPath / "sequences.fastq"
-        compressGzip(source, sequencesPath)
+        ctx_qiime2.compressGzip(source, sequencesPath)
 
     if not barcodesPath.exists():
         source = sequenceFolderPath / "barcodes.fastq"
-        compressGzip(source, barcodesPath)
+        ctx_qiime2.compressGzip(source, barcodesPath)
 
     # First step:
     # Importing sample using qiime2 to generate qza file from fastq/fasta sequences
@@ -75,7 +75,7 @@ def processSample(
     # Local sample
     # Separate function
     importedFilePath = importSample(sequenceFolderPath, metadataPath, experiment.parameters["sequenceType"], outputDir)
-    importedSample = createSample("0-import", outputDataset.id, importedFilePath, experiment, "Step 1: Demultiplexing")
+    importedSample = ctx_qiime2.createSample("0-import", outputDataset.id, importedFilePath, experiment, "Step 1: Demultiplexing")
 
     # Second step:
     # Demultiplexing sequences to extract all barcode occurences from imported qza files
@@ -83,7 +83,7 @@ def processSample(
     importedSample.unzip()
 
     demuxPath = demuxEmpSingleSample(importedSample, metadataPath, experiment.parameters["barcodeColumn"], outputDir)
-    demuxSample = createSample("0-demux", outputDataset.id, demuxPath, experiment, "Step 1: Demultiplexing")
+    demuxSample = ctx_qiime2.createSample("0-demux", outputDataset.id, demuxPath, experiment, "Step 1: Demultiplexing")
 
     # Third step:
     # Summarize demultiplexed sequences to visualize the results
@@ -91,7 +91,7 @@ def processSample(
     demuxSample.unzip()
 
     visualizationPath = summarizeSample(demuxSample, outputDir)
-    createSample("0-summary", outputDataset.id, visualizationPath, experiment, "Step 1: Demultiplexing")
+    ctx_qiime2.createSample("0-summary", outputDataset.id, visualizationPath, experiment, "Step 1: Demultiplexing")
 
 
 def demultiplexing(

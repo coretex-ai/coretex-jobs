@@ -1,9 +1,9 @@
 from pathlib import Path
 from zipfile import ZipFile
 
-from coretex import CustomDataset, CustomSample, Experiment, qiime2 as ctx_qiime2, cache, folder_manager
+from coretex import CustomDataset, CustomSample, Experiment, cache, folder_manager
 from coretex.project import initializeProject
-from coretex.qiime2.utils import sampleNumber, createSample, getDenoisedSamples
+from coretex.bioinformatics import qiime2 as ctx_qiime2
 
 
 def featureClassifierClassifySklearnSample(
@@ -58,7 +58,7 @@ def processSample(
         sampleOutputDir
     )
 
-    taxonomySample = createSample(f"{index}-taxonomy", outputDataset.id, taxonomyPath, experiment, "Step 5: Taxonomic Analysis")
+    taxonomySample = ctx_qiime2.createSample(f"{index}-taxonomy", outputDataset.id, taxonomyPath, experiment, "Step 5: Taxonomic Analysis")
 
     # Second step:
     # Visualize the results
@@ -71,7 +71,7 @@ def processSample(
         str(visualizationPath)
     )
 
-    createSample(f"{index}-taxonomy-visualization", outputDataset.id, visualizationPath, experiment, "Step 5: Taxonomic Analysis")
+    ctx_qiime2.createSample(f"{index}-taxonomy-visualization", outputDataset.id, visualizationPath, experiment, "Step 5: Taxonomic Analysis")
 
     # Third step:
     # View the taxonomic composition of our samples with interactive bar plots
@@ -84,13 +84,13 @@ def processSample(
         str(taxaBarBlotsPath)
     )
 
-    createSample(f"{index}-taxonomy-bar-plots", outputDataset.id, taxaBarBlotsPath, experiment, "Step 5: Taxonomic Analysis")
+    ctx_qiime2.createSample(f"{index}-taxonomy-bar-plots", outputDataset.id, taxaBarBlotsPath, experiment, "Step 5: Taxonomic Analysis")
 
 
 def main(experiment: Experiment[CustomDataset]):
     experiment.dataset.download()
 
-    denoisedSamples = getDenoisedSamples(experiment.dataset)
+    denoisedSamples = ctx_qiime2.getDenoisedSamples(experiment.dataset)
     if len(denoisedSamples) == 0:
         raise ValueError(">> [Workspace] Dataset has 0 denoised samples")
 
@@ -107,7 +107,7 @@ def main(experiment: Experiment[CustomDataset]):
         raise ValueError(">> [Workspace] Failed to create output dataset")
 
     for sample in denoisedSamples:
-        index = sampleNumber(sample)
+        index = ctx_qiime2.sampleNumber(sample)
 
         importedSample = importedDataset.getSample(f"{index}-import")
         if importedSample is None:

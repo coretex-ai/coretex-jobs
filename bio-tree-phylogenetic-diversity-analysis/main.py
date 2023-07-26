@@ -1,9 +1,9 @@
 from pathlib import Path
 from zipfile import ZipFile
 
-from coretex import CustomDataset, CustomSample, Experiment, qiime2 as ctx_qiime2, folder_manager
+from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.project import initializeProject
-from coretex.qiime2.utils import sampleNumber, createSample, getDenoisedSamples
+from coretex.bioinformatics import qiime2 as ctx_qiime2
 
 
 def phylogenyAlignToTreeMafftFasttreeSample(sample: CustomSample, outputDir: Path) -> Path:
@@ -47,13 +47,13 @@ def processSample(
 
     # Phylogenetic diversity analysis
     treePath = phylogenyAlignToTreeMafftFasttreeSample(sample, sampleOutputDir)
-    createSample(f"{index}-phylogenetic-tree", outputDataset.id, treePath, experiment, "Step 3: Phylogenetic tree")
+    ctx_qiime2.createSample(f"{index}-phylogenetic-tree", outputDataset.id, treePath, experiment, "Step 3: Phylogenetic tree")
 
 
 def main(experiment: Experiment[CustomDataset]):
     experiment.dataset.download()
 
-    denoisedSamples = getDenoisedSamples(experiment.dataset)
+    denoisedSamples = ctx_qiime2.getDenoisedSamples(experiment.dataset)
     if len(denoisedSamples) == 0:
         raise ValueError(">> [Workspace] Dataset has 0 denoised samples")
 
@@ -67,7 +67,7 @@ def main(experiment: Experiment[CustomDataset]):
         raise ValueError(">> [Workspace] Failed to create output dataset")
 
     for sample in denoisedSamples:
-        index = sampleNumber(sample)
+        index = ctx_qiime2.sampleNumber(sample)
         processSample(index, sample, experiment, outputDataset, outputDir)
 
 
