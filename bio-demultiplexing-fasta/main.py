@@ -1,6 +1,6 @@
 from coretex import CustomDataset, Experiment, folder_manager
 from coretex.project import initializeProject
-from coretex.bioinformatics import qiime2 as ctx_qiime2
+from coretex.bioinformatics import ctx_qiime2
 
 from src.multiplexed import demultiplexing
 from src.demultiplexed import importDemultiplexedSamples

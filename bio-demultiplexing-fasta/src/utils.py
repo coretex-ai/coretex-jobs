@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from coretex import CustomSample
-from coretex.bioinformatics import qiime2 as ctx_qiime2
+from coretex.bioinformatics import ctx_qiime2
 
 
 def summarizeSample(sample: CustomSample, outputDir: Path) -> Path:

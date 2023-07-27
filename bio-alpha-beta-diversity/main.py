@@ -6,7 +6,7 @@ import logging
 
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.project import initializeProject
-from coretex.bioinformatics import CommandException, qiime2 as ctx_qiime2
+from coretex.bioinformatics import CommandException, ctx_qiime2
 
 
 def diversityCoreMetricsPhylogeneticSample(
