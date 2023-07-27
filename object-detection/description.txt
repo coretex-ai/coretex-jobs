@@ -86,6 +86,30 @@ Higher values increase training time, but they can increase model accuracy, whil
 values decrease training time, but they also can decrease model accuracy.
 -----------------------------
 
+--- learningRate description ---
+The learning rate determines the step size at which the model adjusts its weights during training.
+It directly impacts how quickly or slowly the model converges during training.
+A high learning rate can lead to overshooting and instability, while a low learning rate may cause slow convergence and prolonged training times.
+
+Finding the right learning rate is crucial for optimizing the model's performance.
+-----------------------------
+
+--- weightDecay description ---
+Weight decay, also known as L2 regularization, is a regularization technique used to prevent overfitting.
+It adds a penalty term to the loss function based on the magnitude of the model's weights.
+This encourages the model to have smaller weight values and helps in generalization.
+
+A too high weight decay might result in underfitting, while a too low value might lead to overfitting.
+-----------------------------
+
+--- momentum description ---
+Momentum is a parameter that helps to accelerate gradient descent in the relevant direction and dampens oscillations.
+It keeps a moving average of gradients and helps the model to avoid getting stuck in local minima.
+Appropriate momentum values usually lie between 0.8 to 0.99.
+
+A momentum value too high might cause instability, while a value too low might slow down convergence.
+-----------------------------
+
 --- weightsUrl description ---
 URL of the weights (model checkpoint) which will be used for training. This must
 be a URL to a downloadable file supported by YoloV5 model.
