@@ -3,7 +3,7 @@ from zipfile import ZipFile
 
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.project import initializeProject
-from coretex.bioinformatics import qiime2 as ctx_qiime2
+from coretex.bioinformatics import ctx_qiime2
 
 
 def phylogenyAlignToTreeMafftFasttreeSample(sample: CustomSample, outputDir: Path) -> Path:
