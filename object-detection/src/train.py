@@ -68,6 +68,9 @@ def train(experiment: Experiment[ComputerVisionDataset], hyp, callbacks):  # hyp
 
     val_num_epochs = experiment.parameters["epochs"]
     val_batch_size = experiment.parameters["batchSize"]
+    weightDecay = experiment.parameters["weightDecay"]
+    momentum = experiment.parameters["momentum"]
+    learningRate = experiment.parameters["learningRate"]
     val_weights = getWeightsPath(experiment.parameters["weightsUrl"])
     val_img_size = experiment.parameters["imageSize"]  # DEFAULT IMAGE SIZE
     device = select_device('', batch_size=val_batch_size)
@@ -172,7 +175,7 @@ def train(experiment: Experiment[ComputerVisionDataset], hyp, callbacks):  # hyp
 
     nbs = 64  # nominal batch size
     accumulate = max(round(nbs / val_batch_size), 1)  # accumulate loss before optimizing
-    hyp['weight_decay'] *= val_batch_size * accumulate / nbs  # scale weight_decay
+    weightDecay *= val_batch_size * accumulate / nbs  # scale weight_decay
     logging.info(f"Scaled weight_decay = {hyp['weight_decay']}")
 
     g = [], [], []  # optimizer parameter groups
@@ -185,8 +188,8 @@ def train(experiment: Experiment[ComputerVisionDataset], hyp, callbacks):  # hyp
         elif hasattr(v, 'weight') and isinstance(v.weight, nn.Parameter):  # weight (with decay)
             g[0].append(v.weight)
 
-    optimizer = SGD(g[2], lr=hyp['lr0'], momentum=hyp['momentum'], nesterov=True)
-    optimizer.add_param_group({'params': g[0], 'weight_decay': hyp['weight_decay']})  # add g0 with weight_decay
+    optimizer = SGD(g[2], lr=learningRate, momentum=momentum, nesterov=True)
+    optimizer.add_param_group({'params': g[0], 'weight_decay': weightDecay})  # add g0 with weight_decay
     optimizer.add_param_group({'params': g[1]})  # add g1 (BatchNorm2d weights)
     logging.debug(f"{colorstr('optimizer:')} {type(optimizer).__name__} with parameter groups "
                 f"{len(g[1])} weight (no decay), {len(g[0])} weight, {len(g[2])} bias")
@@ -350,7 +353,7 @@ def train(experiment: Experiment[ComputerVisionDataset], hyp, callbacks):  # hyp
                 for j, x in enumerate(optimizer.param_groups):
                     x['lr'] = np.interp(ni, xi, [hyp['warmup_bias_lr'] if j == 2 else 0.0, x['initial_lr'] * lf(epoch)])
                     if 'momentum' in x:
-                        x['momentum'] = np.interp(ni, xi, [hyp['warmup_momentum'], hyp['momentum']])
+                        x['momentum'] = np.interp(ni, xi, [hyp['warmup_momentum'], momentum])
 
             # Forward
             with amp.autocast(enabled=cuda):
