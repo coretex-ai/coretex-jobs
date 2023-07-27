@@ -128,4 +128,13 @@ will go for validation, while the rest (80%) will go for training.
 Classes which will be excluded from the dataset when the training process starts.
 -----------------------------------
 
+--- modelId description ---
+ID of model that will be fetched from Coretex platform and used for validation.
+-----------------------------------
+
+--- validation description ---
+Paramter that determines mode of run. If set to true validation mode is started,
+if set to false training mode is started.
+-----------------------------------
+
 ------------------------------

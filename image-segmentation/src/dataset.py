@@ -2,6 +2,7 @@ from typing import Generator
 
 from keras.layers import RandomFlip
 
+import numpy as np
 import tensorflow as tf
 
 from coretex import Experiment, ExperimentStatus, ImageSegmentationDataset
@@ -41,6 +42,7 @@ def loadDataset(coretexDataset: ImageSegmentationDataset, coretexExperiment: Exp
                 raise ValueError
 
             segmentationMask = data.annotation.extractSegmentationMask(coretexDataset.classes)
+            segmentationMask = np.expand_dims(segmentationMask, axis=-1)
 
             yield {
                 "image": tf.convert_to_tensor(data.image, dtype = tf.uint8),
