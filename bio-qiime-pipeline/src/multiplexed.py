@@ -136,4 +136,5 @@ def demultiplexing(
     metadataPath = Path(dataset.samples[0].path) / experiment.parameters["metadataFileName"]
     processSample(dataDir, metadataPath, experiment, outputDataset, outputDir)
 
-    return CustomDataset.fetchById(outputDataset.id)
+    outputDataset.refresh()
+    return outputDataset

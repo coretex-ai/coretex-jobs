@@ -16,7 +16,7 @@ from src.utils import isPairedEnd
 def main(experiment: Experiment[CustomDataset]):
     experiment.dataset.download()
 
-    pairedEnd = isPairedEnd(experiment.dataset, experiment)
+    pairedEnd = isPairedEnd(experiment.dataset)
     if pairedEnd:
         logging.info(">> [Microbiome analysis] Paired-end reads detected")
     else:
@@ -34,29 +34,29 @@ def main(experiment: Experiment[CustomDataset]):
     logging.info(">> [Microbiome analysis] Step 1: Demux / Import")
 
     if experiment.parameters["barcodeColumn"]:
-        step1dataset = demultiplexing(initialDataset, experiment)
+        demultiplexedDataset = demultiplexing(initialDataset, experiment)
     else:
-        step1dataset = importDemultiplexedSamples(initialDataset, experiment, pairedEnd)
+        demultiplexedDataset = importDemultiplexedSamples(initialDataset, experiment, pairedEnd)
 
     # Step 2: Denoise
     logging.info(">> [Microbiome analysis] Step 2: Denoise")
-    step1dataset.download()
-    step2dataset = denoise(step1dataset, experiment, pairedEnd)
+    demultiplexedDataset.download()
+    denoisedDataset = denoise(demultiplexedDataset, experiment, pairedEnd)
 
     # Step 3: Phylogenetic Diversity Analysis
     logging.info(">> [Microbiome analysis] Step 3: Phylogenetic Diversity Analysis")
-    step2dataset.download()
-    step3dataset = phyogeneticDiversityAnalysis(step2dataset, experiment)
+    denoisedDataset.download()
+    phylogeneticDataset = phyogeneticDiversityAnalysis(denoisedDataset, experiment)
 
     # Step 4: Alpha and Beta Diversity Analysis
     logging.info(">> [Microbiome analysis] Step 4: Alpha and Beta Diversity Analysis")
-    step3dataset.download()
-    alphaBetaDiversityAnalysis(step1dataset, step2dataset, step3dataset, experiment)
+    phylogeneticDataset.download()
+    alphaBetaDiversityAnalysis(demultiplexedDataset, denoisedDataset, phylogeneticDataset, experiment)
 
     # Step 5: Taxonomic Analysis
     logging.info(">> [Microbiome analysis] Step 5: Taxonomic Analysis")
 
-    taxonomicAnalysis(step1dataset, step2dataset, experiment)
+    taxonomicAnalysis(demultiplexedDataset, denoisedDataset, experiment)
 
 
 if __name__ == "__main__":

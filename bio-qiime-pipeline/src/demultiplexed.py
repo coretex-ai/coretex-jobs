@@ -110,4 +110,5 @@ def importDemultiplexedSamples(
     visualizationPath = summarizeSample(demuxSample, outputDir)
     ctx_qiime2.createSample("0-summary", outputDataset.id, visualizationPath, experiment, "Step 1: Demultiplexing")
 
-    return CustomDataset.fetchById(outputDataset.id)
+    outputDataset.refresh()
+    return outputDataset

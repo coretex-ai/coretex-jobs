@@ -185,4 +185,5 @@ def denoise(dataset: CustomDataset, experiment: Experiment, pairedEnd: bool) -> 
 
         processSample(index, sample, importedSample, summarySample, experiment, outputDataset, outputDir, pairedEnd)
 
-    return CustomDataset.fetchById(outputDataset.id)
+    outputDataset.refresh()
+    return outputDataset

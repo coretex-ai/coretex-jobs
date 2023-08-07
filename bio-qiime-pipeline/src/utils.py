@@ -3,12 +3,12 @@ from pathlib import Path
 
 import csv
 
-from coretex import CustomSample, CustomDataset, Experiment
+from coretex import CustomSample, CustomDataset
 from coretex.bioinformatics import ctx_qiime2
 
 
 def summarizeSample(sample: CustomSample, outputDir: Path) -> Path:
-    demuxPath = Path(sample.path) / "demux.qza"
+    demuxPath = sample.path / "demux.qza"
     visualizationPath = outputDir / "demux.qzv"
 
     ctx_qiime2.demuxSummarize(str(demuxPath), str(visualizationPath))
@@ -17,6 +17,7 @@ def summarizeSample(sample: CustomSample, outputDir: Path) -> Path:
 
 def determineTruncLen(sample: CustomSample, forward: bool) -> int:
     sample.unzip()
+
     summariesFileName = "forward-seven-number-summaries.tsv" if forward else "reverse-seven-number-summaries.tsv"
     summariesTsv = list(sample.path.rglob(summariesFileName))[0]
 
@@ -31,7 +32,6 @@ def determineTruncLen(sample: CustomSample, forward: bool) -> int:
 
     highestScore = 0.0
     for index, qualityScore in enumerate(medianQualities):
-        qualityScore = float(qualityScore)
         if qualityScore > highestScore:
             highestScore = qualityScore
             continue
@@ -48,24 +48,24 @@ def determineTruncLen(sample: CustomSample, forward: bool) -> int:
 
 def loadPairedEnd(sample: CustomSample) -> Tuple[Path, Path, str]:
     sample.unzip()
-    for filePath in sample.path.iterdir():
-        if filePath.suffix != ".fastq":
-            continue
 
-        if filePath.name.find("_R1_") != -1:
-            forwardPath = filePath
-        elif filePath.name.find("_R2_") != -1:
-            reversePath = filePath
-        else:
-            raise ValueError(f">> [Microbiome analysis] Not found _R1_ or _R2_, indicting forward and reverse reads, in the file {filePath}")
+    forwardPathList = list(sample.path.glob("*_R1_*.fastq"))
+    reversePathList = list(sample.path.glob("*_R2_*.fastq"))
 
-    return forwardPath, reversePath, forwardPath.name[0: forwardPath.name.find("_R1_")]
+    if len(forwardPathList) > 0 and len(reversePathList) > 0:
+        forwardPath = forwardPathList[0]
+        reversePath = reversePathList[0]
+    else:
+        raise ValueError(f">> [Microbiome analysis] \"_R1_\" and \"_R2_\" not found, invalid paired-end sample: {sample.name}")
+
+    return forwardPath, reversePath, forwardPath.name.split("_")[0]
 
 
-def isPairedEnd(dataset: CustomDataset, experiment: Experiment):
+def isPairedEnd(dataset: CustomDataset):
     for sample in dataset.samples:
         sample.unzip()
-        if any([path.name == experiment.parameters["metadataFileName"] for path in sample.path.iterdir()]):
+
+        if sample.name.startswith("_metadata"):
             continue
 
         return sum([path.suffix == ".fastq" for path in sample.path.iterdir()]) == 2

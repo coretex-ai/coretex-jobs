@@ -70,4 +70,5 @@ def phyogeneticDiversityAnalysis(dataset: CustomDataset, experiment: Experiment)
         index = ctx_qiime2.sampleNumber(sample)
         processSample(index, sample, experiment, outputDataset, outputDir)
 
-    return CustomDataset.fetchById(outputDataset.id)
+    outputDataset.refresh()
+    return outputDataset

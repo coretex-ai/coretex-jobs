@@ -164,21 +164,24 @@ def processSample(
     # coordinates analysis (PCoA) plots using Emperor for each
     # of the beta diversity metrics.
     logging.info(">> [Microbiome analysis] Apllying the core-metrics-phylogenetic method")
-    coreMetricsPath = diversityCoreMetricsPhylogeneticSample(
-        sample,
-        denoisedSample.joinPath("table.qza"),
-        experiment.parameters["samplingDepth"],
-        metadataPath,
-        sampleOutputDir
-    )
+    try:
+        coreMetricsPath = diversityCoreMetricsPhylogeneticSample(
+            sample,
+            denoisedSample.joinPath("table.qza"),
+            experiment.parameters["samplingDepth"],
+            metadataPath,
+            sampleOutputDir
+        )
 
-    coreMetricsSample = ctx_qiime2.createSample(
-        f"{index}-core-metrics-phylogenetic",
-        outputDataset.id,
-        coreMetricsPath,
-        experiment,
-        "Step 4: Alpha & Beta diversity analysis"
-    )
+        coreMetricsSample = ctx_qiime2.createSample(
+            f"{index}-core-metrics-phylogenetic",
+            outputDataset.id,
+            coreMetricsPath,
+            experiment,
+            "Step 4: Alpha & Beta diversity analysis"
+        )
+    except CommandException:
+        logging.error(">> [Microbiome analysis] Failed to execute \"qiime diversity core-metrics-phylogenetic\"")
 
     # Second step:
     # Explore the microbial composition of the samples in the context of the sample metadata
