@@ -53,7 +53,7 @@ def loadPairedEnd(sample: CustomSample) -> Tuple[Path, Path, str]:
     reversePathList = list(sample.path.glob("*_R2_*.fastq"))
 
     if len(forwardPathList) != 1 or len(reversePathList) != 1:
-        raise ValueError(f">> [Microbiome analysis] Invalid paired-end sample: {sample.name}. Must contain 2 files, one with \"_R1_\" and another with \"_R2\" in name")
+        raise ValueError(f">> [Microbiome analysis] Invalid paired-end sample: {sample.name}. Must contain 2 files, one with \"_R1_\" and another with \"_R2_\" in name")
 
     forwardPath = forwardPathList[0]
     reversePath = reversePathList[0]
