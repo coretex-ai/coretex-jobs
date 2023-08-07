@@ -1,3 +1,4 @@
+from typing import List, Tuple, Optional
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 
@@ -5,90 +6,139 @@ import logging
 
 from coretex import Experiment, CustomDataset, CustomSample, folder_manager
 from coretex.project import initializeProject
-from coretex.bioinformatics import cutadaptTrim
+from coretex.bioinformatics import cutadaptTrim, isPairedEnd
 
 
-def loadSingleEnd(dataset: CustomDataset) -> list[Path]:
-    filePaths: list[Path] = []
-    for sample in dataset.samples:
-        sample.unzip()
-        for filePath in sample.path.iterdir():
-            if filePath.suffix == ".fasta" or filePath.suffix == ".fastq":
-                filePaths.append(filePath)
+def forwardMetadata(sample: CustomSample, outputDataset: CustomDataset) -> None:
+    sample.unzip()
 
-    return filePaths
+    metadataZip = folder_manager.temp / "_metadata.zip"
+    with ZipFile(metadataZip, 'w', ZIP_DEFLATED) as archive:
+        for path in sample.path.iterdir():
+            archive.write(path, path.name)
 
-
-def loadPairedEnd(dataset: CustomDataset) -> tuple[list[Path], list[Path]]:
-    forewardPaths: list[Path] = []
-    reversePaths: list[Path] = []
-    for sample in dataset.samples:
-        sample.unzip()
-        for filePath in sample.path.iterdir():
-            if filePath.suffix == ".fasta" or filePath.suffix == ".fastq":
-                if sample.name.startswith("R1"):
-                    forewardPaths.append(filePath)
-                elif sample.name.startswith("R2"):
-                    reversePaths.append(filePath)
-                else:
-                    raise ValueError(">> [Primer Removal] For paired-end reads, the foreward reads must be in samples with \"R1\" at the start of their names, while the reverse reads must be in samples with \"R2\" in their names. There should be no samples names that don't start with \"ßR1\" or \"R2\"")
-
-    return forewardPaths, reversePaths
+    if CustomSample.createCustomSample("_metadata", outputDataset.id, metadataZip) is None:
+        raise RuntimeError(">> [Microbiome analysis] Failed to forward metadata to the output dataset")
 
 
-def main(experiment: Experiment[CustomDataset]):
-    forewardAdapter = experiment.parameters["forewardAdapter"]
+def loadSingleEnd(sample: CustomSample) -> Path:
+    sample.unzip()
+
+    for filePath in sample.path.iterdir():
+        if filePath.suffix != ".fastq":
+            continue
+
+        return filePath
+
+    raise ValueError(f">> [Microbiome analysis] Sample \"{sample.name}\" does not contain fastq files")
+
+
+def loadPairedEnd(sample: CustomSample) -> Tuple[Path, Path, str]:
+    sample.unzip()
+
+    forwardPathList = list(sample.path.glob("*_R1_*.fastq"))
+    reversePathList = list(sample.path.glob("*_R2_*.fastq"))
+
+    if len(forwardPathList) > 0 and len(reversePathList) > 0:
+        forwardPath = forwardPathList[0]
+        reversePath = reversePathList[0]
+    else:
+        raise ValueError(f">> [Microbiome analysis] \"_R1_\" and \"_R2_\" not found, invalid paired-end sample: {sample.name}")
+
+    return forwardPath, reversePath, forwardPath.name.split("_")[0]
+
+
+def uploadTrimmedReads(sampleName: str, dataset: CustomDataset, forwardFile: Path, reverseFile: Optional[Path] = None):
+    zipPath = folder_manager.temp / f"{sampleName}.zip"
+    with ZipFile(zipPath, 'w', ZIP_DEFLATED) as archive:
+        archive.write(forwardFile, forwardFile.name)
+        if reverseFile:
+            archive.write(reverseFile, reverseFile.name)
+
+    if CustomSample.createCustomSample(sampleName, dataset.id, zipPath) is None:
+        raise RuntimeError(">> [Microbiome analysis] Failed to upload trimmed reads")
+
+
+def trimSingleEnd(
+    samples: List[CustomSample],
+    forwardAdapter: str,
+    forwardReadsFolder: Path,
+    outputDataset: CustomDataset
+) -> None:
+
+    for sample in samples:
+        if sample.name.startswith("_metadata"):
+            forwardMetadata(sample, outputDataset)
+            continue
+
+        inputFile = loadSingleEnd(sample)
+        logging.info(f">> [Microbiome analysis] Trimming adapter sequences for {inputFile.name}")
+
+        outputFile = forwardReadsFolder / inputFile.name
+        cutadaptTrim(str(inputFile), str(outputFile), forwardAdapter)
+        uploadTrimmedReads(outputFile.stem, outputDataset, outputFile)
+
+
+def trimPairedEnd(
+    samples: List[CustomSample],
+    forwardAdapter: str,
+    reverseAdapter: str,
+    forwardReadsFolder: Path,
+    reverseReadsFolder: Path,
+    outputDataset: CustomDataset
+) -> None:
+
+    for sample in samples:
+        if sample.name.startswith("_metadata"):
+            forwardMetadata(sample, outputDataset)
+            continue
+
+        forwardFile, reverseFile, sampleName = loadPairedEnd(sample)
+        logging.info(f">> [Microbiome analysis] Trimming adapter sequences for {forwardFile.name} and {reverseFile.name}")
+
+        forwardOutput = forwardReadsFolder / forwardFile.name
+        reverseOutput = reverseReadsFolder / reverseFile.name
+        cutadaptTrim(str(forwardFile), str(forwardOutput), forwardAdapter, str(reverseFile), str(reverseOutput), reverseAdapter)
+        uploadTrimmedReads(sampleName, outputDataset, forwardFile, reverseFile)
+
+
+def main(experiment: Experiment[CustomDataset]) -> None:
+    forwardAdapter = experiment.parameters["forwardAdapter"]
     reverseAdapter = experiment.parameters["reverseAdapter"]
 
-    pairedEnd = reverseAdapter is not None
+    dataset = experiment.dataset
+    pairedEnd = isPairedEnd(dataset)
 
-    forewardReadsFolder = folder_manager.createTempFolder("forewardReads")
+    if forwardAdapter is None:
+        forwardAdapter = ""
+
+    if reverseAdapter is None:
+        reverseAdapter = ""
+
+    forwardReadsFolder = folder_manager.createTempFolder("forwardReads")
     if pairedEnd:
         reverseReadsFolder = folder_manager.createTempFolder("revereseReads")
 
-    dataset = experiment.dataset
-    dataset.download()
-
-    logging.info(">> [Primer Removal] Loading files")
-    if not pairedEnd:
-        filePaths = loadSingleEnd(dataset)
-        for inputFile in filePaths:
-            logging.info(f">> [Primer Removal] Trimming adapter sequences for {inputFile.name}")
-
-            outputFile = forewardReadsFolder / inputFile.name
-            cutadaptTrim(str(inputFile), str(outputFile), forewardAdapter)
-    else:
-        forewardPaths, reversePaths = loadPairedEnd(dataset)
-        for forewardFile, reverseFile in zip(forewardPaths, reversePaths):
-            logging.info(f">> [Primer Removal] Trimming adapter sequences for {forewardFile.name} and {reverseFile.name}")
-
-            forewardOutput = forewardReadsFolder / forewardFile.name
-            reverseOutput = reverseReadsFolder / reverseFile.name
-            cutadaptTrim(str(forewardFile), str(forewardOutput), forewardAdapter, str(reverseFile), str(reverseOutput), reverseAdapter)
-
     outputDataset = CustomDataset.createDataset(f"{experiment.id} - Cutadapt Output", experiment.spaceId)
     if outputDataset is None:
-        raise RuntimeError(">> [Primer Removal] Failed to create coretex dataset")
+        raise RuntimeError(">> [Microbiome analysis] Failed to create coretex dataset")
 
-    logging.info(f">> [Primer Removal] Trimming finished. Now uploading to coretex as dataset: {outputDataset.name}")
-
-    forewardZip = folder_manager.temp / "forewardReads.zip"
-    with ZipFile(forewardZip, 'w', ZIP_DEFLATED) as archive:
-        for filePath in forewardReadsFolder.iterdir():
-            archive.write(filePath,filePath.name)
-
-    forewardSampleName = "R1_foreward_reads" if pairedEnd else "trimmed_reads"
-    if CustomSample.createCustomSample(forewardSampleName, outputDataset.id, forewardZip) is None:
-        raise RuntimeError(">> [Primer Removal] Failed to upload trimmed foreward reads")
-
-    if pairedEnd:
-        reverseZip = folder_manager.temp / "reverseReads.zip"
-        with ZipFile(reverseZip, 'w', ZIP_DEFLATED) as archive:
-            for filePath in reverseReadsFolder.iterdir():
-                archive.write(filePath,filePath.name)
-
-        if CustomSample.createCustomSample("R2_reverse_reads", outputDataset.id, reverseZip) is None:
-            raise RuntimeError(">> [Primer Removal] Failed to upload trimmed reverse reads")
+    if not pairedEnd:
+        trimSingleEnd(
+            dataset.samples,
+            forwardAdapter,
+            forwardReadsFolder,
+            outputDataset
+        )
+    else:
+        trimPairedEnd(
+            dataset.samples,
+            forwardAdapter,
+            reverseAdapter,
+            forwardReadsFolder,
+            reverseReadsFolder,
+            outputDataset
+        )
 
 
 if __name__ == "__main__":
