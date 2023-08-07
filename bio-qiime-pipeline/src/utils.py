@@ -52,16 +52,16 @@ def loadPairedEnd(sample: CustomSample) -> Tuple[Path, Path, str]:
     forwardPathList = list(sample.path.glob("*_R1_*.fastq"))
     reversePathList = list(sample.path.glob("*_R2_*.fastq"))
 
-    if len(forwardPathList) > 0 and len(reversePathList) > 0:
-        forwardPath = forwardPathList[0]
-        reversePath = reversePathList[0]
-    else:
-        raise ValueError(f">> [Microbiome analysis] \"_R1_\" and \"_R2_\" not found, invalid paired-end sample: {sample.name}")
+    if len(forwardPathList) != 1 and len(reversePathList) != 1:
+        raise ValueError(f">> [Microbiome analysis] Invalid paired-end sample: {sample.name}. Must contain 2 files, one with \"_R1_\" and another with \"_R2\" in name")
+
+    forwardPath = forwardPathList[0]
+    reversePath = reversePathList[0]
 
     return forwardPath, reversePath, forwardPath.name.split("_")[0]
 
 
-def isPairedEnd(dataset: CustomDataset):
+def isPairedEnd(dataset: CustomDataset) -> int:
     for sample in dataset.samples:
         sample.unzip()
 

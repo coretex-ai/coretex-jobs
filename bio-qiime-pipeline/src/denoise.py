@@ -41,7 +41,6 @@ def dada2DenoiseSingleSample(
             str(tablePath),
             str(denoisingStatsPath)
         )
-
     else:
         ctx_qiime2.dada2DenoiseSingle(
             str(demuxPath),
