@@ -46,11 +46,23 @@ def determineTruncLen(sample: CustomSample, forward: bool) -> int:
     return truncLen
 
 
+def loadSingleEnd(sample: CustomSample) -> Tuple[Path, str]:
+    sample.unzip()
+
+    for filePath in sample.path.iterdir():
+        if filePath.suffix != ".fastq" and not filePath.match("*.fastq.gz"):
+            continue
+
+        return filePath, sample.name
+
+    raise ValueError(f">> [Microbiome analysis] Sample \"{sample.name}\" does not contain fastq files")
+
+
 def loadPairedEnd(sample: CustomSample) -> Tuple[Path, Path, str]:
     sample.unzip()
 
-    forwardPathList = list(sample.path.glob("*_R1_*.fastq"))
-    reversePathList = list(sample.path.glob("*_R2_*.fastq"))
+    forwardPathList = list(sample.path.glob("*_R1_*.fastq*"))
+    reversePathList = list(sample.path.glob("*_R2_*.fastq*"))
 
     if len(forwardPathList) != 1 or len(reversePathList) != 1:
         raise ValueError(f">> [Microbiome analysis] Invalid paired-end sample: {sample.name}. Must contain 2 files, one with \"_R1_\" and another with \"_R2_\" in name")
@@ -68,7 +80,16 @@ def isPairedEnd(dataset: CustomDataset) -> bool:
         if sample.name.startswith("_metadata"):
             continue
 
-        if len(list(sample.path.glob("*.fastq"))) != 2:
+        if len(list(sample.path.glob("*.fastq*"))) != 2:
             return False
 
     return True
+
+
+def isGzCompressed(dataset: CustomDataset) -> bool:
+    for sample in dataset.samples:
+        sample.unzip()
+        if len(list(sample.path.rglob("*.fastq.gz"))) > 0:
+            return True
+
+    return False

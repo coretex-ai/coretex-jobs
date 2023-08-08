@@ -7,7 +7,7 @@ import logging
 from coretex import Experiment, CustomDataset, CustomSample, folder_manager
 from coretex.bioinformatics import cutadaptTrim
 
-from .utils import loadPairedEnd
+from .utils import loadSingleEnd, loadPairedEnd
 
 
 def forwardMetadata(sample: CustomSample, outputDataset: CustomDataset) -> None:
@@ -20,18 +20,6 @@ def forwardMetadata(sample: CustomSample, outputDataset: CustomDataset) -> None:
 
     if CustomSample.createCustomSample("_metadata", outputDataset.id, metadataZip) is None:
         raise RuntimeError(">> [Microbiome analysis] Failed to forward metadata to the output dataset")
-
-
-def loadSingleEnd(sample: CustomSample) -> Path:
-    sample.unzip()
-
-    for filePath in sample.path.iterdir():
-        if filePath.suffix != ".fastq":
-            continue
-
-        return filePath
-
-    raise ValueError(f">> [Microbiome analysis] Sample \"{sample.name}\" does not contain fastq files")
 
 
 def uploadTrimmedReads(sampleName: str, dataset: CustomDataset, forwardFile: Path, reverseFile: Optional[Path] = None):
@@ -57,12 +45,12 @@ def trimSingleEnd(
             forwardMetadata(sample, outputDataset)
             continue
 
-        inputFile = loadSingleEnd(sample)
+        inputFile, sampleName = loadSingleEnd(sample)
         logging.info(f">> [Microbiome analysis] Trimming adapter sequences for {inputFile.name}")
 
         outputFile = forwardReadsFolder / inputFile.name
         cutadaptTrim(str(inputFile), str(outputFile), forwardAdapter)
-        uploadTrimmedReads(outputFile.stem, outputDataset, outputFile)
+        uploadTrimmedReads(sampleName, outputDataset, outputFile)
 
 
 def trimPairedEnd(

@@ -8,15 +8,15 @@ import logging
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
-from .utils import summarizeSample, loadPairedEnd
+from .utils import summarizeSample, loadSingleEnd, loadPairedEnd, isGzCompressed
 
 
-def importSample(manifestPath: Path, sequenceType: str, inputFormat: str, outputDir: Path) -> Path:
+def importSample(inputPath: Path, sequenceType: str, inputFormat: str, outputDir: Path) -> Path:
     demuxPath = outputDir / "demux.qza"
 
     ctx_qiime2.toolsImport(
         sequenceType,
-        str(manifestPath),
+        str(inputPath),
         str(demuxPath),
         inputFormat
     )
@@ -41,13 +41,11 @@ def createManifestSingle(samples: List[CustomSample], manifestPath: Path) -> Pat
         csv.writer(manifestFile, delimiter = "\t").writerow(["sample-id", "absolute-filepath"])
 
     for sample in samples:
-        for fastqPath in Path(sample.path).iterdir():
-            if fastqPath.suffix != ".fastq":
-                continue
+        fastqPath = loadSingleEnd(sample)
+        sampleId = fastqPath.stem.split("_")[0]
 
-            sampleId = fastqPath.stem
-            with manifestPath.open("a") as manifestFile:
-                csv.writer(manifestFile, delimiter = "\t").writerow([sampleId, fastqPath])
+        with manifestPath.open("a") as manifestFile:
+            csv.writer(manifestFile, delimiter = "\t").writerow([sampleId, fastqPath])
 
     return manifestPath
 
@@ -62,6 +60,15 @@ def createManifestPaired(samples: List[CustomSample], manifestPath: Path) -> Pat
             csv.writer(manifestFile, delimiter = "\t").writerow([sampleId, forwardPath, reversePath])
 
     return manifestPath
+
+
+def dumpGzFiles(samples: List[CustomSample], outFolder: Path) ->  None:
+    for sample in samples:
+        if sample.name.startswith("_metadata"):
+            continue
+
+        for filePath in sample.path.glob("*.fastq.gz"):
+            outFolder.joinpath(filePath.name).symlink_to(filePath)
 
 
 def importDemultiplexedSamples(
@@ -82,22 +89,31 @@ def importDemultiplexedSamples(
     if outputDataset is None:
         raise ValueError(">> [Microbiome analysis] Failed to create output dataset")
 
-    manifestPath = outputDir / "manifest.tsv"
+    if isGzCompressed(dataset):
+        inputPath = outputDir / "fastqGzFolder"
+        inputPath.mkdir()
+        dumpGzFiles(dataset.samples, inputPath)
+        inputFormat = "CasavaOneEightSingleLanePerSampleDirFmt"
 
-    fastqSamples = ctx_qiime2.getFastqDPSamples(dataset)
-    createManifestPaired(fastqSamples, manifestPath) if pairedEnd else createManifestSingle(fastqSamples, manifestPath)
-
-    if pairedEnd:
-        createManifestPaired(fastqSamples, manifestPath)
-        sequenceType = "SampleData[PairedEndSequencesWithQuality]"
-        inputFormat = "PairedEndFastqManifestPhred33V2"
+        if pairedEnd:
+            sequenceType = "SampleData[PairedEndSequencesWithQuality]"
+        else:
+            sequenceType = "SampleData[SequencesWithQuality]"
     else:
-        createManifestSingle(fastqSamples, manifestPath)
-        sequenceType = "SampleData[SequencesWithQuality]"
-        inputFormat = "SingleEndFastqManifestPhred33V2"
+        inputPath = outputDir / "manifest.tsv"
+        fastqSamples = ctx_qiime2.getFastqDPSamples(dataset)
+
+        if pairedEnd:
+            createManifestPaired(fastqSamples, inputPath)
+            sequenceType = "SampleData[PairedEndSequencesWithQuality]"
+            inputFormat = "PairedEndFastqManifestPhred33V2"
+        else:
+            createManifestSingle(fastqSamples, inputPath)
+            sequenceType = "SampleData[SequencesWithQuality]"
+            inputFormat = "SingleEndFastqManifestPhred33V2"
 
     logging.info(">> [Microbiome analysis] Importing data...")
-    demuxZipPath = importSample(manifestPath, sequenceType, inputFormat, outputDir)
+    demuxZipPath = importSample(inputPath, sequenceType, inputFormat, outputDir)
     demuxSample = ctx_qiime2.createSample("0-demux", outputDataset.id, demuxZipPath, experiment, "Step 1: Demultiplexing")
 
     metadataZipPath = importMetadata(metadata, outputDir)
