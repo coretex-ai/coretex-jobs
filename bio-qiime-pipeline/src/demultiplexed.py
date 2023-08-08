@@ -42,7 +42,6 @@ def createManifestSingle(samples: List[CustomSample], manifestPath: Path) -> Pat
 
     for sample in samples:
         fastqPath, sampleId = loadSingleEnd(sample)
-        sampleId = fastqPath.stem.split("_")[0]
 
         with manifestPath.open("a") as manifestFile:
             csv.writer(manifestFile, delimiter = "\t").writerow([sampleId, fastqPath])

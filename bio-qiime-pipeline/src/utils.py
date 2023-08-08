@@ -51,7 +51,8 @@ def loadSingleEnd(sample: CustomSample) -> Tuple[Path, str]:
 
     filePathList = list(sample.path.glob("*.fastq*"))
     if len(filePathList) == 1:
-        return filePathList[0], sample.name
+        filePath = filePathList[0]
+        return filePath, filePath.name.split("_")[0]
 
     raise ValueError(f">> [Microbiome analysis] Sample \"{sample.name}\" must contain exactly one fastq file")
 
