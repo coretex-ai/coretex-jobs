@@ -49,13 +49,11 @@ def determineTruncLen(sample: CustomSample, forward: bool) -> int:
 def loadSingleEnd(sample: CustomSample) -> Tuple[Path, str]:
     sample.unzip()
 
-    for filePath in sample.path.iterdir():
-        if filePath.suffix != ".fastq" and not filePath.match("*.fastq.gz"):
-            continue
+    filePathList = list(sample.path.glob("*.fastq*"))
+    if len(filePathList) == 1:
+        return filePathList[0], sample.name
 
-        return filePath, sample.name
-
-    raise ValueError(f">> [Microbiome analysis] Sample \"{sample.name}\" does not contain fastq files")
+    raise ValueError(f">> [Microbiome analysis] Sample \"{sample.name}\" must contain exactly one fastq file")
 
 
 def loadPairedEnd(sample: CustomSample) -> Tuple[Path, Path, str]:
