@@ -7,7 +7,7 @@ import logging
 from coretex import Experiment, CustomDataset, CustomSample, folder_manager
 from coretex.bioinformatics import cutadaptTrim
 
-from .utils import loadPairedEnd
+from .utils import loadSingleEnd, loadPairedEnd
 
 
 def forwardMetadata(sample: CustomSample, outputDataset: CustomDataset) -> None:
@@ -22,18 +22,6 @@ def forwardMetadata(sample: CustomSample, outputDataset: CustomDataset) -> None:
         raise RuntimeError(">> [Microbiome analysis] Failed to forward metadata to the output dataset")
 
 
-def loadSingleEnd(sample: CustomSample) -> Path:
-    sample.unzip()
-
-    for filePath in sample.path.iterdir():
-        if filePath.suffix != ".fastq":
-            continue
-
-        return filePath
-
-    raise ValueError(f">> [Microbiome analysis] Sample \"{sample.name}\" does not contain fastq files")
-
-
 def uploadTrimmedReads(sampleName: str, dataset: CustomDataset, forwardFile: Path, reverseFile: Optional[Path] = None):
     zipPath = folder_manager.temp / f"{sampleName}.zip"
     with ZipFile(zipPath, 'w', ZIP_DEFLATED) as archive:
@@ -46,27 +34,22 @@ def uploadTrimmedReads(sampleName: str, dataset: CustomDataset, forwardFile: Pat
 
 
 def trimSingleEnd(
-    samples: List[CustomSample],
+    sample: CustomSample,
     forwardAdapter: str,
     forwardReadsFolder: Path,
     outputDataset: CustomDataset
 ) -> None:
 
-    for sample in samples:
-        if sample.name.startswith("_metadata"):
-            forwardMetadata(sample, outputDataset)
-            continue
+    inputFile, sampleName = loadSingleEnd(sample)
+    logging.info(f">> [Microbiome analysis] Trimming adapter sequences for {inputFile.name}")
 
-        inputFile = loadSingleEnd(sample)
-        logging.info(f">> [Microbiome analysis] Trimming adapter sequences for {inputFile.name}")
-
-        outputFile = forwardReadsFolder / inputFile.name
-        cutadaptTrim(str(inputFile), str(outputFile), forwardAdapter)
-        uploadTrimmedReads(outputFile.stem, outputDataset, outputFile)
+    outputFile = forwardReadsFolder / inputFile.name
+    cutadaptTrim(str(inputFile), str(outputFile), forwardAdapter)
+    uploadTrimmedReads(sampleName, outputDataset, outputFile)
 
 
 def trimPairedEnd(
-    samples: List[CustomSample],
+    sample: CustomSample,
     forwardAdapter: str,
     reverseAdapter: str,
     forwardReadsFolder: Path,
@@ -74,18 +57,13 @@ def trimPairedEnd(
     outputDataset: CustomDataset
 ) -> None:
 
-    for sample in samples:
-        if sample.name.startswith("_metadata"):
-            forwardMetadata(sample, outputDataset)
-            continue
+    forwardFile, reverseFile, sampleName = loadPairedEnd(sample)
+    logging.info(f">> [Microbiome analysis] Trimming adapter sequences for {forwardFile.name} and {reverseFile.name}")
 
-        forwardFile, reverseFile, sampleName = loadPairedEnd(sample)
-        logging.info(f">> [Microbiome analysis] Trimming adapter sequences for {forwardFile.name} and {reverseFile.name}")
-
-        forwardOutput = forwardReadsFolder / forwardFile.name
-        reverseOutput = reverseReadsFolder / reverseFile.name
-        cutadaptTrim(str(forwardFile), str(forwardOutput), forwardAdapter, str(reverseFile), str(reverseOutput), reverseAdapter)
-        uploadTrimmedReads(sampleName, outputDataset, forwardFile, reverseFile)
+    forwardOutput = forwardReadsFolder / forwardFile.name
+    reverseOutput = reverseReadsFolder / reverseFile.name
+    cutadaptTrim(str(forwardFile), str(forwardOutput), forwardAdapter, str(reverseFile), str(reverseOutput), reverseAdapter)
+    uploadTrimmedReads(sampleName, outputDataset, forwardFile, reverseFile)
 
 
 def primerTrimming(dataset: CustomDataset, experiment: Experiment, pairedEnd: bool) -> CustomDataset:
@@ -106,22 +84,27 @@ def primerTrimming(dataset: CustomDataset, experiment: Experiment, pairedEnd: bo
     if outputDataset is None:
         raise RuntimeError(">> [Microbiome analysis] Failed to create coretex dataset")
 
-    if not pairedEnd:
-        trimSingleEnd(
-            dataset.samples,
-            forwardAdapter,
-            forwardReadsFolder,
-            outputDataset
-        )
-    else:
-        trimPairedEnd(
-            dataset.samples,
-            forwardAdapter,
-            reverseAdapter,
-            forwardReadsFolder,
-            reverseReadsFolder,
-            outputDataset
-        )
+    for sample in dataset.samples:
+        if sample.name.startswith("_metadata"):
+            forwardMetadata(sample, outputDataset)
+            continue
+
+        if not pairedEnd:
+            trimSingleEnd(
+                sample,
+                forwardAdapter,
+                forwardReadsFolder,
+                outputDataset
+            )
+        else:
+            trimPairedEnd(
+                sample,
+                forwardAdapter,
+                reverseAdapter,
+                forwardReadsFolder,
+                reverseReadsFolder,
+                outputDataset
+            )
 
     outputDataset.refresh()
     return outputDataset
