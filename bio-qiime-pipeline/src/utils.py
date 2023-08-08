@@ -87,7 +87,7 @@ def isPairedEnd(dataset: CustomDataset) -> bool:
 def isGzCompressed(dataset: CustomDataset) -> bool:
     for sample in dataset.samples:
         sample.unzip()
-        if len(list(sample.path.rglob("*.fastq.gz"))) > 0:
+        if len(list(sample.path.glob("*.fastq.gz"))) > 0:
             return True
 
     return False

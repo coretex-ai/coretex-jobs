@@ -41,7 +41,7 @@ def createManifestSingle(samples: List[CustomSample], manifestPath: Path) -> Pat
         csv.writer(manifestFile, delimiter = "\t").writerow(["sample-id", "absolute-filepath"])
 
     for sample in samples:
-        fastqPath = loadSingleEnd(sample)
+        fastqPath, sampleId = loadSingleEnd(sample)
         sampleId = fastqPath.stem.split("_")[0]
 
         with manifestPath.open("a") as manifestFile:
@@ -68,7 +68,7 @@ def dumpGzFiles(samples: List[CustomSample], outFolder: Path) ->  None:
             continue
 
         for filePath in sample.path.glob("*.fastq.gz"):
-            outFolder.joinpath(filePath.name).symlink_to(filePath)
+            outFolder.joinpath(filePath.name).link_to(filePath)
 
 
 def importDemultiplexedSamples(
