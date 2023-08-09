@@ -8,7 +8,6 @@ library(reticulate)
 use_condaenv(condaEnvironmentPath)
 
 os <- import("os")
-logging <- import("logging")
 ctxProject <- import("coretex.project")
 ctxFolderManager <- import("coretex.folder_manager")
 
@@ -22,9 +21,8 @@ main <- function(experiment) {
     mean <- experiment$parameters[["mean"]]
     sd <- experiment$parameters[["sd"]]
 
-    # Python logging module is used to log logs in Coretex.ai Experiment console
-    logging$info(">> [R Example] Plotting normal distribution...")
-    logging$info(sprintf(">> [R Example] Mean value: %.2f, Standard deviation value: %.2f", mean, sd))
+    print(">> [R Example] Plotting normal distribution...")
+    print(sprintf(">> [R Example] Mean value: %.2f, Standard deviation value: %.2f", mean, sd))
 
     png(plotPath)
 
@@ -42,9 +40,9 @@ main <- function(experiment) {
     # Experiment.createArtifact is used to store any kind of file to
     # Coretex.ai Experiment artifacts
     if (is.null(experiment$createArtifact(plotPath, "plot.png"))) {
-        logging$info(">> [R Example] Failed to create Artifact with name \"plot.png\"")
+        print(">> [R Example] Failed to create Artifact with name \"plot.png\"")
     } else {
-        logging$info(">> [R Example] Artifact with name \"plot.png\" created")
+        print(">> [R Example] Artifact with name \"plot.png\" created")
     }
 }
 
