@@ -8,14 +8,6 @@ from src.demultiplexed import importDemultiplexedSamples
 
 def main(experiment: Experiment[CustomDataset]):
     experiment.dataset.download()
-    multiplexed = True
-
-    fastqSamples = ctx_qiime2.getFastqMPSamples(experiment.dataset)
-    if len(fastqSamples) == 0:
-        fastqSamples = ctx_qiime2.getFastqDPSamples(experiment.dataset)
-        multiplexed = False
-        if len(fastqSamples) == 0:
-            raise ValueError(">> [Workspace] Dataset has 0 fastq samples")
 
     outputDir = folder_manager.createTempFolder("qiime_output")
     outputDataset = CustomDataset.createDataset(
@@ -26,11 +18,10 @@ def main(experiment: Experiment[CustomDataset]):
     if outputDataset is None:
         raise ValueError(">> [Workspace] Failed to create output dataset")
 
-    if multiplexed:
-        demultiplexing(fastqSamples, experiment, outputDataset, outputDir)
+    if experiment.parameters["barcodeColumn"]:
+        demultiplexing(experiment.dataset, experiment, outputDataset, outputDir)
     else:
-        metadataSample = ctx_qiime2.getMetadataSample(experiment.dataset)
-        importDemultiplexedSamples(fastqSamples, metadataSample, experiment, outputDataset, outputDir)
+        importDemultiplexedSamples(experiment.dataset, experiment, outputDataset, outputDir)
 
 
 if __name__ == "__main__":
