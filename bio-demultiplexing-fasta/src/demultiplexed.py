@@ -67,7 +67,7 @@ def dumpGzFiles(samples: List[CustomSample], outFolder: Path) ->  None:
             continue
 
         for filePath in sample.path.glob("*.fastq.gz"):
-            outFolder.joinpath(filePath.name).link_to(filePath)
+            filePath.link_to(outFolder / filePath.name)
 
 
 def loadSingleEnd(sample: CustomSample) -> Tuple[Path, str]:
