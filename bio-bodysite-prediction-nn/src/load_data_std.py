@@ -98,7 +98,7 @@ def loadDataStd(
         classDistribution,
         classDistributionSavePath,
         "body_site_histogram.png",
-        False,
+        True,
         "Body Site",
         "Number of samples",
         "Class distribution"
