@@ -250,39 +250,48 @@ def processSample(
     # Fourth step:
     # Exploring microbial community composition in the context of sample metadata using ordination
     logging.info(">> [Microbiome analysis] Generating unweighted_unifrac_pcoa_results.qza")
-    emperorPlot(
-        coreMetricsSample.joinPath("unweighted_unifrac_pcoa_results.qza"),
-        metadataPath,
-        index,
-        outputDataset.id,
-        sampleOutputDir / "unweighted-unifrac-emperor-days-since-experiment-start.qzv",
-        experiment
-    )
+    try:
+        emperorPlot(
+            coreMetricsSample.joinPath("unweighted_unifrac_pcoa_results.qza"),
+            metadataPath,
+            index,
+            outputDataset.id,
+            sampleOutputDir / "unweighted-unifrac-emperor-days-since-experiment-start.qzv",
+            experiment
+        )
+    except CommandException:
+        logging.error(">> [Microbiome analysis] Failed to create unweighted_unifrac_pcoa_results.qza")
 
     logging.info(">> [Microbiome analysis] Generating bray_curtis_pcoa_results.qza")
-    emperorPlot(
-        coreMetricsSample.joinPath("bray_curtis_pcoa_results.qza"),
-        metadataPath,
-        index,
-        outputDataset.id,
-        sampleOutputDir / "bray-curtis-emperor-days-since-experiment-start.qzv",
-        experiment
-    )
+    try:
+        emperorPlot(
+            coreMetricsSample.joinPath("bray_curtis_pcoa_results.qza"),
+            metadataPath,
+            index,
+            outputDataset.id,
+            sampleOutputDir / "bray-curtis-emperor-days-since-experiment-start.qzv",
+            experiment
+        )
+    except CommandException:
+        logging.error(">> [Microbiome analysis] Failed to create bray_curtis_pcoa_results.qza")
 
     # Fifth step:
     # This visualizer computes one or more alpha diversity metrics at multiple sampling depths,
     # in steps between 1 and the value provided as --p-max-depth
     logging.info(">> [Microbiome analysis] Generating table.qza")
-    diversityAlphaRarefaction(
-        denoisedSample.joinPath("table.qza"),
-        sample.joinPath("rooted-tree.qza"),
-        experiment.parameters["maxDepth"],
-        metadataPath,
-        index,
-        outputDataset.id,
-        sampleOutputDir / "alpha-rarefaction.qzv",
-        experiment
-    )
+    try:
+        diversityAlphaRarefaction(
+            denoisedSample.joinPath("table.qza"),
+            sample.joinPath("rooted-tree.qza"),
+            experiment.parameters["maxDepth"],
+            metadataPath,
+            index,
+            outputDataset.id,
+            sampleOutputDir / "alpha-rarefaction.qzv",
+            experiment
+        )
+    except CommandException:
+        logging.error(">> [Microbiome analysis] Failed to create table.qza")
 
 
 def alphaBetaDiversityAnalysis(
