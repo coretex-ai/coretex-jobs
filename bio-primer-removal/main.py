@@ -1,15 +1,15 @@
-from typing import List, Tuple, Optional
+from typing import Tuple, Optional
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 
 import logging
 
-from coretex import Experiment, CustomDataset, CustomSample, folder_manager
+from coretex import Experiment, CustomDataset, CustomSample, folder_manager, SequenceDataset, SequenceSample
 from coretex.project import initializeProject
 from coretex.bioinformatics import cutadaptTrim, isPairedEnd
 
 
-def forwardMetadata(sample: CustomSample, outputDataset: CustomDataset) -> None:
+def forwardMetadata(sample: CustomSample, outputDataset: SequenceDataset) -> None:
     sample.unzip()
 
     metadataZip = folder_manager.temp / "_metadata.zip"
@@ -21,33 +21,7 @@ def forwardMetadata(sample: CustomSample, outputDataset: CustomDataset) -> None:
         raise RuntimeError(">> [Microbiome analysis] Failed to forward metadata to the output dataset")
 
 
-def loadSingleEnd(sample: CustomSample) -> Tuple[Path, str]:
-    sample.unzip()
-
-    filePathList = list(sample.path.glob("*.fastq*"))
-    if len(filePathList) == 1:
-        filePath = filePathList[0]
-        return filePath, filePath.name.split("_")[0]
-
-    raise ValueError(f">> [Microbiome analysis] Sample \"{sample.name}\" must contain exactly one fastq file")
-
-
-def loadPairedEnd(sample: CustomSample) -> Tuple[Path, Path, str]:
-    sample.unzip()
-
-    forwardPathList = list(sample.path.glob("*_R1_*.fastq*"))
-    reversePathList = list(sample.path.glob("*_R2_*.fastq*"))
-
-    if len(forwardPathList) != 1 or len(reversePathList) != 1:
-        raise ValueError(f">> [Microbiome analysis] Invalid paired-end sample: {sample.name}. Must contain 2 files, one with \"_R1_\" and another with \"_R2_\" in name")
-
-    forwardPath = forwardPathList[0]
-    reversePath = reversePathList[0]
-
-    return forwardPath, reversePath, forwardPath.name.split("_")[0]
-
-
-def uploadTrimmedReads(sampleName: str, dataset: CustomDataset, forwardFile: Path, reverseFile: Optional[Path] = None):
+def uploadTrimmedReads(sampleName: str, dataset: SequenceDataset, forwardFile: Path, reverseFile: Optional[Path] = None):
     zipPath = folder_manager.temp / f"{sampleName}.zip"
     with ZipFile(zipPath, 'w', ZIP_DEFLATED) as archive:
         archive.write(forwardFile, forwardFile.name)
@@ -59,63 +33,64 @@ def uploadTrimmedReads(sampleName: str, dataset: CustomDataset, forwardFile: Pat
 
 
 def trimSingleEnd(
-    sample: CustomSample,
+    sample: SequenceSample,
     forwardAdapter: str,
     forwardReadsFolder: Path,
-    outputDataset: CustomDataset
+    outputDataset: SequenceDataset
 ) -> None:
 
-    inputFile, sampleName = loadSingleEnd(sample)
+    inputFile = sample.sequencePath
     logging.info(f">> [Microbiome analysis] Trimming adapter sequences for {inputFile.name}")
 
     outputFile = forwardReadsFolder / inputFile.name
     cutadaptTrim(str(inputFile), str(outputFile), forwardAdapter)
-    uploadTrimmedReads(sampleName, outputDataset, outputFile)
+    uploadTrimmedReads(inputFile.name.split("_")[0], outputDataset, outputFile)
 
 
 def trimPairedEnd(
-    sample: CustomSample,
+    sample: SequenceSample,
     forwardAdapter: str,
     reverseAdapter: str,
     forwardReadsFolder: Path,
     reverseReadsFolder: Path,
-    outputDataset: CustomDataset
+    outputDataset: SequenceDataset
 ) -> None:
 
-    forwardFile, reverseFile, sampleName = loadPairedEnd(sample)
+    forwardFile = sample.forwardPath
+    reverseFile = sample.reversePath
     logging.info(f">> [Microbiome analysis] Trimming adapter sequences for {forwardFile.name} and {reverseFile.name}")
 
     forwardOutput = forwardReadsFolder / forwardFile.name
     reverseOutput = reverseReadsFolder / reverseFile.name
     cutadaptTrim(str(forwardFile), str(forwardOutput), forwardAdapter, str(reverseFile), str(reverseOutput), reverseAdapter)
-    uploadTrimmedReads(sampleName, outputDataset, forwardFile, reverseFile)
+    uploadTrimmedReads(forwardFile.name.split("_")[0], outputDataset, forwardFile, reverseFile)
 
 
-def main(experiment: Experiment[CustomDataset]) -> None:
+def main(experiment: Experiment[SequenceDataset]) -> None:
     forwardAdapter = experiment.parameters["forwardAdapter"]
     reverseAdapter = experiment.parameters["reverseAdapter"]
 
     dataset = experiment.dataset
-    pairedEnd = isPairedEnd(dataset)
+    pairedEnd = dataset.isPairedEnd()
 
     if forwardAdapter is None:
-        forwardAdapter = ""
+        forwardAdapter = "X"
 
     if reverseAdapter is None:
-        reverseAdapter = ""
+        reverseAdapter = "X"
 
     forwardReadsFolder = folder_manager.createTempFolder("forwardReads")
     if pairedEnd:
         reverseReadsFolder = folder_manager.createTempFolder("revereseReads")
 
-    outputDataset = CustomDataset.createDataset(f"{experiment.id} - Cutadapt Output", experiment.spaceId)
+    outputDataset = SequenceDataset.createDataset(f"{experiment.id} - Cutadapt Output", experiment.spaceId)
     if outputDataset is None:
         raise RuntimeError(">> [Microbiome analysis] Failed to create coretex dataset")
 
+    forwardMetadata(dataset.metadata, outputDataset)
+
     for sample in dataset.samples:
-        if sample.name.startswith("_metadata"):
-            forwardMetadata(sample, outputDataset)
-            continue
+        sample.unzip()
 
         if not pairedEnd:
             trimSingleEnd(
@@ -136,4 +111,4 @@ def main(experiment: Experiment[CustomDataset]) -> None:
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    initializeProject(main, SequenceDataset)
