@@ -101,7 +101,7 @@ def processSample(
 
 def demultiplexing(
     dataset: CustomDataset,
-    experiment: Experiment[CustomDataset],
+    experiment: Experiment,
     outputDataset: CustomDataset,
     outputDir: Path
 ):

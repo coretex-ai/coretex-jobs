@@ -1,12 +1,11 @@
-from coretex import CustomDataset, Experiment, folder_manager
+from coretex import SequenceDataset, CustomDataset, Experiment, folder_manager
 from coretex.project import initializeProject
-from coretex.bioinformatics import ctx_qiime2
 
 from src.multiplexed import demultiplexing
 from src.demultiplexed import importDemultiplexedSamples
 
 
-def main(experiment: Experiment[CustomDataset]):
+def main(experiment: Experiment[SequenceDataset]):
     experiment.dataset.download()
 
     outputDir = folder_manager.createTempFolder("qiime_output")
@@ -19,10 +18,15 @@ def main(experiment: Experiment[CustomDataset]):
         raise ValueError(">> [Workspace] Failed to create output dataset")
 
     if experiment.parameters["barcodeColumn"]:
-        demultiplexing(experiment.dataset, experiment, outputDataset, outputDir)
+        demultiplexing(CustomDataset.fetchById(experiment.dataset.id), experiment, outputDataset, outputDir)
     else:
-        importDemultiplexedSamples(experiment.dataset, experiment, outputDataset, outputDir)
+        importDemultiplexedSamples(
+            experiment.dataset,
+            experiment,
+            outputDataset,
+            outputDir
+        )
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    initializeProject(main, SequenceDataset)
