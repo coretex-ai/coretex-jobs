@@ -63,7 +63,7 @@ def loadDataStd(dataset: CustomDataset, experiment: Experiment[CustomDataset]) -
         classDistribution,
         classDistributionSavePath,
         "body_site_histogram.png",
-        False,
+        True,
         "Body Site",
         "Number of samples",
         "Class distribution"
