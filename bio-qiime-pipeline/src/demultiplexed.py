@@ -42,12 +42,11 @@ def createManifestSingle(samples: List[SequenceSample], manifestPath: Path) -> P
     with manifestPath.open("w") as manifestFile:
         csv.writer(manifestFile, delimiter = "\t").writerow(["sample-id", "absolute-filepath"])
 
-    for sample in samples:
-        sample.unzip()
-        fastqPath = sample.sequencePath
+    with manifestPath.open("a") as manifestFile:
+        for sample in samples:
+            sample.unzip()
 
-        with manifestPath.open("a") as manifestFile:
-            csv.writer(manifestFile, delimiter = "\t").writerow([fastqPath.stem, fastqPath])
+            csv.writer(manifestFile, delimiter = "\t").writerow([sample.sequencePath.stem, sample.sequencePath])
 
     return manifestPath
 
@@ -56,12 +55,12 @@ def createManifestPaired(samples: List[SequenceSample], manifestPath: Path) -> P
     with manifestPath.open("w") as manifestFile:
         csv.writer(manifestFile, delimiter = "\t").writerow(["sample-id", "forward-absolute-filepath", "reverse-absolute-filepath"])
 
-    for sample in samples:
-        sample.unzip()
-        forwardPath = sample.forwardPath
-        reversePath = sample.reversePath
+    with manifestPath.open("a") as manifestFile:
+        for sample in samples:
+            sample.unzip()
 
-        with manifestPath.open("a") as manifestFile:
+            forwardPath = sample.forwardPath
+            reversePath = sample.reversePath
             csv.writer(manifestFile, delimiter = "\t").writerow([forwardPath.name.split("_")[0], forwardPath, reversePath])
 
     return manifestPath

@@ -69,6 +69,8 @@ def primerTrimming(dataset: SequenceDataset, experiment: Experiment, pairedEnd: 
     forwardAdapter = experiment.parameters["forwardAdapter"]
     reverseAdapter = experiment.parameters["reverseAdapter"]
 
+    # In case no adapter in entered, "X" will act as placeholder as no
+    # sequence should start with the letter X
     if forwardAdapter is None:
         forwardAdapter = "X"
 

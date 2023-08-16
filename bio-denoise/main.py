@@ -19,7 +19,7 @@ def isPairedEnd(demuxSample: CustomSample):
     demuxTemp = folder_manager.createTempFolder("demux")
     qzaPath = list(demuxSample.path.iterdir())[0]
 
-    with ZipFile(BytesIO(qzaPath.read_bytes()), "r") as qzaFile:
+    with ZipFile(qzaPath, "r") as qzaFile:
         qzaFile.extractall(demuxTemp)
 
     metadataPath = list(demuxTemp.rglob("*metadata.yaml"))[0]
