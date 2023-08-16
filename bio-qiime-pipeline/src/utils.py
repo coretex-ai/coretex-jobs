@@ -2,8 +2,9 @@ from typing import Optional, Tuple
 from pathlib import Path
 
 import csv
+import logging
 
-from coretex import CustomSample, CustomDataset
+from coretex import CustomSample, CustomDataset, Experiment, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
 
@@ -92,3 +93,35 @@ def isGzCompressed(dataset: CustomDataset) -> bool:
             return True
 
     return False
+
+
+def columnNamePresent(metadataPath: Path, columnName: str) -> bool:
+    with metadataPath.open("r") as metadata:
+        return columnName in list(csv.reader(metadata, delimiter = "\t"))[0]
+
+
+def convertMetadata(metadataPath: Path) -> Path:
+    newMetadataPath = folder_manager.temp / f"{metadataPath.stem}.tsv"
+
+    if metadataPath.suffix != ".csv":
+        logging.warning(">> [Microbiome Analysis] Metadata has to be either tsv or csv")
+        return metadataPath.rename(newMetadataPath)
+
+    with metadataPath.open("r") as inputMetadata, newMetadataPath.open("w") as outputMetadata:
+        outputTsv = csv.writer(outputMetadata, delimiter = "\t")
+
+        for i, row in enumerate(csv.reader(inputMetadata)):
+            if i == 0:
+                row[0] = "sample-id"
+
+            outputTsv.writerow(row)
+
+    return newMetadataPath
+
+
+def getMetadata(sample: CustomSample, metadataFileNme: str) -> Path:
+    metadataPath = sample.joinPath(metadataFileNme)
+    if metadataPath.suffix != "tsv":
+        metadataPath = metadataPath.parent / f"{metadataPath.stem}.tsv"
+
+    return metadataPath

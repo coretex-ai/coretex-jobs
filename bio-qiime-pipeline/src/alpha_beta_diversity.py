@@ -7,6 +7,8 @@ import logging
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.bioinformatics import CommandException, ctx_qiime2
 
+from .utils import columnNamePresent, getMetadata
+
 
 def diversityCoreMetricsPhylogeneticSample(
     sample: CustomSample,
@@ -155,7 +157,11 @@ def processSample(
     sampleOutputDir = outputDir / str(sample.id)
     sampleOutputDir.mkdir()
 
-    metadataPath = importedSample.joinPath(experiment.parameters["metadataFileName"])
+    metadataPath = getMetadata(importedSample, experiment.parameters["metadataFileName"])
+    targetTypeColumn = experiment.parameters["targetTypeColumn"]
+
+    if not columnNamePresent(metadataPath, targetTypeColumn):
+        logging.error(f">> [Microbiome analysis] targetTypeColumn: {targetTypeColumn}, not a column name in the metadata file. Assocciated")
 
     # First step:
     # Apply the core-metrics-phylogenetic method, which rarefies a
@@ -225,7 +231,7 @@ def processSample(
         diversityBetaGroupSignificance(
             coreMetricsSample.joinPath("unweighted_unifrac_distance_matrix.qza"),
             metadataPath,
-            "body-site",
+            targetTypeColumn,
             index,
             outputDataset.id,
             sampleOutputDir / "unweighted-unifrac-body-site-significance.qzv",
@@ -238,7 +244,7 @@ def processSample(
         diversityBetaGroupSignificance(
             coreMetricsSample.joinPath("unweighted_unifrac_distance_matrix.qza"),
             metadataPath,
-            "body-site",
+            targetTypeColumn,
             index,
             outputDataset.id,
             sampleOutputDir / "unweighted-unifrac-subject-group-significance.qzv",
