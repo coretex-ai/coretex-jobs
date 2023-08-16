@@ -4,6 +4,8 @@ from zipfile import ZipFile
 from coretex import CustomDataset, CustomSample, Experiment, cache, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
+from .utils import getMetadata
+
 
 def featureClassifierClassifySklearnSample(
     sample: CustomSample,
@@ -79,7 +81,7 @@ def processSample(
     ctx_qiime2.taxaBarplot(
         str(sample.joinPath("table.qza")),
         str(taxonomySample.joinPath("taxonomy.qza")),
-        str(importedSample.joinPath(experiment.parameters["metadataFileName"])),
+        str(getMetadata(importedSample, experiment.parameters["metadataFileName"])),
         str(taxaBarBlotsPath)
     )
 

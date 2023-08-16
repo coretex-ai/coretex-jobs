@@ -8,7 +8,7 @@ import logging
 from coretex import CustomDataset, SequenceDataset, CustomSample, SequenceSample, Experiment, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
-from .utils import summarizeSample
+from .utils import summarizeSample, convertMetadata
 
 
 def importSample(inputPath: Path, sequenceType: str, inputFormat: str, outputDir: Path) -> Path:
@@ -28,9 +28,12 @@ def importSample(inputPath: Path, sequenceType: str, inputFormat: str, outputDir
     return demuxZipPath
 
 
-def importMetadata(metadata: CustomSample, outputDir: Path) -> Path:
+def importMetadata(metadata: CustomSample, outputDir: Path, metadataFileName: str) -> Path:
     metadata.unzip()
+
     metadataZipPath = outputDir / "metadata.zip"
+    metadataPath = metadata.path / metadataFileName
+    metadataPath = convertMetadata(metadataPath)
 
     with ZipFile(metadataZipPath, "w") as metadataFile:
         metadataFile.write(Path(metadata.path) / "metadata.tsv", "metadata.tsv")
@@ -97,7 +100,7 @@ def importDemultiplexedSamples(
     demuxZipPath = importSample(inputPath, sequenceType, inputFormat, outputDir)
     demuxSample = ctx_qiime2.createSample("0-demux", outputDataset.id, demuxZipPath, experiment, "Step 1: Demultiplexing")
 
-    metadataZipPath = importMetadata(dataset.metadata, outputDir)
+    metadataZipPath = importMetadata(dataset.metadata, outputDir, experiment.parameters["metadataFileName"])
     ctx_qiime2.createSample("0-import", outputDataset.id, metadataZipPath, experiment, "Step 1: Demultiplexing")
 
     demuxSample.download()
