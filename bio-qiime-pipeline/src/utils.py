@@ -10,6 +10,8 @@ from coretex.bioinformatics import ctx_qiime2
 
 FORWARD_SUMMARY_NAME = "forward-seven-number-summaries.tsv"
 REVERSE_SUMMARY_NAME = "reverse-seven-number-summaries.tsv"
+CASEINSENSITIVE_NAMES = ["id", "sampleid", "sample id", "sample-id", "featureid" ,"feature id", "feature-id"]
+CASESENSITIVE_NAMES = ["#SampleID" , "#Sample ID", "#OTUID", "#OTU ID", "sample_name"]
 
 
 def summarizeSample(sample: CustomSample, outputDir: Path) -> Path:
@@ -104,18 +106,29 @@ def columnNamePresent(metadataPath: Path, columnName: str) -> bool:
 
 
 def convertMetadata(metadataPath: Path) -> Path:
-    newMetadataPath = folder_manager.temp / f"{metadataPath.stem}.tsv"
-
-    if metadataPath.suffix != ".csv":
+    if metadataPath.suffix != ".csv" and metadataPath.suffix != ".tsv":
         raise ValueError(">> [Microbiome Analysis] Metadata has to be either tsv or csv")
 
-    with metadataPath.open("r") as inputMetadata, newMetadataPath.open("w") as outputMetadata:
-        outputTsv = csv.writer(outputMetadata, delimiter = "\t")
+    if metadataPath.suffix == ".csv":
+        newMetadataPath = folder_manager.temp / f"{metadataPath.stem}.tsv"
 
-        for row in enumerate(csv.reader(inputMetadata)):
-            outputTsv.writerow(row)
+        with metadataPath.open("r") as inputMetadata, newMetadataPath.open("w") as outputMetadata:
+            outputTsv = csv.writer(outputMetadata, delimiter = "\t")
 
-    return newMetadataPath
+            for row in csv.reader(inputMetadata):
+                outputTsv.writerow(row)
+
+        metadataPath = newMetadataPath
+
+    with metadataPath.open("r") as metadata:
+        for row in csv.reader(metadata, delimiter = "\t"):
+            break
+
+        for columnName in row:
+            if columnName.lower() in CASEINSENSITIVE_NAMES or columnName in CASESENSITIVE_NAMES:
+                return metadataPath
+
+    raise ValueError(f">> [Microbiome Analysis] Sample ID column not found. Recognized column names are: (case insensitive) - {CASEINSENSITIVE_NAMES}, (case sensitive) - {CASESENSITIVE_NAMES}")
 
 
 def getMetadata(sample: CustomSample, metadataFileNme: str) -> Path:

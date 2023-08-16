@@ -31,9 +31,7 @@ def importSample(inputPath: Path, sequenceType: str, inputFormat: str, outputDir
 def importMetadata(metadata: CustomSample, outputDir: Path, metadataFileName: str) -> Path:
     metadataZipPath = outputDir / "metadata.zip"
     metadataPath = metadata.path / metadataFileName
-
-    if metadataPath.suffix != ".tsv":
-        metadataPath = convertMetadata(metadataPath)
+    metadataPath = convertMetadata(metadataPath)
 
     with ZipFile(metadataZipPath, "w") as metadataFile:
         metadataFile.write(Path(metadata.path) / "metadata.tsv", "metadata.tsv")
