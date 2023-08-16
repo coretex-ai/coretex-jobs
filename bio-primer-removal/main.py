@@ -10,14 +10,7 @@ from coretex.bioinformatics import cutadaptTrim, isPairedEnd
 
 
 def forwardMetadata(sample: CustomSample, outputDataset: SequenceDataset) -> None:
-    sample.unzip()
-
-    metadataZip = folder_manager.temp / "_metadata.zip"
-    with ZipFile(metadataZip, 'w', ZIP_DEFLATED) as archive:
-        for path in sample.path.iterdir():
-            archive.write(path, path.name)
-
-    if CustomSample.createCustomSample("_metadata", outputDataset.id, metadataZip) is None:
+    if CustomSample.createCustomSample("_metadata", outputDataset.id, sample.zipPath) is None:
         raise RuntimeError(">> [Microbiome analysis] Failed to forward metadata to the output dataset")
 
 
