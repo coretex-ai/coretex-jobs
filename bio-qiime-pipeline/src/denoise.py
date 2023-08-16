@@ -7,7 +7,7 @@ import logging
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
-from .utils import determineTruncLen
+from .utils import determineTruncLen, getMetadata
 
 
 def dada2DenoiseSingleSample(
@@ -146,7 +146,7 @@ def processSample(
     # Summarize how many sequences are associated with each sample and with each feature,
     # histograms of those distributions, and some related summary statistics
     logging.info(">> [Microbiome analysis] Creating summarization")
-    metadataPath = Path(importedSample.path) / experiment.parameters["metadataFileName"]
+    metadataPath = getMetadata(importedSample, experiment.parameters["metadataFileName"])
     featureTableSummaryPath = featureTableSummarizeSample(denoisedSample, metadataPath, sampleOutputDir)
 
     ctx_qiime2.createSample(f"{index}-feature-table-summarize", outputDataset.id, featureTableSummaryPath, experiment, "Step 2: Denoising")

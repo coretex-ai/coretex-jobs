@@ -8,7 +8,7 @@ import logging
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
-from .utils import summarizeSample, loadSingleEnd, loadPairedEnd, isGzCompressed
+from .utils import summarizeSample, loadSingleEnd, loadPairedEnd, isGzCompressed, convertMetadata
 
 
 def importSample(inputPath: Path, sequenceType: str, inputFormat: str, outputDir: Path) -> Path:
@@ -28,8 +28,11 @@ def importSample(inputPath: Path, sequenceType: str, inputFormat: str, outputDir
     return demuxZipPath
 
 
-def importMetadata(metadata: CustomSample, outputDir: Path) -> Path:
+def importMetadata(metadata: CustomSample, outputDir: Path, metadataFileName: str) -> Path:
     metadataZipPath = outputDir / "metadata.zip"
+    metadataPath = metadata.path / metadataFileName
+    metadataPath = convertMetadata(metadataPath)
+
     with ZipFile(metadataZipPath, "w") as metadataFile:
         metadataFile.write(Path(metadata.path) / "metadata.tsv", "metadata.tsv")
 
@@ -77,7 +80,9 @@ def importDemultiplexedSamples(
 ) -> CustomDataset:
 
     logging.info(">> [Microbiome analysis] Preparing data for import into QIIME2 format")
-    metadata = ctx_qiime2.getMetadataSample(experiment.dataset)
+    for sample in dataset.samples:
+        if sample.name.startswith("_metadata"):
+            metadata = sample
 
     outputDir = folder_manager.createTempFolder("import_output")
     outputDataset = CustomDataset.createDataset(
@@ -115,7 +120,7 @@ def importDemultiplexedSamples(
     demuxZipPath = importSample(inputPath, sequenceType, inputFormat, outputDir)
     demuxSample = ctx_qiime2.createSample("0-demux", outputDataset.id, demuxZipPath, experiment, "Step 1: Demultiplexing")
 
-    metadataZipPath = importMetadata(metadata, outputDir)
+    metadataZipPath = importMetadata(metadata, outputDir, experiment.parameters["metadataFileName"])
     ctx_qiime2.createSample("0-import", outputDataset.id, metadataZipPath, experiment, "Step 1: Demultiplexing")
 
     demuxSample.download()
