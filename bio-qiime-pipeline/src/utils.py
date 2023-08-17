@@ -2,15 +2,17 @@ from typing import Optional, Tuple
 from pathlib import Path
 
 import csv
-import logging
+import pandas as pd
 
-from coretex import CustomSample, CustomDataset, Experiment, folder_manager
+from coretex import CustomSample, CustomDataset, folder_manager
 from coretex.bioinformatics import ctx_qiime2
+
+import chardet
 
 
 FORWARD_SUMMARY_NAME = "forward-seven-number-summaries.tsv"
 REVERSE_SUMMARY_NAME = "reverse-seven-number-summaries.tsv"
-CASEINSENSITIVE_NAMES = ["id", "sampleid", "sample id", "sample-id", "featureid" ,"feature id", "feature-id"]
+CASEINSENSITIVE_NAMES = ["id", "sampleid", "sample id", "sample-id", "featureid" ,"feature id", "feature-id", "sample_id", "sample.id"]
 CASESENSITIVE_NAMES = ["#SampleID" , "#Sample ID", "#OTUID", "#OTU ID", "sample_name"]
 
 
@@ -105,30 +107,36 @@ def columnNamePresent(metadataPath: Path, columnName: str) -> bool:
     raise RuntimeError(">> [Microbiome Analysis] Metadata file is empty")
 
 
+def detectFileEncoding(path: Path) -> Optional[str]:
+    with path.open("rb") as file:
+        return chardet.detect(file.read(10))["encoding"]
+
+
 def convertMetadata(metadataPath: Path) -> Path:
+    newMetadataPath = folder_manager.temp / f"{metadataPath.stem}.tsv"
     if metadataPath.suffix != ".csv" and metadataPath.suffix != ".tsv":
         raise ValueError(">> [Microbiome Analysis] Metadata has to be either tsv or csv")
 
     if metadataPath.suffix == ".csv":
-        newMetadataPath = folder_manager.temp / f"{metadataPath.stem}.tsv"
+        metadata = pd.read_csv(metadataPath, encoding = detectFileEncoding(metadataPath))
+    else:
+        metadata = pd.read_csv(metadataPath, encoding = detectFileEncoding(metadataPath), delimiter = "\t")
 
-        with metadataPath.open("r") as inputMetadata, newMetadataPath.open("w") as outputMetadata:
-            outputTsv = csv.writer(outputMetadata, delimiter = "\t")
-
-            for row in csv.reader(inputMetadata):
-                outputTsv.writerow(row)
-
-        metadataPath = newMetadataPath
-
-    with metadataPath.open("r") as metadata:
-        for row in csv.reader(metadata, delimiter = "\t"):
+    for i, columnName in enumerate(metadata.columns):
+        if columnName.lower() in CASEINSENSITIVE_NAMES or columnName in CASESENSITIVE_NAMES:
             break
 
-        for columnName in row:
-            if columnName.lower() in CASEINSENSITIVE_NAMES or columnName in CASESENSITIVE_NAMES:
-                return metadataPath
+        raise ValueError(f">> [Microbiome Analysis] Sample ID column not found. Recognized column names are: (case insensitive) - {CASEINSENSITIVE_NAMES}, (case sensitive) - {CASESENSITIVE_NAMES}")
 
-    raise ValueError(f">> [Microbiome Analysis] Sample ID column not found. Recognized column names are: (case insensitive) - {CASEINSENSITIVE_NAMES}, (case sensitive) - {CASESENSITIVE_NAMES}")
+    metadata.columns.values[i] = "sampleid"
+    for sampleId in metadata["sampleid"]:
+        sampleIdSplit = str(sampleId).split("_")
+        if len(sampleIdSplit) > 1:
+            metadata["sampleid"].replace(sampleId, sampleIdSplit[0], inplace = True)
+
+    metadata.to_csv(newMetadataPath, "\t", index = False)
+
+    return newMetadataPath
 
 
 def getMetadata(sample: CustomSample, metadataFileNme: str) -> Path:
