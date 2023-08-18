@@ -1,11 +1,13 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict
 from pathlib import Path
 
+import logging
 import csv
 import pandas as pd
 
-from coretex import CustomSample, CustomDataset, folder_manager
+from coretex import CustomSample, CustomDataset, folder_manager, Experiment
 from coretex.bioinformatics import ctx_qiime2
+from coretex.utils.hash import hashCacheName
 
 import chardet
 
@@ -46,7 +48,7 @@ def determineTruncLen(sample: CustomSample, forward: bool) -> int:
             break
 
     if not truncLen:
-        raise RuntimeError(">> [Microbiome Analysis] Forward read truncLen could not be determined automatically")
+        raise RuntimeError(">> [Microbiome analysis] Forward read truncLen could not be determined automatically")
 
     return truncLen
 
@@ -104,7 +106,7 @@ def columnNamePresent(metadataPath: Path, columnName: str) -> bool:
         for row in csv.reader(metadata, delimiter = "\t"):
             return columnName in row
 
-    raise RuntimeError(">> [Microbiome Analysis] Metadata file is empty")
+    raise RuntimeError(">> [Microbiome analysis] Metadata file is empty")
 
 
 def detectFileEncoding(path: Path) -> Optional[str]:
@@ -115,7 +117,7 @@ def detectFileEncoding(path: Path) -> Optional[str]:
 def convertMetadata(metadataPath: Path) -> Path:
     newMetadataPath = folder_manager.temp / f"{metadataPath.stem}.tsv"
     if metadataPath.suffix != ".csv" and metadataPath.suffix != ".tsv":
-        raise ValueError(">> [Microbiome Analysis] Metadata has to be either tsv or csv")
+        raise ValueError(">> [Microbiome analysis] Metadata has to be either tsv or csv")
 
     if metadataPath.suffix == ".csv":
         metadata = pd.read_csv(metadataPath, encoding = detectFileEncoding(metadataPath))
@@ -126,7 +128,7 @@ def convertMetadata(metadataPath: Path) -> Path:
         if columnName.lower() in CASEINSENSITIVE_NAMES or columnName in CASESENSITIVE_NAMES:
             break
 
-        raise ValueError(f">> [Microbiome Analysis] Sample ID column not found. Recognized column names are: (case insensitive) - {CASEINSENSITIVE_NAMES}, (case sensitive) - {CASESENSITIVE_NAMES}")
+        raise ValueError(f">> [Microbiome analysis] Sample ID column not found. Recognized column names are: (case insensitive) - {CASEINSENSITIVE_NAMES}, (case sensitive) - {CASESENSITIVE_NAMES}")
 
     metadata.columns.values[i] = "sampleid"
     for sampleId in metadata["sampleid"]:
@@ -145,3 +147,79 @@ def getMetadata(sample: CustomSample, metadataFileNme: str) -> Path:
         metadataPath = metadataPath.parent / f"{metadataPath.stem}.tsv"
 
     return metadataPath
+
+
+def getDatasetName(experiment: Experiment[CustomDataset], step: int) -> str:
+    if step < 1 or step > 5:
+        raise ValueError(">> [Microbiome analysis] Step number has to be between 1 and 5")
+
+    if experiment.parameters["barcodeColumn"]:
+        prefix = f"{experiment.id} - Step 1: Demux"
+    else:
+        prefix = f"{experiment.id} - Step 1: Import"
+
+    paramList = [
+        str(experiment.dataset.id),
+        str(experiment.parameters["metadataFileName"]),
+        str(experiment.parameters["barcodeColumn"]),
+        str(experiment.parameters["forwardAdapter"]),
+        str(experiment.parameters["reverseAdapter"])
+    ]
+
+    if step > 1:
+        prefix = f"{experiment.id} - Step 2: Denoise"
+        paramList.extend([
+            str(experiment.parameters["trimLeftF"]),
+            str(experiment.parameters["trimLeftR"]),
+            str(experiment.parameters["truncLenF"]),
+            str(experiment.parameters["truncLenR"]),
+        ])
+
+    if step == 3:
+        prefix = f"{experiment.id} - Step 3: Phylogenetic tree"
+        paramList.append("Step 3")
+
+    if step == 4:
+        prefix = f"{experiment.id} - Step 4: Alpha & Beta diversity"
+        paramList.extend([
+            str(experiment.parameters["samplingDepth"]),
+            str(experiment.parameters["maxDepth"]),
+            str(experiment.parameters["targetTypeColumn"])
+        ])
+
+    if step == 5:
+        prefix = f"{experiment.id} - Step 5: Taxonomic analysis"
+        paramList.append(experiment.parameters["classifier"])
+
+    if not experiment.parameters["useCache"]:
+        return prefix
+
+    return hashCacheName(prefix, "_".join(paramList))
+
+
+def getCaches(experiment: Experiment[CustomDataset]) -> Dict[int, CustomDataset]:
+    logging.info(f">> [Microbiome analysis] Searching for cache")
+
+    cacheDict: Dict[int, CustomDataset] = {}
+    for step in range(1, 6):
+        cacheHash = getDatasetName(experiment, step).split("_")[1]
+        caches = CustomDataset.fetchAll(queryParameters = [f"name={cacheHash}", "include_sessions=1"])
+
+        if len(caches) == 0:
+            continue
+
+        for cache in caches:
+            if cache.count != 0:
+                dataset = CustomDataset.fetchById(cache.id)
+                break
+
+        stepName = dataset.name.split(" - ")[1].split("_")[0]
+        logging.info(f">> [Microbiome analysis] Found {stepName} cache. Dataset ID: {dataset.id}")
+        dataset.download()
+
+        cacheDict[step] = dataset
+        for sample in dataset.samples:
+            sampleName = sample.name.split('_')[0]
+            experiment.createQiimeArtifact(f"{stepName}/{sampleName}", sample.zipPath)
+
+    return cacheDict

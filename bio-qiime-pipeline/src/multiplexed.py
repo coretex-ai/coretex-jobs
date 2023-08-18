@@ -6,7 +6,7 @@ import logging
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
-from .utils import summarizeSample
+from .utils import summarizeSample, getDatasetName
 
 
 def importSample(sequencesPath: Path, metadataPath: Path, sequenceType: str, outputDir: Path) -> Path:
@@ -107,7 +107,7 @@ def demultiplexing(
 
     outputDir = folder_manager.createTempFolder("demux_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 1: Demux",
+        getDatasetName(experiment, 1),
         experiment.spaceId
     )
 

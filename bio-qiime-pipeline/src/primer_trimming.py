@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 
@@ -80,7 +80,11 @@ def primerTrimming(dataset: CustomDataset, experiment: Experiment, pairedEnd: bo
     if pairedEnd:
         reverseReadsFolder = folder_manager.createTempFolder("revereseReads")
 
-    outputDataset = CustomDataset.createDataset(f"{experiment.id} - Cutadapt Output", experiment.spaceId)
+    outputDataset = CustomDataset.createDataset(
+        f"{experiment.id} - Cutadapt Output",
+        experiment.spaceId
+
+    )
     if outputDataset is None:
         raise RuntimeError(">> [Microbiome analysis] Failed to create coretex dataset")
 

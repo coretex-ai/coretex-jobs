@@ -8,7 +8,7 @@ import logging
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
-from .utils import summarizeSample, loadSingleEnd, loadPairedEnd, isGzCompressed, convertMetadata
+from .utils import summarizeSample, loadSingleEnd, loadPairedEnd, isGzCompressed, convertMetadata, getDatasetName
 
 
 def importSample(inputPath: Path, sequenceType: str, inputFormat: str, outputDir: Path) -> Path:
@@ -86,7 +86,7 @@ def importDemultiplexedSamples(
 
     outputDir = folder_manager.createTempFolder("import_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 1: Import",
+        getDatasetName(experiment, 1),
         experiment.spaceId
     )
 

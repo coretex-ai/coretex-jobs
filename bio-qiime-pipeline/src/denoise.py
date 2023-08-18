@@ -7,7 +7,7 @@ import logging
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
-from .utils import determineTruncLen, getMetadata
+from .utils import determineTruncLen, getMetadata, getDatasetName
 
 
 def dada2DenoiseSingleSample(
@@ -166,7 +166,7 @@ def denoise(dataset: CustomDataset, experiment: Experiment, pairedEnd: bool) -> 
 
     outputDir = folder_manager.createTempFolder("denoise_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 2: Denoise",
+        getDatasetName(experiment, 2),
         experiment.spaceId
     )
 
