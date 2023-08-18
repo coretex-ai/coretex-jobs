@@ -84,7 +84,7 @@ def importDemultiplexed(
     outputDir: Path
 ) -> None:
 
-    logging.info(">> [Microbiome analysis] Preparing demultiplexed data for import into Qiime2")
+    logging.info(">> [Qiime Impot] Preparing demultiplexed data for import into Qiime2")
     inputPath = outputDir / "manifest.tsv"
 
     if dataset.isPairedEnd():
@@ -96,16 +96,16 @@ def importDemultiplexed(
         sequenceType = "SampleData[SequencesWithQuality]"
         inputFormat = "SingleEndFastqManifestPhred33V2"
 
-    logging.info(">> [Microbiome analysis] Importing data...")
+    logging.info(">> [Qiime Impot] Importing data...")
     importZipPath = importSample(inputPath, sequenceType, inputFormat, outputDir)
     demuxSample = ctx_qiime2.createSample("0-demux", outputDataset.id, importZipPath, experiment, "Step 1: Import")
 
     metadataZipPath = importMetadata(dataset.metadata, outputDir, experiment.parameters["metadataFileName"])
-    ctx_qiime2.createSample("0-import", outputDataset.id, metadataZipPath, experiment, "Step 1: Import")
+    ctx_qiime2.createSample("0-metadata", outputDataset.id, metadataZipPath, experiment, "Step 1: Import")
 
     demuxSample.download()
     demuxSample.unzip()
 
-    logging.info(">> [Microbiome analysis] Creating summarization...")
+    logging.info(">> [Qiime Impot] Creating summarization...")
     visualizationPath = demuxSummarize(demuxSample, outputDir)
     ctx_qiime2.createSample("0-summary", outputDataset.id, visualizationPath, experiment, "Step 1: Import")

@@ -1,3 +1,4 @@
+from typing import Optional
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -9,19 +10,78 @@ from coretex.bioinformatics import ctx_qiime2
 from .utils import convertMetadata
 
 
-def importSample(sequencesPath: Path, metadataPath: Path, sequenceType: str, outputDir: Path) -> Path:
+FORWARD_FASTQ = "forward.fastq"
+REVERSE_FASTQ = "reverse.fastq"
+BARCODES_FASTQ = "barcodes.fastq"
+
+
+def importSample(sequencesPath: Path, sequenceType: str, outputDir: Path) -> Path:
     importedSequencesPath = outputDir / "multiplexedSequences.qza"
 
     ctx_qiime2.toolsImport(sequenceType, str(sequencesPath), str(importedSequencesPath))
-    metadataPath = convertMetadata(metadataPath)
 
     outputPath = outputDir / "import-output.zip"
-
     with ZipFile(outputPath, "w") as outputFile:
-        outputFile.write(metadataPath, metadataPath.name)
         outputFile.write(importedSequencesPath, importedSequencesPath.name)
 
     return outputPath
+
+
+def importMetadata(metadataPath: Path, outputDir: Path) -> Path:
+    metadataPath = convertMetadata(metadataPath)
+
+    outputPath = outputDir / "metadata-output.zip"
+    with ZipFile(outputPath, "w") as outputFile:
+        outputFile.write(metadataPath, metadataPath.name)
+
+    return outputPath
+
+
+def getFastq(samplePath: Path, fileName: str) -> Optional[Path]:
+    foundFiles = list(samplePath.glob(f"*{fileName}"))
+    foundFiles.extend(list(samplePath.glob(f"*{fileName}.gz")))
+
+    if len(foundFiles) > 1:
+        raise RuntimeError(f">> [Qiime Import] Found multiple {fileName} files")
+
+    return foundFiles[0] if len(foundFiles) == 1 else None
+
+
+def prepareSequences(
+    barcodesPath: Path,
+    forwardPath: Path,
+    reversePath: Optional[Path]
+) -> None:
+
+    sequenceFolderPath = folder_manager.createTempFolder("sequencesFolder")
+
+    newBarcodesPath = sequenceFolderPath / BARCODES_FASTQ
+    newForwardPath = sequenceFolderPath / FORWARD_FASTQ
+    newReversePath = sequenceFolderPath / REVERSE_FASTQ
+
+    if reversePath is None:
+        checkGz = [path.suffix == ".gz" for path in [barcodesPath, forwardPath]]
+    else:
+        checkGz = [path.suffix == ".gz" for path in [barcodesPath, forwardPath, reversePath]]
+
+    if all(checkGz):
+        barcodesPath.link_to(newBarcodesPath)
+        forwardPath.link_to(newForwardPath)
+
+        if reversePath is not None:
+            reversePath.link_to(newReversePath)
+
+        return sequenceFolderPath
+    elif not any(checkGz):
+        ctx_qiime2.compressGzip(barcodesPath, newBarcodesPath)
+        ctx_qiime2.compressGzip(forwardPath, newForwardPath)
+
+        if reversePath is not None:
+            ctx_qiime2.compressGzip(reversePath, newReversePath)
+
+        return sequenceFolderPath
+
+    raise RuntimeError(">> [Qiime Import] All fastq files must be either gz compressed or not compressed. Found a mix of both")
 
 
 def importMultiplexed(
@@ -31,39 +91,28 @@ def importMultiplexed(
     outputDir: Path
 ) -> None:
 
-    logging.info(">> [Microbiome analysis] Preparing multiplexed data for import into Qiime2")
-
-    sequenceFolderPath = folder_manager.createTempFolder("data_dir")
-    sequencesPath = sequenceFolderPath / "sequences.fastq"
-    barcodesPath = sequenceFolderPath / "barcodes.fastq"
+    logging.info(">> [Qiime Import] Preparing multiplexed data for import into Qiime2")
 
     fastqSamples = ctx_qiime2.getFastqMPSamples(dataset)
-    for sample in fastqSamples:
+    for index, sample in enumerate(fastqSamples):
+        logging.info(f">> [Qiime Import] Importing sample {index}")
         sample.unzip()
 
-        samplePath = Path(sample.path)
-        sampleSequences = samplePath / "sequences" / "sequences.fastq"
-        sampleBarcodes = samplePath / "sequences" / "barcodes.fastq"
+        barcodesPath = getFastq(sample, BARCODES_FASTQ)
+        forwardPath = getFastq(sample, FORWARD_FASTQ)
+        reversePath = getFastq(sample, REVERSE_FASTQ)
 
-        with sequencesPath.open("a") as sequencesFile:
-            sequencesFile.write(sampleSequences.read_text())
+        metadataPath = sample.path / experiment.parameters["metadataFileName"]
 
-        with barcodesPath.open("a") as barcodesFile:
-            barcodesFile.write(sampleBarcodes.read_text())
+        if forwardPath is None or barcodesPath is None or not metadataPath.exists():
+            raise FileNotFoundError(f">> [Qiime Import] Each sample must contain one metadata file, {FORWARD_FASTQ}, {BARCODES_FASTQ} and optionaly {REVERSE_FASTQ} in case of paired-end reads. {sample.name} fails to meet these requirements")
 
-        metadataPath = dataset.samples[0].path / experiment.parameters["metadataFileName"]
+        sequenceFolderPath = prepareSequences(barcodesPath, forwardPath, reversePath)
+        sequenceType = "EMPPairedEndSequences" if reversePath else "EMPSingleEndSequences"
 
-        sequencesPath = sequenceFolderPath / "sequences.fastq.gz"
-        barcodesPath = sequenceFolderPath / "barcodes.fastq.gz"
+        logging.info(">> [Qiime Impot] Importing sample")
+        importedFilePath = importSample(sequenceFolderPath, sequenceType, outputDir)
+        ctx_qiime2.createSample(f"{index}-import", outputDataset.id, importedFilePath, experiment, "Step 1: Import")
 
-        if not sequencesPath.exists():
-            source = sequenceFolderPath / "sequences.fastq"
-            ctx_qiime2.compressGzip(source, sequencesPath)
-
-        if not barcodesPath.exists():
-            source = sequenceFolderPath / "barcodes.fastq"
-            ctx_qiime2.compressGzip(source, barcodesPath)
-
-        logging.info(">> [Microbiome analysis] Importing sample")
-        importedFilePath = importSample(sequenceFolderPath, metadataPath, experiment.parameters["sequenceType"], outputDir)
-        ctx_qiime2.createSample("0-import", outputDataset.id, importedFilePath, experiment, "Step 1: Import")
+        zippedMetadataPath = importMetadata(metadataPath, outputDir)
+        ctx_qiime2.createSample(f"{index}-metadata", outputDataset.id, zippedMetadataPath, experiment, "Step 1: Import")

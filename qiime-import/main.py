@@ -9,14 +9,14 @@ def main(experiment: Experiment[SequenceDataset]):
     dataset = experiment.dataset
     dataset.download()
 
-    outputDir = folder_manager.createTempFolder("qiime_output")
+    outputDir = folder_manager.createTempFolder("import_output")
     outputDataset = CustomDataset.createDataset(
         f"{experiment.id} - Step 1: Import",
         experiment.spaceId
     )
 
     if outputDataset is None:
-        raise ValueError(">> [Workspace] Failed to create output dataset")
+        raise ValueError(">> [Qiime Import] Failed to create output dataset")
 
     if experiment.parameters["barcodeColumn"]:
         importMultiplexed(
