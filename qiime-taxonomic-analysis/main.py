@@ -30,14 +30,14 @@ def featureClassifierClassifySklearnSample(
 def processSample(
     index: int,
     sample: CustomSample,
-    importedSample: CustomSample,
+    metadataSample: CustomSample,
     experiment: Experiment,
     outputDataset: CustomDataset,
     outputDir: Path
 ):
 
     sample.unzip()
-    importedSample.unzip()
+    metadataSample.unzip()
 
     sampleOutputDir = outputDir / str(sample.id)
     sampleOutputDir.mkdir()
@@ -80,7 +80,7 @@ def processSample(
     ctx_qiime2.taxaBarplot(
         str(sample.joinPath("table.qza")),
         str(taxonomySample.joinPath("taxonomy.qza")),
-        str(importedSample.joinPath(experiment.parameters["metadataFileName"])),
+        str(ctx_qiime2.getMetadata(metadataSample)),
         str(taxaBarBlotsPath)
     )
 
@@ -97,7 +97,7 @@ def main(experiment: Experiment[CustomDataset]):
     importedDataset: CustomDataset = experiment.parameters["importedDataset"]
     importedDataset.download()
 
-    outputDir = folder_manager.createTempFolder("qiime_output")
+    outputDir = folder_manager.createTempFolder("taxonomy_output")
     outputDataset = CustomDataset.createDataset(
         f"{experiment.id} - Step 5: Taxonomic analysis",
         experiment.spaceId
@@ -109,14 +109,14 @@ def main(experiment: Experiment[CustomDataset]):
     for sample in denoisedSamples:
         index = ctx_qiime2.sampleNumber(sample)
 
-        importedSample = importedDataset.getSample(f"{index}-import")
-        if importedSample is None:
+        metadataSample = importedDataset.getSample(f"{index}-metadata")
+        if metadataSample is None:
             raise ValueError(f">> [Workspace] Imported sample not found")
 
         processSample(
             index,
             sample,
-            importedSample,
+            metadataSample,
             experiment,
             outputDataset,
             outputDir

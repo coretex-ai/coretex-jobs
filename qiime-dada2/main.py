@@ -1,7 +1,6 @@
 from typing import Optional
 from pathlib import Path
 from zipfile import ZipFile
-from io import BytesIO
 
 import logging
 import csv
@@ -135,7 +134,7 @@ def determineTruncLen(sample: CustomSample, forward: bool) -> int:
 def processSample(
     index: int,
     sample: CustomSample,
-    importedSample: CustomSample,
+    metadataSample: CustomSample,
     summarySample: CustomSample,
     experiment: Experiment,
     outputDataset: CustomDataset,
@@ -178,7 +177,7 @@ def processSample(
         truncLenR,
     )
 
-    denoisedSample = ctx_qiime2.createSample(f"{index}-denoise", outputDataset.id, denoiseOutput, experiment, "Step 2: Denoising")
+    denoisedSample = ctx_qiime2.createSample(f"{index}-denoise", outputDataset.id, denoiseOutput, experiment, "Step 3: DADA2")
 
     # Second step:
     # Generate visualization artifacts for the denoised data
@@ -187,23 +186,23 @@ def processSample(
     denoisedSample.unzip()
 
     visualizationPath = metadataTabulateSample(denoisedSample, sampleOutputDir)
-    ctx_qiime2.createSample(f"{index}-metadata-tabulate", outputDataset.id, visualizationPath, experiment, "Step 2: Denoising")
+    ctx_qiime2.createSample(f"{index}-metadata-tabulate", outputDataset.id, visualizationPath, experiment, "Step 3: DADA2")
 
     # Third step:
     # Summarize how many sequences are associated with each sample and with each feature,
     # histograms of those distributions, and some related summary statistics
     logging.info(">> [Microbiome analysis] Creating summarization")
-    metadataPath = Path(importedSample.path) / experiment.parameters["metadataFileName"]
+    metadataPath = ctx_qiime2.getMetadata(metadataSample)
     featureTableSummaryPath = featureTableSummarizeSample(denoisedSample, metadataPath, sampleOutputDir)
 
-    ctx_qiime2.createSample(f"{index}-feature-table-summarize", outputDataset.id, featureTableSummaryPath, experiment, "Step 2: Denoising")
+    ctx_qiime2.createSample(f"{index}-feature-table-summarize", outputDataset.id, featureTableSummaryPath, experiment, "Step 3: DADA2")
 
     # Fourth step:
     # Provide a mapping of feature IDs to sequences,
     # and provide links to easily BLAST each sequence against the NCBI nt database
     logging.info(">> [Microbiome analysis] Creating mapping file between feature IDs and sequences")
     featureTableMapPath = featureTableTabulateSeqsSample(denoisedSample, sampleOutputDir)
-    ctx_qiime2.createSample(f"{index}-feature-table-tabulate-seqs", outputDataset.id, featureTableMapPath, experiment, "Step 2: Denoising")
+    ctx_qiime2.createSample(f"{index}-feature-table-tabulate-seqs", outputDataset.id, featureTableMapPath, experiment, "Step 3: DADA2")
 
 
 def main(experiment: Experiment[CustomDataset]):
@@ -216,7 +215,7 @@ def main(experiment: Experiment[CustomDataset]):
 
     outputDir = folder_manager.createTempFolder("qiime_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 2: Denoise",
+        f"{experiment.id} - Step 3: DADA2",
         experiment.spaceId
     )
 
@@ -228,11 +227,11 @@ def main(experiment: Experiment[CustomDataset]):
 
         index = ctx_qiime2.sampleNumber(sample)
 
-        importedSample = dataset.getSample(f"{index}-import")
-        if importedSample is None:
+        metadataSample = dataset.getSample(f"{index}-metadata")
+        if metadataSample is None:
             raise ValueError(f">> [Microbiome analysis] Imported sample not found")
 
-        importedSample.unzip()
+        metadataSample.unzip()
 
         summarySample = dataset.getSample(f"{index}-summary")
         if summarySample is None:
@@ -243,7 +242,7 @@ def main(experiment: Experiment[CustomDataset]):
         processSample(
             index,
             sample,
-            importedSample,
+            metadataSample,
             summarySample,
             experiment,
             outputDataset,

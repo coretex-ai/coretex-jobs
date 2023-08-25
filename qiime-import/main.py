@@ -5,34 +5,17 @@ from src.multiplexed import importMultiplexed
 from src.demultiplexed import importDemultiplexed
 
 
-def main(experiment: Experiment[SequenceDataset]):
+def main(experiment: Experiment[CustomDataset]):
     dataset = experiment.dataset
     dataset.download()
 
     outputDir = folder_manager.createTempFolder("import_output")
-    outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 1: Import",
-        experiment.spaceId
-    )
-
-    if outputDataset is None:
-        raise ValueError(">> [Qiime Import] Failed to create output dataset")
 
     if experiment.parameters["barcodeColumn"]:
-        importMultiplexed(
-            CustomDataset.fetchById(experiment.dataset.id),
-            experiment,
-            outputDataset,
-            outputDir
-        )
+        importMultiplexed(dataset, experiment, outputDir)
     else:
-        importDemultiplexed(
-            experiment.dataset,
-            experiment,
-            outputDataset,
-            outputDir
-        )
+        importDemultiplexed(SequenceDataset.fetchById(dataset.id), experiment, outputDir)
 
 
 if __name__ == "__main__":
-    initializeProject(main, SequenceDataset)
+    initializeProject(main)

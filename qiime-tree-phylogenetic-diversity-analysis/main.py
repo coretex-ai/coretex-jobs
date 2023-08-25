@@ -50,7 +50,7 @@ def processSample(
     # Phylogenetic diversity analysis
     logging.info(">> [Microbiome analysis] Generating phylogenetic tree")
     treePath = phylogenyAlignToTreeMafftFasttreeSample(sample, sampleOutputDir)
-    ctx_qiime2.createSample(f"{index}-phylogenetic-tree", outputDataset.id, treePath, experiment, "Step 3: Phylogenetic tree")
+    ctx_qiime2.createSample(f"{index}-phylogenetic-tree", outputDataset.id, treePath, experiment, "Step 6: Phylogenetic tree")
 
 
 def main(experiment: Experiment[CustomDataset]):
@@ -60,9 +60,9 @@ def main(experiment: Experiment[CustomDataset]):
     if len(denoisedSamples) == 0:
         raise ValueError(">> [Workspace] Dataset has 0 denoised samples")
 
-    outputDir = folder_manager.createTempFolder("qiime_output")
+    outputDir = folder_manager.createTempFolder("tree_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 3: Phylogenetic tree",
+        f"{experiment.id} - Step 6: Phylogenetic tree",
         experiment.spaceId
     )
 

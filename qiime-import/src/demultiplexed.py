@@ -12,8 +12,8 @@ from .utils import convertMetadata
 
 
 def demuxSummarize(sample: CustomSample, outputDir: Path) -> Path:
-    demuxPath = list(sample.path.glob("*.qza"))[0]
-    visualizationPath = outputDir / f"{demuxPath.stem}.qzv"
+    demuxPath = sample.path / "demux.qza"
+    visualizationPath = outputDir / "demux.qzv"
 
     ctx_qiime2.demuxSummarize(str(demuxPath), str(visualizationPath))
     return visualizationPath
@@ -84,6 +84,14 @@ def importDemultiplexed(
     outputDir: Path
 ) -> None:
 
+    outputDataset = CustomDataset.createDataset(
+        f"{experiment.id} - Step 1: Import - Demultiplexed",
+        experiment.spaceId
+    )
+
+    if outputDataset is None:
+        raise ValueError(">> [Qiime Import] Failed to create output dataset")
+
     logging.info(">> [Qiime Impot] Preparing demultiplexed data for import into Qiime2")
     inputPath = outputDir / "manifest.tsv"
 
@@ -98,6 +106,7 @@ def importDemultiplexed(
 
     logging.info(">> [Qiime Impot] Importing data...")
     importZipPath = importSample(inputPath, sequenceType, inputFormat, outputDir)
+    logging.info(">> [Qiime Impot] Uploading sample")
     demuxSample = ctx_qiime2.createSample("0-demux", outputDataset.id, importZipPath, experiment, "Step 1: Import")
 
     metadataZipPath = importMetadata(dataset.metadata, outputDir, experiment.parameters["metadataFileName"])

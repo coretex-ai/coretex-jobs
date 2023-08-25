@@ -4,7 +4,7 @@ from zipfile import ZipFile
 
 import logging
 
-from coretex import CustomDataset, Experiment, folder_manager
+from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
 from .utils import convertMetadata
@@ -16,7 +16,7 @@ BARCODES_FASTQ = "barcodes.fastq"
 
 
 def importSample(sequencesPath: Path, sequenceType: str, outputDir: Path) -> Path:
-    importedSequencesPath = outputDir / "multiplexedSequences.qza"
+    importedSequencesPath = outputDir / "multiplexed-sequences.qza"
 
     ctx_qiime2.toolsImport(sequenceType, str(sequencesPath), str(importedSequencesPath))
 
@@ -37,9 +37,9 @@ def importMetadata(metadataPath: Path, outputDir: Path) -> Path:
     return outputPath
 
 
-def getFastq(samplePath: Path, fileName: str) -> Optional[Path]:
-    foundFiles = list(samplePath.glob(f"*{fileName}"))
-    foundFiles.extend(list(samplePath.glob(f"*{fileName}.gz")))
+def getFastq(sample: CustomSample, fileName: str) -> Optional[Path]:
+    foundFiles = list(sample.path.glob(f"*{fileName}"))
+    foundFiles.extend(list(sample.path.glob(f"*{fileName}.gz")))
 
     if len(foundFiles) > 1:
         raise RuntimeError(f">> [Qiime Import] Found multiple {fileName} files")
@@ -55,9 +55,9 @@ def prepareSequences(
 
     sequenceFolderPath = folder_manager.createTempFolder("sequencesFolder")
 
-    newBarcodesPath = sequenceFolderPath / BARCODES_FASTQ
-    newForwardPath = sequenceFolderPath / FORWARD_FASTQ
-    newReversePath = sequenceFolderPath / REVERSE_FASTQ
+    newBarcodesPath = sequenceFolderPath / f"{BARCODES_FASTQ}.gz"
+    newForwardPath = sequenceFolderPath / f"{FORWARD_FASTQ}.gz"
+    newReversePath = sequenceFolderPath / f"{REVERSE_FASTQ}.gz"
 
     if reversePath is None:
         checkGz = [path.suffix == ".gz" for path in [barcodesPath, forwardPath]]
@@ -91,6 +91,14 @@ def importMultiplexed(
     outputDir: Path
 ) -> None:
 
+    outputDataset = CustomDataset.createDataset(
+        f"{experiment.id} - Step 1: Import - Multiplexed",
+        experiment.spaceId
+    )
+
+    if outputDataset is None:
+        raise ValueError(">> [Qiime Import] Failed to create output dataset")
+
     logging.info(">> [Qiime Import] Preparing multiplexed data for import into Qiime2")
 
     fastqSamples = ctx_qiime2.getFastqMPSamples(dataset)
@@ -112,6 +120,7 @@ def importMultiplexed(
 
         logging.info(">> [Qiime Impot] Importing sample")
         importedFilePath = importSample(sequenceFolderPath, sequenceType, outputDir)
+        logging.info(">> [Qiime Impot] Uploading sample")
         ctx_qiime2.createSample(f"{index}-import", outputDataset.id, importedFilePath, experiment, "Step 1: Import")
 
         zippedMetadataPath = importMetadata(metadataPath, outputDir)

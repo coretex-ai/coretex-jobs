@@ -2,11 +2,20 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import os
+import csv
 import logging
 
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.project import initializeProject
 from coretex.bioinformatics import CommandException, ctx_qiime2
+
+
+def columnNamePresent(metadataPath: Path, columnName: str) -> bool:
+    with metadataPath.open("r") as metadata:
+        for row in csv.reader(metadata, delimiter = "\t"):
+            return columnName in row
+
+    raise RuntimeError(">> [Microbiome Analysis] Metadata file is empty")
 
 
 def diversityCoreMetricsPhylogeneticSample(
@@ -56,7 +65,7 @@ def diversityAlphaGroupSignificance(
         outputDatasetId,
         outputPath,
         experiment,
-        "Step 4: Alpha & Beta diversity analysis"
+        "Step 7: Alpha & Beta diversity analysis"
     )
 
 
@@ -83,7 +92,7 @@ def diversityBetaGroupSignificance(
         outputDatasetId,
         outputPath,
         experiment,
-        "Step 4: Alpha & Beta diversity analysis"
+        "Step 7: Alpha & Beta diversity analysis"
     )
 
 
@@ -108,7 +117,7 @@ def emperorPlot(
         outputDatasetId,
         outputPath,
         experiment,
-        "Step 4: Alpha & Beta diversity analysis"
+        "Step 7: Alpha & Beta diversity analysis"
     )
 
 
@@ -135,14 +144,14 @@ def diversityAlphaRarefaction(
         outputDatasetId,
         outputPath,
         experiment,
-        "Step 4: Alpha & Beta diversity analysis"
+        "Step 7: Alpha & Beta diversity analysis"
     )
 
 
 def processSample(
     index: int,
     sample: CustomSample,
-    importedSample: CustomSample,
+    metadataSample: CustomSample,
     denoisedSample: CustomSample,
     experiment: Experiment,
     outputDataset: CustomDataset,
@@ -150,13 +159,17 @@ def processSample(
 ):
 
     sample.unzip()
-    importedSample.unzip()
+    metadataSample.unzip()
     denoisedSample.unzip()
 
     sampleOutputDir = outputDir / str(sample.id)
     sampleOutputDir.mkdir()
 
-    metadataPath = importedSample.joinPath(experiment.parameters["metadataFileName"])
+    metadataPath = ctx_qiime2.getMetadata(metadataSample)
+    targetTypeColumn = experiment.parameters["targetTypeColumn"]
+
+    if not columnNamePresent(metadataPath, targetTypeColumn):
+        logging.error(f">> [Microbiome analysis] targetTypeColumn")
 
     # First step:
     # Apply the core-metrics-phylogenetic method, which rarefies a
@@ -179,7 +192,7 @@ def processSample(
             outputDataset.id,
             coreMetricsPath,
             experiment,
-            "Step 4: Alpha & Beta diversity analysis"
+            "Step 7: Alpha & Beta diversity analysis"
         )
     except CommandException:
         logging.error(">> [Microbiome analysis] Failed to execute \"qiime diversity core-metrics-phylogenetic\"")
@@ -226,7 +239,7 @@ def processSample(
         diversityBetaGroupSignificance(
             coreMetricsSample.joinPath("unweighted_unifrac_distance_matrix.qza"),
             metadataPath,
-            "body-site",
+            targetTypeColumn,
             index,
             outputDataset.id,
             sampleOutputDir / "unweighted-unifrac-body-site-significance.qzv",
@@ -239,7 +252,7 @@ def processSample(
         diversityBetaGroupSignificance(
             coreMetricsSample.joinPath("unweighted_unifrac_distance_matrix.qza"),
             metadataPath,
-            "body-site",
+            targetTypeColumn,
             index,
             outputDataset.id,
             sampleOutputDir / "unweighted-unifrac-subject-group-significance.qzv",
@@ -315,9 +328,9 @@ def main(experiment: Experiment[CustomDataset]):
     denoisedDataset: CustomDataset = experiment.parameters["denoisedDataset"]
     denoisedDataset.download()
 
-    outputDir = folder_manager.createTempFolder("qiime_output")
+    outputDir = folder_manager.createTempFolder("alpha_beta_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 4: Alpha & Beta diversity",
+        f"{experiment.id} - Step 7: Alpha & Beta diversity",
         experiment.spaceId
     )
 
@@ -327,9 +340,9 @@ def main(experiment: Experiment[CustomDataset]):
     for sample in phylogeneticTreeSamples:
         index = ctx_qiime2.sampleNumber(sample)
 
-        importedSample = importedDataset.getSample(f"{index}-import")
-        if importedSample is None:
-            raise ValueError(f">> [Microbiome analysis] Imported sample not found")
+        metadataSample = importedDataset.getSample(f"{index}-metadata")
+        if metadataSample is None:
+            raise ValueError(f">> [Microbiome analysis] metadata sample not found")
 
         denoisedSample = denoisedDataset.getSample(f"{index}-denoise")
         if denoisedSample is None:
@@ -338,7 +351,7 @@ def main(experiment: Experiment[CustomDataset]):
         processSample(
             index,
             sample,
-            importedSample,
+            metadataSample,
             denoisedSample,
             experiment,
             outputDataset,

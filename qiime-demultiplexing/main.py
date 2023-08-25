@@ -8,36 +8,56 @@ from coretex.project import initializeProject
 from coretex.bioinformatics import ctx_qiime2
 
 
-def handleMetadata(sample: CustomSample, outputDataset: CustomDataset) -> Path:
-    if CustomSample.createCustomSample(sample.name, outputDataset.id, sample.zipPath) is None:
-        raise RuntimeError(">> [Microbiome analysis] Failed to forward metadata to the output dataset")
+def isPairedEnd(demuxSample: CustomSample):
+    demuxTemp = folder_manager.createTempFolder("demux")
+    qzaPath = list(demuxSample.path.iterdir())[0]
 
-    return list(sample.path.glob("*.tsv"))[0]
+    with ZipFile(qzaPath, "r") as qzaFile:
+        qzaFile.extractall(demuxTemp)
+
+    metadataPath = list(demuxTemp.rglob("*metadata.yaml"))[0]
+
+    with metadataPath.open("r") as metadata:
+        return "PairedEnd" in metadata.readlines()[1]
 
 
-def summarizeSample(sample: CustomSample, outputDir: Path) -> Path:
-    demuxPath = Path(sample.path) / "demux.qza"
+def handleMetadata(sample: CustomSample, index: int,  outputDatasetId: int, experiment: Experiment) -> Path:
+    ctx_qiime2.createSample(f"{index}-metadata", outputDatasetId, sample.zipPath, experiment, "Step 2: Demultiplexing")
+    return ctx_qiime2.getMetadata(sample)
+
+
+def demuxSummarize(sample: CustomSample, outputDir: Path) -> Path:
+    demuxPath = sample.path / "demux.qza"
     visualizationPath = outputDir / "demux.qzv"
 
     ctx_qiime2.demuxSummarize(str(demuxPath), str(visualizationPath))
     return visualizationPath
 
 
-def demuxEmpSingleSample(sample: CustomSample, barcodesPath: Path, barcodeColumn: str, outputDir: Path) -> Path:
+def demuxEmpSample(sample: CustomSample, barcodesPath: Path, barcodeColumn: str, outputDir: Path, pairedEnd: bool) -> Path:
     samplePath = Path(sample.path)
 
-    sequencesPath = samplePath / "multiplexedSequences.qza"
+    sequencesPath = samplePath / "multiplexed-sequences.qza"
 
     demuxFilePath = outputDir / "demux.qza"
     demuxDetailsFilePath = outputDir / "demux-details.qza"
 
-    ctx_qiime2.demuxEmpSingle(
-        str(sequencesPath),
-        str(barcodesPath),
-        barcodeColumn,
-        str(demuxFilePath),
-        str(demuxDetailsFilePath)
-    )
+    if not pairedEnd:
+        ctx_qiime2.demuxEmpSingle(
+            str(sequencesPath),
+            str(barcodesPath),
+            barcodeColumn,
+            str(demuxFilePath),
+            str(demuxDetailsFilePath)
+        )
+    else:
+        ctx_qiime2.demuxEmpPaired(
+            str(sequencesPath),
+            str(barcodesPath),
+            barcodeColumn,
+            str(demuxFilePath),
+            str(demuxDetailsFilePath)
+        )
 
     demuxOutputPath = outputDir / "demux-output.zip"
 
@@ -74,16 +94,23 @@ def main(experiment: Experiment[CustomDataset]):
         if metadataSample is None:
             raise ValueError(f">> [Microbiome analysis] Metadata sample not found")
 
-        metadataPath = handleMetadata(metadataSample, outputDataset)
-        demuxPath = demuxEmpSingleSample(sample, metadataPath, experiment.parameters["barcodeColumn"], outputDir)
-        demuxSample = ctx_qiime2.createSample(f"{index}-demux", outputDataset.id, demuxPath, experiment, "Step 1: Demultiplexing")
+        metadataPath = handleMetadata(metadataSample, index, outputDataset.id, experiment)
+        demuxPath = demuxEmpSample(
+            sample,
+            metadataPath,
+            experiment.parameters["barcodeColumn"],
+            outputDir,
+            isPairedEnd(sample)
+        )
+
+        demuxSample = ctx_qiime2.createSample(f"{index}-demux", outputDataset.id, demuxPath, experiment, "Step 2: Demultiplexing")
 
         demuxSample.download()
         demuxSample.unzip()
 
         logging.info(">> [Microbiome analysis] Creating summarization")
-        visualizationPath = summarizeSample(demuxSample, outputDir)
-        ctx_qiime2.createSample(f"{index}-summary", outputDataset.id, visualizationPath, experiment, "Step 1: Demultiplexing")
+        visualizationPath = demuxSummarize(demuxSample, outputDir)
+        ctx_qiime2.createSample(f"{index}-summary", outputDataset.id, visualizationPath, experiment, "Step 2: Demultiplexing")
 
 
 if __name__ == "__main__":
