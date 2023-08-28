@@ -36,7 +36,7 @@ def importMetadata(metadata: CustomSample, outputDir: Path, metadataFileName: st
     metadataPath = convertMetadata(metadataPath)
 
     with ZipFile(metadataZipPath, "w") as metadataFile:
-        metadataFile.write(Path(metadata.path) / "metadata.tsv", "metadata.tsv")
+        metadataFile.write(metadataPath, metadataPath.name)
 
     return metadataZipPath
 
@@ -102,6 +102,9 @@ def importDemultiplexedSamples(
 
     metadataZipPath = importMetadata(dataset.metadata, outputDir, experiment.parameters["metadataFileName"])
     ctx_qiime2.createSample("0-import", outputDataset.id, metadataZipPath, experiment, "Step 1: Demultiplexing")
+
+    demuxZipPath = importSample(inputPath, sequenceType, inputFormat, outputDir)
+    demuxSample = ctx_qiime2.createSample("0-demux", outputDataset.id, demuxZipPath, experiment, "Step 1: Demultiplexing")
 
     demuxSample.download()
     demuxSample.unzip()
