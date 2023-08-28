@@ -92,7 +92,7 @@ def main(experiment: Experiment[CustomDataset]):
 
     denoisedSamples = ctx_qiime2.getDenoisedSamples(experiment.dataset)
     if len(denoisedSamples) == 0:
-        raise ValueError(">> [Workspace] Dataset has 0 denoised samples")
+        raise ValueError(">> [Qiime: Taxonomic Analysis] Dataset has 0 denoised samples")
 
     importedDataset: CustomDataset = experiment.parameters["importedDataset"]
     importedDataset.download()
@@ -104,14 +104,14 @@ def main(experiment: Experiment[CustomDataset]):
     )
 
     if outputDataset is None:
-        raise ValueError(">> [Workspace] Failed to create output dataset")
+        raise ValueError(">> [Qiime: Taxonomic Analysis] Failed to create output dataset")
 
     for sample in denoisedSamples:
         index = ctx_qiime2.sampleNumber(sample)
 
         metadataSample = importedDataset.getSample(f"{index}-metadata")
         if metadataSample is None:
-            raise ValueError(f">> [Workspace] Imported sample not found")
+            raise ValueError(f">> [Qiime: Taxonomic Analysis] Imported sample not found")
 
         processSample(
             index,

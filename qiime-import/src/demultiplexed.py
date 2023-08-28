@@ -80,7 +80,6 @@ def createManifestPaired(samples: List[SequenceSample], manifestPath: Path) -> P
 def importDemultiplexed(
     dataset: SequenceDataset,
     experiment: Experiment,
-    outputDataset: CustomDataset,
     outputDir: Path
 ) -> None:
 
@@ -90,9 +89,9 @@ def importDemultiplexed(
     )
 
     if outputDataset is None:
-        raise ValueError(">> [Qiime Import] Failed to create output dataset")
+        raise ValueError(">> [Qiime: Import] Failed to create output dataset")
 
-    logging.info(">> [Qiime Impot] Preparing demultiplexed data for import into Qiime2")
+    logging.info(">> [Qiime: Import] Preparing demultiplexed data for import into Qiime2")
     inputPath = outputDir / "manifest.tsv"
 
     if dataset.isPairedEnd():
@@ -104,9 +103,10 @@ def importDemultiplexed(
         sequenceType = "SampleData[SequencesWithQuality]"
         inputFormat = "SingleEndFastqManifestPhred33V2"
 
-    logging.info(">> [Qiime Impot] Importing data...")
+    logging.info(">> [Qiime: Import] Importing data...")
     importZipPath = importSample(inputPath, sequenceType, inputFormat, outputDir)
-    logging.info(">> [Qiime Impot] Uploading sample")
+
+    logging.info(">> [Qiime: Import] Uploading sample")
     demuxSample = ctx_qiime2.createSample("0-demux", outputDataset.id, importZipPath, experiment, "Step 1: Import")
 
     metadataZipPath = importMetadata(dataset.metadata, outputDir, experiment.parameters["metadataFileName"])
@@ -115,6 +115,6 @@ def importDemultiplexed(
     demuxSample.download()
     demuxSample.unzip()
 
-    logging.info(">> [Qiime Impot] Creating summarization...")
+    logging.info(">> [Qiime: Import] Creating summarization...")
     visualizationPath = demuxSummarize(demuxSample, outputDir)
     ctx_qiime2.createSample("0-summary", outputDataset.id, visualizationPath, experiment, "Step 1: Import")

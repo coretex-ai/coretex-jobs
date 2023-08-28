@@ -1,42 +1,52 @@
 --- Template description ---
 
-Sequence quality control and feature table construction project template is based on Qiime2 Moving Pictures
+DADA2: Sequence quality control and feature table construction job template is based on Qiime2 Moving Pictures
 tutorial (https://docs.qiime2.org/2023.2/tutorials/moving-pictures/#sequence-quality-control-and-feature-table-construction).
 Qiime2 is a software tool used for processing BioInformatics sequences.
 
-Demultiplexed samples contain some errors in the sequence so a correction algorithm needs to
-be applied to cleanup the data. These algorithms are currently supported:
-    - DADA2
-    - Deblur
+This job uses DADA2 to perform donoising, error correction and other DADA2
+functions.
 
-Input data is demultiplexed sequences in "fastq" format which are generated
-by running the project template marked as "Step #1".
+Input data are demultiplexed sequences in "fastq" format which should have been
+imported with the first job of the Coretex Qiime pipeline (Import) or demultiplexed
+in the second (Demultiplexing sequences).
 
-Output data is filtered sequence data, as well as feature table which was
-constructed based on the filtered sequence data.
+The following will be performed by DADA2:
+
+Error Modeling and Quality Filtering: DADA2 begins by estimating the error rates
+of each sequencing run and filtering out low-quality reads. This is important
+because sequencing errors are common, and distinguishing true biological
+variation from sequencing errors is crucial for accurate downstream analysis.
+
+Read Pair Assembly: DADA2 works with paired-end sequencing data and assembles
+the forward and reverse reads into full-length sequences. This step helps
+to capture the complete biological sequences and increases accuracy.
+
+Error Correction: By using the estimated error rates, DADA2 identifies
+and corrects sequencing errors. Instead of clustering sequences into
+OTUs, DADA2 seeks to resolve each unique biological sequence variant
+(often referred to as amplicon sequence variants or ASVs) and their
+abundances directly from the raw data.
+
+Chimera Detection: DADA2 employs a statistical approach to identify
+and remove chimera sequences, which are artifacts created during
+PCR amplification. This is another critical step to ensure that
+only genuine biological sequences are retained.
+
+Results: The output of DADA2's denoising process is a table
+that contains the identified sequence variants along with
+their respective abundances in each sample. This table can
+then be used for downstream analyses, such as taxonomic classification,
+diversity analysis, and more.
 
 ----------------------------
 
 --- Template parameters description ---
 
 --- dataset description ---
-A dataset which contains demultiplexed fastq sequences. This
-dataset is output of the "Step #1" template. Dataset is generated
-by Qiime2 tool.
+A dataset which contains demultiplexed fastq sequences which
+have been imported into Qiime2.
 ---------------------------
-
---- barcodesFileName description ---
-Name of the sequence metadata file from the dataset.
-------------------------------------
-
---- algorithm description ---
-Algorithm used for denoising demultiplexed sequences.
-Supported values are:
-   - DADA2
-
-Coming soon:
-   - Deblur
------------------------------
 
 --- trimLeftF description ---
 Amount of bases to be trimmed from the start of the forward sequence.

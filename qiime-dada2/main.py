@@ -46,9 +46,9 @@ def dada2DenoiseSingleSample(
 
     if pairedEnd:
         if trimLeftR is None or truncLenR is None:
-            raise ValueError(f">> [Microbiome analysis] Required arguments for paired-end denoising trimLeftR and truncLenR must not be None. trimLeftR: \"{trimLeftR}\", truncLenR \"{truncLenR}\"")
+            raise ValueError(f">> [Qiime: DADA2] Required arguments for paired-end denoising trimLeftR and truncLenR must not be None. trimLeftR: \"{trimLeftR}\", truncLenR \"{truncLenR}\"")
 
-        logging.info(">> [Microbiome analysis] Denoising paired-end sequences")
+        logging.info(">> [Qiime: DADA2] Denoising paired-end sequences")
         ctx_qiime2.dada2DenoisePaired(
             str(demuxPath),
             trimLeftF,
@@ -60,7 +60,7 @@ def dada2DenoiseSingleSample(
             str(denoisingStatsPath)
         )
     else:
-        logging.info(">> [Microbiome analysis] Denoising single-end sequences")
+        logging.info(">> [Qiime: DADA2] Denoising single-end sequences")
         ctx_qiime2.dada2DenoiseSingle(
             str(demuxPath),
             trimLeftF,
@@ -126,7 +126,7 @@ def determineTruncLen(sample: CustomSample, forward: bool) -> int:
             break
 
     if not truncLen:
-        raise RuntimeError(">> [Microbiome Analysis] Forward read truncLen could not be determined automatically")
+        raise RuntimeError(">> [Qiime: DADA2] Forward read truncLen could not be determined automatically")
 
     return truncLen
 
@@ -160,12 +160,12 @@ def processSample(
     truncLenF = experiment.parameters["truncLenF"]
     if truncLenF is None:
         truncLenF = determineTruncLen(summarySample, forward = True)
-        logging.info(f">> [Microbiome analysis] Automatic truncLen for forward reads: {truncLenF}")
+        logging.info(f">> [Qiime: DADA2] Automatic truncLen for forward reads: {truncLenF}")
 
     truncLenR = experiment.parameters["truncLenR"]
     if truncLenR is None and pairedEnd:
         truncLenR = determineTruncLen(summarySample, forward = False)
-        logging.info(f">> [Microbiome analysis] Automatic truncLen for reverse reads: {truncLenR}")
+        logging.info(f">> [Qiime: DADA2] Automatic truncLen for reverse reads: {truncLenR}")
 
     denoiseOutput = dada2DenoiseSingleSample(
         sample,
@@ -181,7 +181,7 @@ def processSample(
 
     # Second step:
     # Generate visualization artifacts for the denoised data
-    logging.info(">> [Microbiome analysis] Generating visualization")
+    logging.info(">> [Qiime: DADA2] Generating visualization")
     denoisedSample.download()
     denoisedSample.unzip()
 
@@ -191,7 +191,7 @@ def processSample(
     # Third step:
     # Summarize how many sequences are associated with each sample and with each feature,
     # histograms of those distributions, and some related summary statistics
-    logging.info(">> [Microbiome analysis] Creating summarization")
+    logging.info(">> [Qiime: DADA2] Creating summarization")
     metadataPath = ctx_qiime2.getMetadata(metadataSample)
     featureTableSummaryPath = featureTableSummarizeSample(denoisedSample, metadataPath, sampleOutputDir)
 
@@ -200,7 +200,7 @@ def processSample(
     # Fourth step:
     # Provide a mapping of feature IDs to sequences,
     # and provide links to easily BLAST each sequence against the NCBI nt database
-    logging.info(">> [Microbiome analysis] Creating mapping file between feature IDs and sequences")
+    logging.info(">> [Qiime: DADA2] Creating mapping file between feature IDs and sequences")
     featureTableMapPath = featureTableTabulateSeqsSample(denoisedSample, sampleOutputDir)
     ctx_qiime2.createSample(f"{index}-feature-table-tabulate-seqs", outputDataset.id, featureTableMapPath, experiment, "Step 3: DADA2")
 
@@ -211,7 +211,7 @@ def main(experiment: Experiment[CustomDataset]):
 
     demuxSamples = ctx_qiime2.getDemuxSamples(experiment.dataset)
     if len(demuxSamples) == 0:
-        raise ValueError(">> [Workspace] Dataset has 0 demultiplexed samples")
+        raise ValueError(">> [Qiime: DADA2] Dataset has 0 demultiplexed samples")
 
     outputDir = folder_manager.createTempFolder("qiime_output")
     outputDataset = CustomDataset.createDataset(
@@ -220,7 +220,7 @@ def main(experiment: Experiment[CustomDataset]):
     )
 
     if outputDataset is None:
-        raise ValueError(">> [Workspace] Failed to create output dataset")
+        raise ValueError(">> [Qiime: DADA2] Failed to create output dataset")
 
     for sample in demuxSamples:
         sample.unzip()
@@ -229,13 +229,13 @@ def main(experiment: Experiment[CustomDataset]):
 
         metadataSample = dataset.getSample(f"{index}-metadata")
         if metadataSample is None:
-            raise ValueError(f">> [Microbiome analysis] Imported sample not found")
+            raise ValueError(f">> [Qiime: DADA2] Imported sample not found")
 
         metadataSample.unzip()
 
         summarySample = dataset.getSample(f"{index}-summary")
         if summarySample is None:
-            raise ValueError(f">> [Microbiome analysis] Summary sample not found")
+            raise ValueError(f">> [Qiime: DADA2] Summary sample not found")
 
         summarySample.unzip()
 

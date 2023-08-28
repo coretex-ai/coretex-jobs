@@ -1,9 +1,7 @@
-from typing import Optional
 from pathlib import Path
 from zipfile import ZipFile
 
 import logging
-import csv
 
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.project import initializeProject
@@ -48,6 +46,10 @@ def processSample(
 
     # Phylogenetic diversity analysis
     logging.info(">> [Microbiome analysis] Performing de novo clustering")
+    percentIdentity = experiment.parameters["percentIdentity"]
+    if percentIdentity <=0 or percentIdentity > 1:
+        raise ValueError(">> [Qiime: Clustering] The percent identity parameter must be between 0 and 1.")
+
     otuPath = deNovoClustering(sample, sampleOutputDir, experiment.parameters["percentIdentity"])
     ctx_qiime2.createSample(f"{index}-otu-clusters", outputDataset.id, otuPath, experiment, "Step 4: OTU clustering")
 
@@ -59,7 +61,7 @@ def main(experiment: Experiment[CustomDataset]):
 
     denoisedSamples = ctx_qiime2.getDenoisedSamples(dataset)
     if len(denoisedSamples) == 0:
-        raise ValueError(">> [Workspace] Dataset has 0 denoised samples")
+        raise ValueError(">> [Qiime: Clustering] Dataset has 0 denoised samples")
 
     outputDir = folder_manager.createTempFolder("otu_output")
     outputDataset = CustomDataset.createDataset(
@@ -68,7 +70,7 @@ def main(experiment: Experiment[CustomDataset]):
     )
 
     if outputDataset is None:
-        raise ValueError(">> [Workspace] Failed to create output dataset")
+        raise ValueError(">> [Qiime: Clustering] Failed to create output dataset")
 
     for sample in denoisedSamples:
         index = ctx_qiime2.sampleNumber(sample)

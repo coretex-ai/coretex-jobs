@@ -74,7 +74,7 @@ def main(experiment: Experiment[CustomDataset]):
 
     importedSamples = ctx_qiime2.getImportedSamples(dataset)
     if len(importedSamples) == 0:
-        raise ValueError(">> [Qiime Demux] Dataset has 0 imported samples")
+        raise ValueError(">> [Qiime: Demux] Dataset has 0 imported samples")
 
     outputDir = folder_manager.createTempFolder("demux_output")
     outputDataset = CustomDataset.createDataset(
@@ -83,7 +83,7 @@ def main(experiment: Experiment[CustomDataset]):
     )
 
     if outputDataset is None:
-        raise ValueError(">> [Workspace] Failed to create output dataset")
+        raise ValueError(">> [Qiime: Demux] Failed to create output dataset")
 
     for sample in importedSamples:
         sample.unzip()
@@ -92,7 +92,7 @@ def main(experiment: Experiment[CustomDataset]):
 
         metadataSample = dataset.getSample(f"{index}-metadata")
         if metadataSample is None:
-            raise ValueError(f">> [Microbiome analysis] Metadata sample not found")
+            raise ValueError(f">> [Qiime: Demux] Metadata sample not found")
 
         metadataPath = handleMetadata(metadataSample, index, outputDataset.id, experiment)
         demuxPath = demuxEmpSample(
@@ -108,7 +108,7 @@ def main(experiment: Experiment[CustomDataset]):
         demuxSample.download()
         demuxSample.unzip()
 
-        logging.info(">> [Microbiome analysis] Creating summarization")
+        logging.info(">> [Qiime: Demux] Creating summarization")
         visualizationPath = demuxSummarize(demuxSample, outputDir)
         ctx_qiime2.createSample(f"{index}-summary", outputDataset.id, visualizationPath, experiment, "Step 2: Demultiplexing")
 

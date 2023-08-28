@@ -15,7 +15,7 @@ def columnNamePresent(metadataPath: Path, columnName: str) -> bool:
         for row in csv.reader(metadata, delimiter = "\t"):
             return columnName in row
 
-    raise RuntimeError(">> [Microbiome Analysis] Metadata file is empty")
+    raise RuntimeError(">> [Qiime: Alpha & Beta Diversity] Metadata file is empty")
 
 
 def diversityCoreMetricsPhylogeneticSample(
@@ -169,7 +169,7 @@ def processSample(
     targetTypeColumn = experiment.parameters["targetTypeColumn"]
 
     if not columnNamePresent(metadataPath, targetTypeColumn):
-        logging.error(f">> [Microbiome analysis] targetTypeColumn")
+        logging.error(f">> [Qiime: Alpha & Beta Diversity] targetTypeColumn")
 
     # First step:
     # Apply the core-metrics-phylogenetic method, which rarefies a
@@ -177,7 +177,7 @@ def processSample(
     # several alpha and beta diversity metrics, and generates principle
     # coordinates analysis (PCoA) plots using Emperor for each
     # of the beta diversity metrics.
-    logging.info(">> [Microbiome analysis] Apllying the core-metrics-phylogenetic method")
+    logging.info(">> [Qiime: Alpha & Beta Diversity] Apllying the core-metrics-phylogenetic method")
     try:
         coreMetricsPath = diversityCoreMetricsPhylogeneticSample(
             sample,
@@ -195,14 +195,14 @@ def processSample(
             "Step 7: Alpha & Beta diversity analysis"
         )
     except CommandException:
-        logging.error(">> [Microbiome analysis] Failed to execute \"qiime diversity core-metrics-phylogenetic\"")
+        logging.error(">> [Qiime: Alpha & Beta Diversity] Failed to execute \"qiime diversity core-metrics-phylogenetic\"")
 
     # Second step:
     # Explore the microbial composition of the samples in the context of the sample metadata
     coreMetricsSample.download()
     coreMetricsSample.unzip()
 
-    logging.info(">> [Microbiome analysis] Generating faith_pd_vector.qza")
+    logging.info(">> [Qiime: Alpha & Beta Diversity] Generating faith_pd_vector.qza")
     try:
         diversityAlphaGroupSignificance(
             coreMetricsSample.joinPath("faith_pd_vector.qza"),
@@ -213,9 +213,9 @@ def processSample(
             experiment
         )
     except CommandException:
-        logging.error(">> [Microbiome analysis] Failed to create faith_pd_vector.qza")
+        logging.error(">> [Qiime: Alpha & Beta Diversity] Failed to create faith_pd_vector.qza")
 
-    logging.info(">> [Microbiome analysis] Generating evenness_vector.qza")
+    logging.info(">> [Qiime: Alpha & Beta Diversity] Generating evenness_vector.qza")
     try:
         diversityAlphaGroupSignificance(
             coreMetricsSample.joinPath("evenness_vector.qza"),
@@ -226,7 +226,7 @@ def processSample(
             experiment
         )
     except CommandException:
-        logging.error(">> [Microbiome analysis] Failed to create evenness_vector.qza")
+        logging.error(">> [Qiime: Alpha & Beta Diversity] Failed to create evenness_vector.qza")
 
     # Third step:
     # Analyze sample composition in the context of categorical metadata using PERMANOVA
@@ -234,7 +234,7 @@ def processSample(
     # samples from the same body site (e.g., gut), are more similar to
     # each other then they are to samples from the other
     # groups (e.g., tongue, left palm, and right palm).
-    logging.info(">> [Microbiome analysis] Generating unweighted_unifrac_distance_matrix.qza")
+    logging.info(">> [Qiime: Alpha & Beta Diversity] Generating unweighted_unifrac_distance_matrix.qza")
     try:
         diversityBetaGroupSignificance(
             coreMetricsSample.joinPath("unweighted_unifrac_distance_matrix.qza"),
@@ -246,7 +246,7 @@ def processSample(
             experiment
         )
     except CommandException:
-        logging.error(">> [Microbiome analysis] Failed to create unweighted_unifrac_distance_matrix.qza")
+        logging.error(">> [Qiime: Alpha & Beta Diversity] Failed to create unweighted_unifrac_distance_matrix.qza")
 
     try:
         diversityBetaGroupSignificance(
@@ -259,44 +259,53 @@ def processSample(
             experiment
         )
     except CommandException:
-        logging.error(">> [Microbiome analysis] Failed to create unweighted_unifrac_distance_matrix.qza")
+        logging.error(">> [Qiime: Alpha & Beta Diversity] Failed to create unweighted_unifrac_distance_matrix.qza")
 
     # Fourth step:
     # Exploring microbial community composition in the context of sample metadata using ordination
-    logging.info(">> [Microbiome analysis] Generating unweighted_unifrac_pcoa_results.qza")
-    emperorPlot(
-        coreMetricsSample.joinPath("unweighted_unifrac_pcoa_results.qza"),
-        metadataPath,
-        index,
-        outputDataset.id,
-        sampleOutputDir / "unweighted-unifrac-emperor-days-since-experiment-start.qzv",
-        experiment
-    )
+    logging.info(">> [Qiime: Alpha & Beta Diversity] Generating unweighted_unifrac_pcoa_results.qza")
+    try:
+        emperorPlot(
+            coreMetricsSample.joinPath("unweighted_unifrac_pcoa_results.qza"),
+            metadataPath,
+            index,
+            outputDataset.id,
+            sampleOutputDir / "unweighted-unifrac-emperor-days-since-experiment-start.qzv",
+            experiment
+        )
+    except CommandException:
+        logging.error(">> [Qiime: Alpha & Beta Diversity] Failed to create unweighted-unifrac-emperor-days-since-experiment-start.qzv")
 
-    logging.info(">> [Microbiome analysis] Generating bray_curtis_pcoa_results.qza")
-    emperorPlot(
-        coreMetricsSample.joinPath("bray_curtis_pcoa_results.qza"),
-        metadataPath,
-        index,
-        outputDataset.id,
-        sampleOutputDir / "bray-curtis-emperor-days-since-experiment-start.qzv",
-        experiment
-    )
+    logging.info(">> [Qiime: Alpha & Beta Diversity] Generating bray_curtis_pcoa_results.qza")
+    try:
+        emperorPlot(
+            coreMetricsSample.joinPath("bray_curtis_pcoa_results.qza"),
+            metadataPath,
+            index,
+            outputDataset.id,
+            sampleOutputDir / "bray-curtis-emperor-days-since-experiment-start.qzv",
+            experiment
+        )
+    except CommandException:
+        logging.error(">> [Qiime: Alpha & Beta Diversity] Failed to create bray-curtis-emperor-days-since-experiment-start.qzv")
 
     # Fifth step:
     # This visualizer computes one or more alpha diversity metrics at multiple sampling depths,
     # in steps between 1 and the value provided as --p-max-depth
-    logging.info(">> [Microbiome analysis] Generating table.qza")
-    diversityAlphaRarefaction(
-        denoisedSample.joinPath("table.qza"),
-        sample.joinPath("rooted-tree.qza"),
-        experiment.parameters["maxDepth"],
-        metadataPath,
-        index,
-        outputDataset.id,
-        sampleOutputDir / "alpha-rarefaction.qzv",
-        experiment
-    )
+    logging.info(">> [Qiime: Alpha & Beta Diversity] Generating table.qza")
+    try:
+        diversityAlphaRarefaction(
+            denoisedSample.joinPath("table.qza"),
+            sample.joinPath("rooted-tree.qza"),
+            experiment.parameters["maxDepth"],
+            metadataPath,
+            index,
+            outputDataset.id,
+            sampleOutputDir / "alpha-rarefaction.qzv",
+            experiment
+        )
+    except CommandException:
+        logging.error(">> [Qiime: Alpha & Beta Diversity] Failed to create alpha-rarefaction.qzv")
 
 
 def main(experiment: Experiment[CustomDataset]):
@@ -308,19 +317,19 @@ def main(experiment: Experiment[CustomDataset]):
         py3nvml.nvmlInit()
 
         os.environ["UNIFRAC_USE_GPU"] = "Y"
-        logging.info(">> [Microbiome analysis] GPU will be used for \"unifrac\" calculations")
+        logging.info(">> [Qiime: Alpha & Beta Diversity] GPU will be used for \"unifrac\" calculations")
 
         py3nvml.nvmlShutdown()
     except:
         os.environ["UNIFRAC_USE_GPU"] = "N"
 
-        logging.warning(">> [Microbiome analysis] GPU will not be used for \"unifrac\" calculations")
+        logging.warning(">> [Qiime: Alpha & Beta Diversity] GPU will not be used for \"unifrac\" calculations")
 
     experiment.dataset.download()
 
     phylogeneticTreeSamples = ctx_qiime2.getPhylogeneticTreeSamples(experiment.dataset)
     if len(phylogeneticTreeSamples) == 0:
-        raise ValueError(">> [Microbiome analysis] Dataset has 0 phylogenetic tree samples")
+        raise ValueError(">> [Qiime: Alpha & Beta Diversity] Dataset has 0 phylogenetic tree samples")
 
     importedDataset: CustomDataset = experiment.parameters["importedDataset"]
     importedDataset.download()
@@ -335,18 +344,18 @@ def main(experiment: Experiment[CustomDataset]):
     )
 
     if outputDataset is None:
-        raise ValueError(">> [Microbiome analysis] Failed to create output dataset")
+        raise ValueError(">> [Qiime: Alpha & Beta Diversity] Failed to create output dataset")
 
     for sample in phylogeneticTreeSamples:
         index = ctx_qiime2.sampleNumber(sample)
 
         metadataSample = importedDataset.getSample(f"{index}-metadata")
         if metadataSample is None:
-            raise ValueError(f">> [Microbiome analysis] metadata sample not found")
+            raise ValueError(f">> [Qiime: Alpha & Beta Diversity] metadata sample not found")
 
         denoisedSample = denoisedDataset.getSample(f"{index}-denoise")
         if denoisedSample is None:
-            raise ValueError(f">> [Microbiome analysis] Denoised sample not found")
+            raise ValueError(f">> [Qiime: Alpha & Beta Diversity] Denoised sample not found")
 
         processSample(
             index,
