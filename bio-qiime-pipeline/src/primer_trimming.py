@@ -1,16 +1,14 @@
-from typing import List, Optional
+from typing import Optional
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 
 import logging
 
-from coretex import Experiment, CustomDataset, CustomSample, folder_manager
+from coretex import Experiment, SequenceDataset, CustomSample, SequenceSample, folder_manager
 from coretex.bioinformatics import cutadaptTrim
 
-from .utils import loadSingleEnd, loadPairedEnd
 
-
-def forwardMetadata(sample: CustomSample, outputDataset: CustomDataset) -> None:
+def forwardMetadata(sample: CustomSample, outputDataset: SequenceDataset) -> None:
     sample.unzip()
 
     metadataZip = folder_manager.temp / "_metadata.zip"
@@ -22,72 +20,74 @@ def forwardMetadata(sample: CustomSample, outputDataset: CustomDataset) -> None:
         raise RuntimeError(">> [Microbiome analysis] Failed to forward metadata to the output dataset")
 
 
-def uploadTrimmedReads(sampleName: str, dataset: CustomDataset, forwardFile: Path, reverseFile: Optional[Path] = None):
+def uploadTrimmedReads(sampleName: str, dataset: SequenceDataset, forwardFile: Path, reverseFile: Optional[Path] = None):
     zipPath = folder_manager.temp / f"{sampleName}.zip"
     with ZipFile(zipPath, 'w', ZIP_DEFLATED) as archive:
         archive.write(forwardFile, forwardFile.name)
         if reverseFile:
             archive.write(reverseFile, reverseFile.name)
 
-    if CustomSample.createCustomSample(sampleName, dataset.id, zipPath) is None:
+    if SequenceSample.createSequenceSample(zipPath, dataset.id) is None:
         raise RuntimeError(">> [Microbiome analysis] Failed to upload trimmed reads")
 
 
 def trimSingleEnd(
-    sample: CustomSample,
+    sample: SequenceSample,
     forwardAdapter: str,
     forwardReadsFolder: Path,
-    outputDataset: CustomDataset
+    outputDataset: SequenceDataset
 ) -> None:
 
-    inputFile, sampleName = loadSingleEnd(sample)
+    inputFile = sample.sequencePath
     logging.info(f">> [Microbiome analysis] Trimming adapter sequences for {inputFile.name}")
 
     outputFile = forwardReadsFolder / inputFile.name
     cutadaptTrim(str(inputFile), str(outputFile), forwardAdapter)
-    uploadTrimmedReads(sampleName, outputDataset, outputFile)
+    uploadTrimmedReads(inputFile.name.split("_")[0], outputDataset, outputFile)
 
 
 def trimPairedEnd(
-    sample: CustomSample,
+    sample: SequenceSample,
     forwardAdapter: str,
     reverseAdapter: str,
     forwardReadsFolder: Path,
     reverseReadsFolder: Path,
-    outputDataset: CustomDataset
+    outputDataset: SequenceDataset
 ) -> None:
 
-    forwardFile, reverseFile, sampleName = loadPairedEnd(sample)
+    forwardFile = sample.forwardPath
+    reverseFile = sample.reversePath
     logging.info(f">> [Microbiome analysis] Trimming adapter sequences for {forwardFile.name} and {reverseFile.name}")
 
     forwardOutput = forwardReadsFolder / forwardFile.name
     reverseOutput = reverseReadsFolder / reverseFile.name
     cutadaptTrim(str(forwardFile), str(forwardOutput), forwardAdapter, str(reverseFile), str(reverseOutput), reverseAdapter)
-    uploadTrimmedReads(sampleName, outputDataset, forwardFile, reverseFile)
+    uploadTrimmedReads(forwardFile.name.split("_")[0], outputDataset, forwardFile, reverseFile)
 
 
-def primerTrimming(dataset: CustomDataset, experiment: Experiment, pairedEnd: bool) -> CustomDataset:
+def primerTrimming(dataset: SequenceDataset, experiment: Experiment, pairedEnd: bool) -> SequenceDataset:
     forwardAdapter = experiment.parameters["forwardAdapter"]
     reverseAdapter = experiment.parameters["reverseAdapter"]
 
+    # In case no adapter in entered, "X" will act as placeholder as no
+    # sequence should start with the letter X
     if forwardAdapter is None:
-        forwardAdapter = ""
+        forwardAdapter = "X"
 
     if reverseAdapter is None:
-        reverseAdapter = ""
+        reverseAdapter = "X"
 
     forwardReadsFolder = folder_manager.createTempFolder("forwardReads")
     if pairedEnd:
         reverseReadsFolder = folder_manager.createTempFolder("revereseReads")
 
-    outputDataset = CustomDataset.createDataset(f"{experiment.id} - Cutadapt Output", experiment.spaceId)
+    outputDataset = SequenceDataset.createDataset(f"{experiment.id} - Cutadapt Output", experiment.spaceId)
     if outputDataset is None:
         raise RuntimeError(">> [Microbiome analysis] Failed to create coretex dataset")
 
+    forwardMetadata(dataset.metadata, outputDataset)
     for sample in dataset.samples:
-        if sample.name.startswith("_metadata"):
-            forwardMetadata(sample, outputDataset)
-            continue
+        sample.unzip()
 
         if not pairedEnd:
             trimSingleEnd(

@@ -34,7 +34,7 @@ dataset is output of the "Step #1" template. Dataset is generated
 by Qiime2 tool.
 -----------------------------------
 
---- barcodesFileName description ---
+--- metadataFileName description ---
 Name of the sequence metadata file from the dataset.
 ------------------------------------
 
