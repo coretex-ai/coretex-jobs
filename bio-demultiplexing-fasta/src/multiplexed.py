@@ -2,6 +2,8 @@ from typing import List
 from pathlib import Path
 from zipfile import ZipFile
 
+import logging
+
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
@@ -74,6 +76,7 @@ def processSample(
     # If needed keep comment
     # Local sample
     # Separate function
+    logging.info(">> [Microbiome analysis] Importing sample")
     importedFilePath = importSample(sequenceFolderPath, metadataPath, experiment.parameters["sequenceType"], outputDir)
     importedSample = ctx_qiime2.createSample("0-import", outputDataset.id, importedFilePath, experiment, "Step 1: Demultiplexing")
 
@@ -82,6 +85,7 @@ def processSample(
     importedSample.download()
     importedSample.unzip()
 
+    logging.info(">> [Microbiome analysis] Demultiplexing sample")
     demuxPath = demuxEmpSingleSample(importedSample, metadataPath, experiment.parameters["barcodeColumn"], outputDir)
     demuxSample = ctx_qiime2.createSample("0-demux", outputDataset.id, demuxPath, experiment, "Step 1: Demultiplexing")
 
@@ -90,21 +94,25 @@ def processSample(
     demuxSample.download()
     demuxSample.unzip()
 
+    logging.info(">> [Microbiome analysis] Creating summarization")
     visualizationPath = summarizeSample(demuxSample, outputDir)
     ctx_qiime2.createSample("0-summary", outputDataset.id, visualizationPath, experiment, "Step 1: Demultiplexing")
 
 
 def demultiplexing(
-    fastqSamples: List[CustomSample],
-    experiment: Experiment[CustomDataset],
+    dataset: CustomDataset,
+    experiment: Experiment,
     outputDataset: CustomDataset,
     outputDir: Path
 ):
+
+    logging.info(">> [Microbiome analysis] Multiplexed samples detected. Procceeding with demultiplexing")
 
     dataDir = folder_manager.createTempFolder("data_dir")
     sequencesPath = dataDir / "sequences.fastq"
     barcodesPath = dataDir / "barcodes.fastq"
 
+    fastqSamples = ctx_qiime2.getFastqMPSamples(dataset)
     for sample in fastqSamples:
         sample.unzip()
 

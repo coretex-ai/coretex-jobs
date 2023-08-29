@@ -2,11 +2,11 @@ from typing import Optional
 
 import logging
 
-from coretex import CustomDataset, Experiment
+from coretex import CustomDataset, Experiment, SequenceDataset
 from coretex.utils.hash import hashCacheName
 
 
-def getCacheNameOne(experiment: Experiment[CustomDataset]) -> str:
+def getCacheNameOne(experiment: Experiment) -> str:
     if experiment.parameters["barcodeColumn"]:
         prefix = f"{experiment.id} - Step 1: Demux"
     else:
@@ -27,7 +27,7 @@ def getCacheNameOne(experiment: Experiment[CustomDataset]) -> str:
     return hashCacheName(prefix, "_".join(paramList))
 
 
-def getCacheNameTwo(experiment: Experiment[CustomDataset]) -> str:
+def getCacheNameTwo(experiment: Experiment) -> str:
     prefix = f"{experiment.id} - Step 2: Denoise"
 
     paramList = [
@@ -49,7 +49,7 @@ def getCacheNameTwo(experiment: Experiment[CustomDataset]) -> str:
     return hashCacheName(prefix, "_".join(paramList))
 
 
-def getCacheNameThree(experiment: Experiment[CustomDataset]) -> str:
+def getCacheNameThree(experiment: Experiment) -> str:
     prefix = f"{experiment.id} - Step 3: Phylogenetic tree"
 
     paramList = [
@@ -71,7 +71,7 @@ def getCacheNameThree(experiment: Experiment[CustomDataset]) -> str:
     return hashCacheName(prefix, "_".join(paramList))
 
 
-def getCacheNameFour(experiment: Experiment[CustomDataset]) -> str:
+def getCacheNameFour(experiment: Experiment) -> str:
     prefix = f"{experiment.id} - Step 4: Alpha & Beta diversity"
 
     paramList = [
@@ -96,7 +96,7 @@ def getCacheNameFour(experiment: Experiment[CustomDataset]) -> str:
     return hashCacheName(prefix, "_".join(paramList))
 
 
-def getCacheNameFive(experiment: Experiment[CustomDataset]) -> str:
+def getCacheNameFive(experiment: Experiment) -> str:
     prefix = f"{experiment.id} - Step 5: Taxonomic analysis"
 
     paramList = [

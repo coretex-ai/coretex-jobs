@@ -1,13 +1,11 @@
-from typing import Optional, Tuple, Dict
+from typing import Optional
 from pathlib import Path
 
-import logging
 import csv
 import pandas as pd
 
-from coretex import CustomSample, CustomDataset, folder_manager, Experiment
+from coretex import CustomSample, folder_manager
 from coretex.bioinformatics import ctx_qiime2
-from coretex.utils.hash import hashCacheName
 
 import chardet
 
@@ -51,54 +49,6 @@ def determineTruncLen(sample: CustomSample, forward: bool) -> int:
         raise RuntimeError(">> [Microbiome analysis] Forward read truncLen could not be determined automatically")
 
     return truncLen
-
-
-def loadSingleEnd(sample: CustomSample) -> Tuple[Path, str]:
-    sample.unzip()
-
-    filePathList = list(sample.path.glob("*.fastq*"))
-    if len(filePathList) == 1:
-        filePath = filePathList[0]
-        return filePath, filePath.name.split("_")[0]
-
-    raise ValueError(f">> [Microbiome analysis] Sample \"{sample.name}\" must contain exactly one fastq file")
-
-
-def loadPairedEnd(sample: CustomSample) -> Tuple[Path, Path, str]:
-    sample.unzip()
-
-    forwardPathList = list(sample.path.glob("*_R1_*.fastq*"))
-    reversePathList = list(sample.path.glob("*_R2_*.fastq*"))
-
-    if len(forwardPathList) != 1 or len(reversePathList) != 1:
-        raise ValueError(f">> [Microbiome analysis] Invalid paired-end sample: {sample.name}. Must contain 2 files, one with \"_R1_\" and another with \"_R2_\" in name")
-
-    forwardPath = forwardPathList[0]
-    reversePath = reversePathList[0]
-
-    return forwardPath, reversePath, forwardPath.name.split("_")[0]
-
-
-def isPairedEnd(dataset: CustomDataset) -> bool:
-    for sample in dataset.samples:
-        sample.unzip()
-
-        if sample.name.startswith("_metadata"):
-            continue
-
-        if len(list(sample.path.glob("*.fastq*"))) != 2:
-            return False
-
-    return True
-
-
-def isGzCompressed(dataset: CustomDataset) -> bool:
-    for sample in dataset.samples:
-        sample.unzip()
-        if len(list(sample.path.glob("*.fastq.gz"))) > 0:
-            return True
-
-    return False
 
 
 def columnNamePresent(metadataPath: Path, columnName: str) -> bool:

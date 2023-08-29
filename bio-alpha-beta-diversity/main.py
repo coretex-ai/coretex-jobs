@@ -156,7 +156,7 @@ def processSample(
     sampleOutputDir = outputDir / str(sample.id)
     sampleOutputDir.mkdir()
 
-    metadataPath = importedSample.joinPath(experiment.parameters["barcodesFileName"])
+    metadataPath = importedSample.joinPath(experiment.parameters["metadataFileName"])
 
     # First step:
     # Apply the core-metrics-phylogenetic method, which rarefies a
@@ -164,27 +164,32 @@ def processSample(
     # several alpha and beta diversity metrics, and generates principle
     # coordinates analysis (PCoA) plots using Emperor for each
     # of the beta diversity metrics.
-    coreMetricsPath = diversityCoreMetricsPhylogeneticSample(
-        sample,
-        denoisedSample.joinPath("table.qza"),
-        experiment.parameters["samplingDepth"],
-        metadataPath,
-        sampleOutputDir
-    )
+    logging.info(">> [Microbiome analysis] Apllying the core-metrics-phylogenetic method")
+    try:
+        coreMetricsPath = diversityCoreMetricsPhylogeneticSample(
+            sample,
+            denoisedSample.joinPath("table.qza"),
+            experiment.parameters["samplingDepth"],
+            metadataPath,
+            sampleOutputDir
+        )
 
-    coreMetricsSample = ctx_qiime2.createSample(
-        f"{index}-core-metrics-phylogenetic",
-        outputDataset.id,
-        coreMetricsPath,
-        experiment,
-        "Step 4: Alpha & Beta diversity analysis"
-    )
+        coreMetricsSample = ctx_qiime2.createSample(
+            f"{index}-core-metrics-phylogenetic",
+            outputDataset.id,
+            coreMetricsPath,
+            experiment,
+            "Step 4: Alpha & Beta diversity analysis"
+        )
+    except CommandException:
+        logging.error(">> [Microbiome analysis] Failed to execute \"qiime diversity core-metrics-phylogenetic\"")
 
     # Second step:
     # Explore the microbial composition of the samples in the context of the sample metadata
     coreMetricsSample.download()
     coreMetricsSample.unzip()
 
+    logging.info(">> [Microbiome analysis] Generating faith_pd_vector.qza")
     try:
         diversityAlphaGroupSignificance(
             coreMetricsSample.joinPath("faith_pd_vector.qza"),
@@ -197,6 +202,7 @@ def processSample(
     except CommandException:
         logging.error(">> [Microbiome analysis] Failed to create faith_pd_vector.qza")
 
+    logging.info(">> [Microbiome analysis] Generating evenness_vector.qza")
     try:
         diversityAlphaGroupSignificance(
             coreMetricsSample.joinPath("evenness_vector.qza"),
@@ -215,6 +221,7 @@ def processSample(
     # samples from the same body site (e.g., gut), are more similar to
     # each other then they are to samples from the other
     # groups (e.g., tongue, left palm, and right palm).
+    logging.info(">> [Microbiome analysis] Generating unweighted_unifrac_distance_matrix.qza")
     try:
         diversityBetaGroupSignificance(
             coreMetricsSample.joinPath("unweighted_unifrac_distance_matrix.qza"),
@@ -243,6 +250,7 @@ def processSample(
 
     # Fourth step:
     # Exploring microbial community composition in the context of sample metadata using ordination
+    logging.info(">> [Microbiome analysis] Generating unweighted_unifrac_pcoa_results.qza")
     emperorPlot(
         coreMetricsSample.joinPath("unweighted_unifrac_pcoa_results.qza"),
         metadataPath,
@@ -252,6 +260,7 @@ def processSample(
         experiment
     )
 
+    logging.info(">> [Microbiome analysis] Generating bray_curtis_pcoa_results.qza")
     emperorPlot(
         coreMetricsSample.joinPath("bray_curtis_pcoa_results.qza"),
         metadataPath,
@@ -264,6 +273,7 @@ def processSample(
     # Fifth step:
     # This visualizer computes one or more alpha diversity metrics at multiple sampling depths,
     # in steps between 1 and the value provided as --p-max-depth
+    logging.info(">> [Microbiome analysis] Generating table.qza")
     diversityAlphaRarefaction(
         denoisedSample.joinPath("table.qza"),
         sample.joinPath("rooted-tree.qza"),

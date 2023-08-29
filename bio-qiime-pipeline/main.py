@@ -1,6 +1,6 @@
 import logging
 
-from coretex import CustomDataset, Experiment
+from coretex import SequenceDataset, Experiment, CustomDataset
 from coretex.project import initializeProject
 
 from src.primer_trimming import primerTrimming
@@ -10,15 +10,14 @@ from src.denoise import denoise
 from src.pylogenetic_analysis import phyogeneticDiversityAnalysis
 from src.alpha_beta_diversity import alphaBetaDiversityAnalysis
 from src.taxonomic_analysis import taxonomicAnalysis
-from src.utils import isPairedEnd
 from src.caching import getCache, uploadCacheAsArtifact, getCacheNameOne, getCacheNameTwo, getCacheNameThree, getCacheNameFour, getCacheNameFive
 
 
-def main(experiment: Experiment[CustomDataset]):
+def main(experiment: Experiment[SequenceDataset]):
     useCache = experiment.parameters["useCache"]
     experiment.dataset.download()
 
-    pairedEnd = isPairedEnd(experiment.dataset)
+    pairedEnd = experiment.dataset.isPairedEnd()
     if pairedEnd:
         logging.info(">> [Microbiome analysis] Paired-end reads detected")
     else:
@@ -43,7 +42,7 @@ def main(experiment: Experiment[CustomDataset]):
         logging.info(">> [Microbiome analysis] Step 1: Demux / Import")
 
         if experiment.parameters["barcodeColumn"]:
-            demultiplexedDataset = demultiplexing(initialDataset, experiment)
+            demultiplexedDataset = demultiplexing(CustomDataset.fetchById(initialDataset.id), experiment)
         else:
             demultiplexedDataset = importDemultiplexedSamples(initialDataset, experiment, pairedEnd)
 
@@ -97,4 +96,4 @@ def main(experiment: Experiment[CustomDataset]):
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    initializeProject(main, SequenceDataset)

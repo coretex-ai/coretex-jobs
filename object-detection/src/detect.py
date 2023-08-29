@@ -54,7 +54,7 @@ from coretex import ComputerVisionDataset, Experiment, folder_manager
 @torch.no_grad()
 def run(
     experiment: Experiment[ComputerVisionDataset],
-    weights: Optional[Path],
+    weights: Optional[Path] = None,
     imgsz=(640, 640),  # inference size (height, width)
     conf_thres=0.25,  # confidence threshold
     iou_thres=0.45,  # NMS IOU threshold

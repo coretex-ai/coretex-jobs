@@ -80,7 +80,7 @@ def processSample(
     ctx_qiime2.taxaBarplot(
         str(sample.joinPath("table.qza")),
         str(taxonomySample.joinPath("taxonomy.qza")),
-        str(importedSample.joinPath(experiment.parameters["barcodesFileName"])),
+        str(importedSample.joinPath(experiment.parameters["metadataFileName"])),
         str(taxaBarBlotsPath)
     )
 

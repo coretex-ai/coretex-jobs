@@ -1,22 +1,16 @@
-from typing import Optional
+from typing import Tuple, Optional
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 
 import logging
 
-from coretex import Experiment, SequenceDataset, CustomSample, SequenceSample, folder_manager
-from coretex.bioinformatics import cutadaptTrim
+from coretex import Experiment, CustomDataset, CustomSample, folder_manager, SequenceDataset, SequenceSample
+from coretex.project import initializeProject
+from coretex.bioinformatics import cutadaptTrim, isPairedEnd
 
 
 def forwardMetadata(sample: CustomSample, outputDataset: SequenceDataset) -> None:
-    sample.unzip()
-
-    metadataZip = folder_manager.temp / "_metadata.zip"
-    with ZipFile(metadataZip, 'w', ZIP_DEFLATED) as archive:
-        for path in sample.path.iterdir():
-            archive.write(path, path.name)
-
-    if CustomSample.createCustomSample("_metadata", outputDataset.id, metadataZip) is None:
+    if CustomSample.createCustomSample("_metadata", outputDataset.id, sample.zipPath) is None:
         raise RuntimeError(">> [Microbiome analysis] Failed to forward metadata to the output dataset")
 
 
@@ -27,7 +21,7 @@ def uploadTrimmedReads(sampleName: str, dataset: SequenceDataset, forwardFile: P
         if reverseFile:
             archive.write(reverseFile, reverseFile.name)
 
-    if SequenceSample.createSequenceSample(zipPath, dataset.id) is None:
+    if CustomSample.createCustomSample(sampleName, dataset.id, zipPath) is None:
         raise RuntimeError(">> [Microbiome analysis] Failed to upload trimmed reads")
 
 
@@ -65,12 +59,13 @@ def trimPairedEnd(
     uploadTrimmedReads(forwardFile.name.split("_")[0], outputDataset, forwardFile, reverseFile)
 
 
-def primerTrimming(dataset: SequenceDataset, experiment: Experiment, pairedEnd: bool) -> SequenceDataset:
+def main(experiment: Experiment[SequenceDataset]) -> None:
     forwardAdapter = experiment.parameters["forwardAdapter"]
     reverseAdapter = experiment.parameters["reverseAdapter"]
 
-    # In case no adapter in entered, "X" will act as placeholder as no
-    # sequence should start with the letter X
+    dataset = experiment.dataset
+    pairedEnd = dataset.isPairedEnd()
+
     if forwardAdapter is None:
         forwardAdapter = "X"
 
@@ -86,6 +81,7 @@ def primerTrimming(dataset: SequenceDataset, experiment: Experiment, pairedEnd: 
         raise RuntimeError(">> [Microbiome analysis] Failed to create coretex dataset")
 
     forwardMetadata(dataset.metadata, outputDataset)
+
     for sample in dataset.samples:
         sample.unzip()
 
@@ -106,5 +102,6 @@ def primerTrimming(dataset: SequenceDataset, experiment: Experiment, pairedEnd: 
                 outputDataset
             )
 
-    outputDataset.refresh()
-    return outputDataset
+
+if __name__ == "__main__":
+    initializeProject(main, SequenceDataset)

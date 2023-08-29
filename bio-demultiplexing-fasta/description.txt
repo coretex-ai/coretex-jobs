@@ -38,25 +38,16 @@ Dataset format must macth this sturcture in case of demultiplexed data:
     1 Sample:
         - Sequence metadata file: expected format is tsv
     N Samples:
-        - {sample-id}.fastq
+        - {forward_sequence}.fastq
+        - Optional: {reverse_sequence}.fstq
 ---------------------------
 
---- sequenceType description ---
-Type of the sequences contained in the dataset. Supported options are:
-    For multiplexed sequences:
-        - "EMPSingleEndSequences"
-    For demultiplexed sequences:
-        - "SingleEndFastqManifestPhred33V2"
-
-Coming soon:
-    - EMPPairedEndSequences
---------------------------------
-
---- barcodesFileName description ---
+--- metadataFileName description ---
 Name of the sequence metadata file from the dataset.
 ------------------------------------
 
 --- barcodeColumn description ---
+(If this field is empty it will be assumed that the sequencing reads are demultiplexed)
 Column from sequence metadata file which containes IDs for samples.
 The values of this column are used to match sample sequences with their
 corresponding barcode. Only used with multiplexed data.

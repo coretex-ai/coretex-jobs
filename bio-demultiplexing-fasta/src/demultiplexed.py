@@ -1,23 +1,24 @@
-from typing import List
+from typing import List, Tuple
 from pathlib import Path
 from zipfile import ZipFile
 
 import csv
+import logging
 
-from coretex import CustomDataset, CustomSample, Experiment
+from coretex import SequenceDataset, CustomDataset, CustomSample, Experiment, SequenceSample
 from coretex.bioinformatics import ctx_qiime2
 
 from .utils import summarizeSample
 
 
-def importSample(manifestPath: Path, sequenceType: str, outputDir: Path) -> Path:
+def importSample(inputPath: Path, sequenceType: str, inputFormat: str, outputDir: Path) -> Path:
     demuxPath = outputDir / "demux.qza"
 
     ctx_qiime2.toolsImport(
-        "SampleData[SequencesWithQuality]",
-        str(manifestPath),
+        sequenceType,
+        str(inputPath),
         str(demuxPath),
-        sequenceType
+        inputFormat
     )
 
     demuxZipPath = outputDir / "demux.zip"
@@ -28,48 +29,70 @@ def importSample(manifestPath: Path, sequenceType: str, outputDir: Path) -> Path
 
 
 def importMetadata(metadata: CustomSample, outputDir: Path) -> Path:
+    metadata.unzip()
     metadataZipPath = outputDir / "metadata.zip"
+
     with ZipFile(metadataZipPath, "w") as metadataFile:
         metadataFile.write(Path(metadata.path) / "metadata.tsv", "metadata.tsv")
 
     return metadataZipPath
 
 
-def createManifest(samples: List[CustomSample], manifestPath: Path) -> Path:
-    with manifestPath.open("w") as manifestFile:
+def createManifestSingle(samples: List[SequenceSample], manifestPath: Path) -> Path:
+    with manifestPath.open("a") as manifestFile:
         csv.writer(manifestFile, delimiter = "\t").writerow(["sample-id", "absolute-filepath"])
 
-    for sample in samples:
-        for fastqPath in Path(sample.path).iterdir():
-            if fastqPath.suffix != ".fastq":
-                continue
+        for sample in samples:
+            sample.unzip()
 
-            sampleId = fastqPath.name[:-6]
-            with manifestPath.open("a") as manifestFile:
-                csv.writer(manifestFile, delimiter = "\t").writerow([sampleId, fastqPath])
+            csv.writer(manifestFile, delimiter = "\t").writerow([sample.sequencePath.stem, sample.sequencePath])
+
+    return manifestPath
+
+
+def createManifestPaired(samples: List[SequenceSample], manifestPath: Path) -> Path:
+    with manifestPath.open("a") as manifestFile:
+        csv.writer(manifestFile, delimiter = "\t").writerow(["sample-id", "forward-absolute-filepath", "reverse-absolute-filepath"])
+
+        for sample in samples:
+            sample.unzip()
+
+            forwardPath = sample.forwardPath
+            reversePath = sample.reversePath
+            csv.writer(manifestFile, delimiter = "\t").writerow([forwardPath.name.split("_")[0], forwardPath, reversePath])
 
     return manifestPath
 
 
 def importDemultiplexedSamples(
-    fastqSamples: List[CustomSample],
-    metadata: CustomSample,
+    dataset: SequenceDataset,
     experiment: Experiment,
     outputDataset: CustomDataset,
     outputDir: Path
 ):
 
-    manifestPath = outputDir / "manifest.tsv"
-    createManifest(fastqSamples, manifestPath)
+    logging.info(">> [Microbiome analysis] Preparing data for import into QIIME2 format")
+    inputPath = outputDir / "manifest.tsv"
 
-    demuxZipPath = importSample(manifestPath, experiment.parameters["sequenceType"], outputDir)
+    if dataset.isPairedEnd():
+        createManifestPaired(dataset.samples, inputPath)
+        sequenceType = "SampleData[PairedEndSequencesWithQuality]"
+        inputFormat = "PairedEndFastqManifestPhred33V2"
+    else:
+        createManifestSingle(dataset.samples, inputPath)
+        sequenceType = "SampleData[SequencesWithQuality]"
+        inputFormat = "SingleEndFastqManifestPhred33V2"
+
+    logging.info(">> [Microbiome analysis] Importing data...")
+    demuxZipPath = importSample(inputPath, sequenceType, inputFormat, outputDir)
     demuxSample = ctx_qiime2.createSample("0-demux", outputDataset.id, demuxZipPath, experiment, "Step 1: Demultiplexing")
 
-    metadataZipPath = importMetadata(metadata, outputDir)
+    metadataZipPath = importMetadata(dataset.metadata, outputDir)
     ctx_qiime2.createSample("0-import", outputDataset.id, metadataZipPath, experiment, "Step 1: Demultiplexing")
 
     demuxSample.download()
     demuxSample.unzip()
 
+    logging.info(">> [Microbiome analysis] Creating summarization...")
     visualizationPath = summarizeSample(demuxSample, outputDir)
     ctx_qiime2.createSample("0-summary", outputDataset.id, visualizationPath, experiment, "Step 1: Demultiplexing")

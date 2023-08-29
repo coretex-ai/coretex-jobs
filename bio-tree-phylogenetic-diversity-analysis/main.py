@@ -1,6 +1,8 @@
 from pathlib import Path
 from zipfile import ZipFile
 
+import logging
+
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.project import initializeProject
 from coretex.bioinformatics import ctx_qiime2
@@ -46,6 +48,7 @@ def processSample(
     sampleOutputDir.mkdir()
 
     # Phylogenetic diversity analysis
+    logging.info(">> [Microbiome analysis] Generating phylogenetic tree")
     treePath = phylogenyAlignToTreeMafftFasttreeSample(sample, sampleOutputDir)
     ctx_qiime2.createSample(f"{index}-phylogenetic-tree", outputDataset.id, treePath, experiment, "Step 3: Phylogenetic tree")
 
