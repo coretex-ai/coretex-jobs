@@ -24,7 +24,7 @@ def getCacheNameOne(experiment: Experiment) -> str:
     if not experiment.parameters["useCache"]:
         return prefix
 
-    return hashCacheName(prefix, "_".join(paramList))
+    return hashCacheName(prefix, "_".join(paramList)).replace("+", "0")
 
 
 def getCacheNameTwo(experiment: Experiment) -> str:
@@ -46,7 +46,7 @@ def getCacheNameTwo(experiment: Experiment) -> str:
     if not experiment.parameters["useCache"]:
         return prefix
 
-    return hashCacheName(prefix, "_".join(paramList))
+    return hashCacheName(prefix, "_".join(paramList)).replace("+", "0")
 
 
 def getCacheNameThree(experiment: Experiment) -> str:
@@ -68,7 +68,7 @@ def getCacheNameThree(experiment: Experiment) -> str:
     if not experiment.parameters["useCache"]:
         return prefix
 
-    return hashCacheName(prefix, "_".join(paramList))
+    return hashCacheName(prefix, "_".join(paramList)).replace("+", "0")
 
 
 def getCacheNameFour(experiment: Experiment) -> str:
@@ -93,7 +93,7 @@ def getCacheNameFour(experiment: Experiment) -> str:
     if not experiment.parameters["useCache"]:
         return prefix
 
-    return hashCacheName(prefix, "_".join(paramList))
+    return hashCacheName(prefix, "_".join(paramList)).replace("+", "0")
 
 
 def getCacheNameFive(experiment: Experiment) -> str:
@@ -116,7 +116,7 @@ def getCacheNameFive(experiment: Experiment) -> str:
     if not experiment.parameters["useCache"]:
         return prefix
 
-    return hashCacheName(prefix, "_".join(paramList))
+    return hashCacheName(prefix, "_".join(paramList)).replace("+", "0")
 
 
 def getCache(cacheName: str) -> Optional[CustomDataset]:
