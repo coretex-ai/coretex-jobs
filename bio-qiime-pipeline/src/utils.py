@@ -11,10 +11,12 @@ import pandas as pd
 from coretex import CustomSample, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
+import chardet
+
 
 FORWARD_SUMMARY_NAME = "forward-seven-number-summaries.tsv"
 REVERSE_SUMMARY_NAME = "reverse-seven-number-summaries.tsv"
-CASEINSENSITIVE_NAMES = ["id", "sampleid", "sample id", "sample-id", "featureid" ,"feature id", "feature-id"]
+CASEINSENSITIVE_NAMES = ["id", "sampleid", "sample id", "sample-id", "featureid" ,"feature id", "feature-id", "sample_id", "sample.id"]
 CASESENSITIVE_NAMES = ["#SampleID" , "#Sample ID", "#OTUID", "#OTU ID", "sample_name"]
 
 
