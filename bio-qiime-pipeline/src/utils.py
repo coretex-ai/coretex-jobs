@@ -1,10 +1,14 @@
 from typing import Optional
 from pathlib import Path
+from zipfile import ZipFile
 
 import csv
-import logging
+import shutil
 
-from coretex import CustomSample, CustomDataset, Experiment, folder_manager
+import chardet
+import pandas as pd
+
+from coretex import CustomSample, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
 
@@ -14,7 +18,7 @@ CASEINSENSITIVE_NAMES = ["id", "sampleid", "sample id", "sample-id", "featureid"
 CASESENSITIVE_NAMES = ["#SampleID" , "#Sample ID", "#OTUID", "#OTU ID", "sample_name"]
 
 
-def summarizeSample(sample: CustomSample, outputDir: Path) -> Path:
+def demuxSummarize(sample: CustomSample, outputDir: Path) -> Path:
     demuxPath = sample.path / "demux.qza"
     visualizationPath = outputDir / "demux.qzv"
 
@@ -44,7 +48,8 @@ def determineTruncLen(sample: CustomSample, forward: bool) -> int:
             break
 
     if not truncLen:
-        raise RuntimeError(">> [Microbiome Analysis] Forward read truncLen could not be determined automatically")
+        strand = "Forward" if forward else "Reverse"
+        raise RuntimeError(f">> [Microbiome Analysis] {strand} read truncLen could not be determined automatically")
 
     return truncLen
 
@@ -57,35 +62,50 @@ def columnNamePresent(metadataPath: Path, columnName: str) -> bool:
     raise RuntimeError(">> [Microbiome Analysis] Metadata file is empty")
 
 
+def detectFileEncoding(path: Path) -> Optional[str]:
+    with path.open("rb") as file:
+        return chardet.detect(file.read(10))["encoding"]
+
+
 def convertMetadata(metadataPath: Path) -> Path:
+    newMetadataPath = folder_manager.temp / f"{metadataPath.stem}.tsv"
     if metadataPath.suffix != ".csv" and metadataPath.suffix != ".tsv":
         raise ValueError(">> [Microbiome Analysis] Metadata has to be either tsv or csv")
 
     if metadataPath.suffix == ".csv":
-        newMetadataPath = folder_manager.temp / f"{metadataPath.stem}.tsv"
+        metadata = pd.read_csv(metadataPath, encoding = detectFileEncoding(metadataPath))
+    else:
+        metadata = pd.read_csv(metadataPath, encoding = detectFileEncoding(metadataPath), delimiter = "\t")
 
-        with metadataPath.open("r") as inputMetadata, newMetadataPath.open("w") as outputMetadata:
-            outputTsv = csv.writer(outputMetadata, delimiter = "\t")
-
-            for row in csv.reader(inputMetadata):
-                outputTsv.writerow(row)
-
-        metadataPath = newMetadataPath
-
-    with metadataPath.open("r") as metadata:
-        for row in csv.reader(metadata, delimiter = "\t"):
+    for i, columnName in enumerate(metadata.columns):
+        if columnName.lower() in CASEINSENSITIVE_NAMES or columnName in CASESENSITIVE_NAMES:
             break
 
-        for columnName in row:
-            if columnName.lower() in CASEINSENSITIVE_NAMES or columnName in CASESENSITIVE_NAMES:
-                return metadataPath
+        raise ValueError(f">> [Microbiome Analysis] Sample ID column not found. Recognized column names are: (case insensitive) - {CASEINSENSITIVE_NAMES}, (case sensitive) - {CASESENSITIVE_NAMES}")
 
-    raise ValueError(f">> [Microbiome Analysis] Sample ID column not found. Recognized column names are: (case insensitive) - {CASEINSENSITIVE_NAMES}, (case sensitive) - {CASESENSITIVE_NAMES}")
+    metadata.columns.values[i] = "sampleid"
+    for sampleId in metadata["sampleid"]:
+        sampleIdSplit = str(sampleId).split("_")
+        if len(sampleIdSplit) > 1:
+            metadata["sampleid"].replace(sampleId, sampleIdSplit[0], inplace = True)
+
+    metadata.to_csv(newMetadataPath, "\t", index = False)
+
+    return newMetadataPath
 
 
-def getMetadata(sample: CustomSample, metadataFileNme: str) -> Path:
-    metadataPath = sample.joinPath(metadataFileNme)
-    if metadataPath.suffix != ".tsv":
-        metadataPath = metadataPath.parent / f"{metadataPath.stem}.tsv"
+def isPairedEnd(sample: CustomSample) -> bool:
+    sampleTemp = folder_manager.createTempFolder("qzaSample")
+    qzaPath = list(sample.path.iterdir())[0]
 
-    return metadataPath
+    with ZipFile(qzaPath, "r") as qzaFile:
+        qzaFile.extractall(sampleTemp)
+
+    metadataPath = list(sampleTemp.rglob("*metadata.yaml"))[0]
+
+    with metadataPath.open("r") as metadata:
+        pairedEnd = "PairedEnd" in metadata.readlines()[1]
+
+    shutil.rmtree(sampleTemp)
+
+    return pairedEnd

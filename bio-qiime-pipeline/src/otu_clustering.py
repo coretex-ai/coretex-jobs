@@ -4,7 +4,6 @@ from zipfile import ZipFile
 import logging
 
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
-from coretex.project import initializeProject
 from coretex.bioinformatics import ctx_qiime2
 
 
@@ -14,7 +13,6 @@ def importReferenceDataset(dataset: CustomDataset, outputDir: Path, experiment: 
     if len(caches) > 0:
         if caches[0].count > 0:
             dataset = CustomDataset.fetchById(caches[0].id)
-            logging.info(">> [Qiime: Clustering] Loading cached imported OTU reference sequences")
 
     if dataset.count > 1:
         raise ValueError(f">> [Qiime: Clustering] Reference dataset must only contain one sample with the OTU fasta file. Found {len(dataset.samples)}")
@@ -32,8 +30,6 @@ def importReferenceDataset(dataset: CustomDataset, outputDir: Path, experiment: 
         fastaPath = fastaPaths[0]
         qzaPath = outputDir / f"{fastaPath.stem}.qza"
         ctx_qiime2.toolsImport("FeatureData[Sequence]", str(fastaPath), str(qzaPath))
-
-        logging.info(">> [Qiime: Clustering] Caching imported OTU reference sequences")
 
         referenceCache = CustomDataset.createDataset(referenceCacheName, experiment.spaceId)
         if referenceCache is None:
@@ -182,9 +178,10 @@ def processSample(
     ctx_qiime2.createSample(f"{index}-otu-clusters", outputDataset.id, otuPath, experiment, "Step 4: OTU clustering")
 
 
-def main(experiment: Experiment[CustomDataset]):
-    dataset = experiment.dataset
-    dataset.download()
+def otuClustering(
+    dataset: CustomDataset,
+    experiment: Experiment
+) -> CustomDataset:
 
     denoisedSamples = ctx_qiime2.getDenoisedSamples(dataset)
     if len(denoisedSamples) == 0:
@@ -205,6 +202,5 @@ def main(experiment: Experiment[CustomDataset]):
         index = ctx_qiime2.sampleNumber(sample)
         processSample(index, sample, experiment, outputDataset, outputDir, clusteringMethod)
 
-
-if __name__ == "__main__":
-    initializeProject(main)
+    outputDataset.refresh()
+    return outputDataset

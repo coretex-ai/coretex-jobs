@@ -47,24 +47,28 @@ def processSample(
     sampleOutputDir.mkdir()
 
     # Phylogenetic diversity analysis
-    logging.info(">> [Microbiome analysis] Generating phylogenetic tree")
+    logging.info(">> [Qiime: Phylogenetic Diversity] Generating phylogenetic tree")
     treePath = phylogenyAlignToTreeMafftFasttreeSample(sample, sampleOutputDir)
-    ctx_qiime2.createSample(f"{index}-phylogenetic-tree", outputDataset.id, treePath, experiment, "Step 3: Phylogenetic tree")
+    ctx_qiime2.createSample(f"{index}-phylogenetic-tree", outputDataset.id, treePath, experiment, "Step 6: Phylogenetic tree")
 
 
-def phyogeneticDiversityAnalysis(dataset: CustomDataset, experiment: Experiment) -> CustomDataset:
+def phyogeneticDiversityAnalysis(
+    dataset: CustomDataset,
+    experiment: Experiment
+) -> CustomDataset:
+
     denoisedSamples = ctx_qiime2.getDenoisedSamples(dataset)
     if len(denoisedSamples) == 0:
-        raise ValueError(">> [Microbiome analysis] Dataset has 0 denoised samples")
+        raise ValueError(">> [Qiime: Phylogenetic Diversity] Dataset has 0 denoised samples")
 
-    outputDir = folder_manager.createTempFolder("phylogenetic_output")
+    outputDir = folder_manager.createTempFolder("tree_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 3: Phylogenetic tree",
+        f"{experiment.id} - Step 6: Phylogenetic tree",
         experiment.spaceId
     )
 
     if outputDataset is None:
-        raise ValueError(">> [Microbiome analysis] Failed to create output dataset")
+        raise ValueError(">> [Qiime: Phylogenetic Diversity] Failed to create output dataset")
 
     for sample in denoisedSamples:
         index = ctx_qiime2.sampleNumber(sample)

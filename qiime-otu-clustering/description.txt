@@ -22,6 +22,20 @@ A dataset which contains a featrue table generated in the third job form
 the Coretex Qiime pipeline, DADA2.
 ---------------------------
 
+--- clusteringMethod description ---
+This parameter decides which method will be used for OTU clustering.
+Available methods are:
+    - De Novo
+    - Closed Reference
+    - Open Reference
+------------------------------------
+
+--- referenceDataset description ---
+A dataset that contains a single sample with the reference sequences either
+in a single .fasta file, or imported in a .qza file. If the file is in fasta
+it will be imported to .qza and upoaded as a cache to Coretex
+------------------------------------
+
 --- percentIdentity description ---
 In OTU clustering, sequences that share a certain level of sequence identity are
 considered to be part of the same taxonomic unit. This similarity threshold,

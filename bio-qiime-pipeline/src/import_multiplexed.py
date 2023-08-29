@@ -86,10 +86,12 @@ def prepareSequences(
 
 def importMultiplexed(
     fastqSamples: List[CustomSample],
-    experiment: Experiment,
-    outputDir: Path
-) -> None:
+    experiment: Experiment
+) -> CustomDataset:
 
+    logging.info(">> [Qiime: Import] Multiplexed samples detected. Procceeding with demultiplexing")
+
+    outputDir = folder_manager.createTempFolder("import_output")
     outputDataset = CustomDataset.createDataset(
         f"{experiment.id} - Step 1: Import - Multiplexed",
         experiment.spaceId
@@ -123,3 +125,6 @@ def importMultiplexed(
 
         zippedMetadataPath = importMetadata(metadataPath, outputDir)
         ctx_qiime2.createSample(f"{index}-metadata", outputDataset.id, zippedMetadataPath, experiment, "Step 1: Import")
+
+    outputDataset.refresh()
+    return outputDataset

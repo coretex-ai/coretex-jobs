@@ -3,6 +3,7 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import logging
+import shutil
 import csv
 
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
@@ -14,17 +15,21 @@ FORWARD_SUMMARY_NAME = "forward-seven-number-summaries.tsv"
 REVERSE_SUMMARY_NAME = "reverse-seven-number-summaries.tsv"
 
 
-def isPairedEnd(demuxSample: CustomSample):
-    demuxTemp = folder_manager.createTempFolder("demux")
-    qzaPath = list(demuxSample.path.iterdir())[0]
+def isPairedEnd(sample: CustomSample) -> bool:
+    sampleTemp = folder_manager.createTempFolder("qzaSample")
+    qzaPath = list(sample.path.iterdir())[0]
 
     with ZipFile(qzaPath, "r") as qzaFile:
-        qzaFile.extractall(demuxTemp)
+        qzaFile.extractall(sampleTemp)
 
-    metadataPath = list(demuxTemp.rglob("*metadata.yaml"))[0]
+    metadataPath = list(sampleTemp.rglob("*metadata.yaml"))[0]
 
     with metadataPath.open("r") as metadata:
-        return "PairedEnd" in metadata.readlines()[1]
+        pairedEnd = "PairedEnd" in metadata.readlines()[1]
+
+    shutil.rmtree(sampleTemp)
+
+    return pairedEnd
 
 
 def dada2DenoiseSingleSample(

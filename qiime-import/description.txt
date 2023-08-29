@@ -53,7 +53,8 @@ Dataset format must macth this sturcture in case of demultiplexed data:
 ---------------------------
 
 --- metadataFileName description ---
-Name of the sequence metadata file from the dataset. This file has to follow Qiime2 standards.
+Name of the sequence metadata file from the dataset. The file has to follow the QIIME2
+standard for metadata files: https://gregcaporaso.github.io/q2book/using/metadata.html
 ------------------------------------
 
 ------------------------------

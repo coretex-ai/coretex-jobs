@@ -2,41 +2,16 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import logging
-import shutil
 
 from coretex import CustomSample, CustomDataset, Experiment, folder_manager
-from coretex.project import initializeProject
 from coretex.bioinformatics import ctx_qiime2
 
-
-def isPairedEnd(sample: CustomSample) -> bool:
-    sampleTemp = folder_manager.createTempFolder("qzaSample")
-    qzaPath = list(sample.path.iterdir())[0]
-
-    with ZipFile(qzaPath, "r") as qzaFile:
-        qzaFile.extractall(sampleTemp)
-
-    metadataPath = list(sampleTemp.rglob("*metadata.yaml"))[0]
-
-    with metadataPath.open("r") as metadata:
-        pairedEnd = "PairedEnd" in metadata.readlines()[1]
-
-    shutil.rmtree(sampleTemp)
-
-    return pairedEnd
+from src.utils import demuxSummarize, isPairedEnd
 
 
 def handleMetadata(sample: CustomSample, index: int,  outputDatasetId: int, experiment: Experiment) -> Path:
     ctx_qiime2.createSample(f"{index}-metadata", outputDatasetId, sample.zipPath, experiment, "Step 2: Demultiplexing")
     return ctx_qiime2.getMetadata(sample)
-
-
-def demuxSummarize(sample: CustomSample, outputDir: Path) -> Path:
-    demuxPath = sample.path / "demux.qza"
-    visualizationPath = outputDir / "demux.qzv"
-
-    ctx_qiime2.demuxSummarize(str(demuxPath), str(visualizationPath))
-    return visualizationPath
 
 
 def demuxEmpSample(sample: CustomSample, barcodesPath: Path, barcodeColumn: str, outputDir: Path, pairedEnd: bool) -> Path:
@@ -73,9 +48,10 @@ def demuxEmpSample(sample: CustomSample, barcodesPath: Path, barcodeColumn: str,
     return demuxOutputPath
 
 
-def main(experiment: Experiment[CustomDataset]):
-    dataset = experiment.dataset
-    dataset.download()
+def demultiplexing(
+    dataset: CustomDataset,
+    experiment: Experiment
+) -> CustomDataset:
 
     importedSamples = ctx_qiime2.getImportedSamples(dataset)
     if len(importedSamples) == 0:
@@ -117,6 +93,5 @@ def main(experiment: Experiment[CustomDataset]):
         visualizationPath = demuxSummarize(demuxSample, outputDir)
         ctx_qiime2.createSample(f"{index}-summary", outputDataset.id, visualizationPath, experiment, "Step 2: Demultiplexing")
 
-
-if __name__ == "__main__":
-    initializeProject(main)
+    outputDataset.refresh()
+    return outputDataset

@@ -40,7 +40,7 @@ def processSample(
     experiment: Experiment,
     outputDataset: CustomDataset,
     outputDir: Path
-):
+) -> None:
 
     sample.unzip()
 

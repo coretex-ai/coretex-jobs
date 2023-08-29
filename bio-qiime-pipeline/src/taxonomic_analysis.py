@@ -4,8 +4,6 @@ from zipfile import ZipFile
 from coretex import CustomDataset, CustomSample, Experiment, cache, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
-from .utils import getMetadata
-
 
 def featureClassifierClassifySklearnSample(
     sample: CustomSample,
@@ -31,14 +29,14 @@ def featureClassifierClassifySklearnSample(
 def processSample(
     index: int,
     sample: CustomSample,
-    importedSample: CustomSample,
+    metadataSample: CustomSample,
     experiment: Experiment,
     outputDataset: CustomDataset,
     outputDir: Path
 ):
 
     sample.unzip()
-    importedSample.unzip()
+    metadataSample.unzip()
 
     sampleOutputDir = outputDir / str(sample.id)
     sampleOutputDir.mkdir()
@@ -81,7 +79,7 @@ def processSample(
     ctx_qiime2.taxaBarplot(
         str(sample.joinPath("table.qza")),
         str(taxonomySample.joinPath("taxonomy.qza")),
-        str(getMetadata(importedSample, experiment.parameters["metadataFileName"])),
+        str(ctx_qiime2.getMetadata(metadataSample)),
         str(taxaBarBlotsPath)
     )
 
@@ -96,28 +94,28 @@ def taxonomicAnalysis(
 
     denoisedSamples = ctx_qiime2.getDenoisedSamples(denoisedDataset)
     if len(denoisedSamples) == 0:
-        raise ValueError(">> [Microbiome analysis] Dataset has 0 denoised samples")
+        raise ValueError(">> [Qiime: Taxonomic Analysis] Dataset has 0 denoised samples")
 
-    outputDir = folder_manager.createTempFolder("taxonomic_output")
+    outputDir = folder_manager.createTempFolder("taxonomy_output")
     outputDataset = CustomDataset.createDataset(
         f"{experiment.id} - Step 5: Taxonomic analysis",
         experiment.spaceId
     )
 
     if outputDataset is None:
-        raise ValueError(">> [Microbiome analysis] Failed to create output dataset")
+        raise ValueError(">> [Qiime: Taxonomic Analysis] Failed to create output dataset")
 
     for sample in denoisedSamples:
         index = ctx_qiime2.sampleNumber(sample)
 
-        importedSample = importedDataset.getSample(f"{index}-import")
-        if importedSample is None:
-            raise ValueError(f">> [Microbiome analysis] Imported sample not found")
+        metadataSample = importedDataset.getSample(f"{index}-metadata")
+        if metadataSample is None:
+            raise ValueError(f">> [Qiime: Taxonomic Analysis] Imported sample not found")
 
         processSample(
             index,
             sample,
-            importedSample,
+            metadataSample,
             experiment,
             outputDataset,
             outputDir
