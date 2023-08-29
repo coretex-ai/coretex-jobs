@@ -10,7 +10,8 @@ from src.denoise import denoise
 from src.pylogenetic_analysis import phyogeneticDiversityAnalysis
 from src.alpha_beta_diversity import alphaBetaDiversityAnalysis
 from src.taxonomic_analysis import taxonomicAnalysis
-from src.utils import isPairedEnd, getCaches
+from src.utils import isPairedEnd
+from src.caching import getCache, uploadCacheAsArtifact, getCacheNameOne, getCacheNameTwo, getCacheNameThree, getCacheNameFour, getCacheNameFive
 
 
 def main(experiment: Experiment[CustomDataset]):
@@ -24,10 +25,13 @@ def main(experiment: Experiment[CustomDataset]):
         logging.info(">> [Microbiome analysis] Single-end reads detected")
 
     if useCache:
-        cacheDict = getCaches(experiment)
+        demultiplexedDataset = getCache(getCacheNameOne(experiment))
+        if demultiplexedDataset is not None:
+            demultiplexedDataset.download()
+            uploadCacheAsArtifact(demultiplexedDataset, experiment)
 
-    #  Optional: Primer trimming
-    if not useCache or 1 not in cacheDict:
+    if not useCache or not demultiplexedDataset:
+        #  Optional: Primer trimming
         if experiment.parameters["forwardAdapter"] or experiment.parameters["reverseAdapter"]:
             logging.info(">> [Microbiome analysis] Trimming primers based on provided adapter sequences with cutadapt")
             initialDataset = primerTrimming(experiment.dataset, experiment, pairedEnd)
@@ -42,33 +46,52 @@ def main(experiment: Experiment[CustomDataset]):
             demultiplexedDataset = demultiplexing(initialDataset, experiment)
         else:
             demultiplexedDataset = importDemultiplexedSamples(initialDataset, experiment, pairedEnd)
-    else:
-        demultiplexedDataset = cacheDict[1]
+
+        demultiplexedDataset.download()
 
     # Step 2: Denoise
-    if not useCache or 2 not in cacheDict:
+    if useCache:
+        denoisedDataset = getCache(getCacheNameTwo(experiment))
+        if denoisedDataset is not None:
+            denoisedDataset.download()
+            uploadCacheAsArtifact(denoisedDataset, experiment)
+
+    if not useCache or not denoisedDataset:
         logging.info(">> [Microbiome analysis] Step 2: Denoise")
-        demultiplexedDataset.download()
         denoisedDataset = denoise(demultiplexedDataset, experiment, pairedEnd)
-    else:
-        denoisedDataset = cacheDict[2]
+        denoisedDataset.download()
 
     # Step 3: Phylogenetic Diversity Analysis
-    if not useCache or 3 not in cacheDict:
+    if useCache:
+        phylogeneticDataset = getCache(getCacheNameThree(experiment))
+        if phylogeneticDataset is not None:
+            phylogeneticDataset.download()
+            uploadCacheAsArtifact(phylogeneticDataset, experiment)
+
+    if not useCache or not phylogeneticDataset:
         logging.info(">> [Microbiome analysis] Step 3: Phylogenetic Diversity Analysis")
-        denoisedDataset.download()
         phylogeneticDataset = phyogeneticDiversityAnalysis(denoisedDataset, experiment)
-    else:
-        phylogeneticDataset = cacheDict[3]
+        phylogeneticDataset.download()
 
     # Step 4: Alpha and Beta Diversity Analysis
-    if not useCache or 4 not in cacheDict:
+    if useCache:
+        alphaBetaDataset = getCache(getCacheNameFour(experiment))
+        if alphaBetaDataset is not None:
+            alphaBetaDataset.download()
+            uploadCacheAsArtifact(alphaBetaDataset, experiment)
+
+    if not useCache or not alphaBetaDataset:
         logging.info(">> [Microbiome analysis] Step 4: Alpha and Beta Diversity Analysis")
-        phylogeneticDataset.download()
         alphaBetaDiversityAnalysis(demultiplexedDataset, denoisedDataset, phylogeneticDataset, experiment)
 
     # Step 5: Taxonomic Analysis
-    if not useCache or 5 not in cacheDict:
+    if useCache:
+        taxonomicDataset = getCache(getCacheNameFive(experiment))
+        if taxonomicDataset is not None:
+            taxonomicDataset.download()
+            uploadCacheAsArtifact(taxonomicDataset, experiment)
+
+    if not useCache or not taxonomicDataset:
         logging.info(">> [Microbiome analysis] Step 5: Taxonomic Analysis")
         taxonomicAnalysis(demultiplexedDataset, denoisedDataset, experiment)
 

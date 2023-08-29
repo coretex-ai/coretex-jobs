@@ -4,7 +4,8 @@ from zipfile import ZipFile
 from coretex import CustomDataset, CustomSample, Experiment, cache, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
-from .utils import getMetadata, getDatasetName
+from .utils import getMetadata
+from .caching import getCacheNameFive
 
 
 def featureClassifierClassifySklearnSample(
@@ -100,7 +101,7 @@ def taxonomicAnalysis(
 
     outputDir = folder_manager.createTempFolder("taxonomic_output")
     outputDataset = CustomDataset.createDataset(
-        getDatasetName(experiment, 5),
+        getCacheNameFive(experiment),
         experiment.spaceId
     )
 

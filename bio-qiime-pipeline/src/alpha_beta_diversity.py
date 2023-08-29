@@ -7,7 +7,8 @@ import logging
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.bioinformatics import CommandException, ctx_qiime2
 
-from .utils import columnNamePresent, getMetadata, getDatasetName
+from .utils import columnNamePresent, getMetadata
+from .caching import getCacheNameFour
 
 
 def diversityCoreMetricsPhylogeneticSample(
@@ -329,7 +330,7 @@ def alphaBetaDiversityAnalysis(
 
     outputDir = folder_manager.createTempFolder("alpha_beta_output")
     outputDataset = CustomDataset.createDataset(
-        getDatasetName(experiment, 4),
+        getCacheNameFour(experiment),
         experiment.spaceId
     )
 
