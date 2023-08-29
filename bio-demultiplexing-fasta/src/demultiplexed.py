@@ -39,10 +39,9 @@ def importMetadata(metadata: CustomSample, outputDir: Path) -> Path:
 
 
 def createManifestSingle(samples: List[SequenceSample], manifestPath: Path) -> Path:
-    with manifestPath.open("w") as manifestFile:
+    with manifestPath.open("a") as manifestFile:
         csv.writer(manifestFile, delimiter = "\t").writerow(["sample-id", "absolute-filepath"])
 
-    with manifestPath.open("a") as manifestFile:
         for sample in samples:
             sample.unzip()
 
@@ -52,10 +51,9 @@ def createManifestSingle(samples: List[SequenceSample], manifestPath: Path) -> P
 
 
 def createManifestPaired(samples: List[SequenceSample], manifestPath: Path) -> Path:
-    with manifestPath.open("w") as manifestFile:
+    with manifestPath.open("a") as manifestFile:
         csv.writer(manifestFile, delimiter = "\t").writerow(["sample-id", "forward-absolute-filepath", "reverse-absolute-filepath"])
 
-    with manifestPath.open("a") as manifestFile:
         for sample in samples:
             sample.unzip()
 

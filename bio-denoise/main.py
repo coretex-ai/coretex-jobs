@@ -1,7 +1,6 @@
 from typing import Optional
 from pathlib import Path
 from zipfile import ZipFile
-from io import BytesIO
 
 import logging
 import csv
@@ -16,6 +15,11 @@ REVERSE_SUMMARY_NAME = "reverse-seven-number-summaries.tsv"
 
 
 def isPairedEnd(demuxSample: CustomSample):
+    # In order to determine whether we are dealing with paired-end
+    # sequences, this function unzips the qiime artifact and
+    # reads the metadata, looking for the second (type) row, which will have
+    # "PairedEnd" somewhere if it's paired-end
+
     demuxTemp = folder_manager.createTempFolder("demux")
     qzaPath = list(demuxSample.path.iterdir())[0]
 
@@ -111,7 +115,6 @@ def determineTruncLen(sample: CustomSample, forward: bool) -> int:
     summariesFileName = FORWARD_SUMMARY_NAME if forward else REVERSE_SUMMARY_NAME
     summariesTsv = list(sample.path.rglob(summariesFileName))[0]
 
-    truncLen: Optional[int] = None
     with summariesTsv.open("r") as file:
         summaries = list(csv.reader(file, delimiter = "\t"))
 
@@ -120,7 +123,9 @@ def determineTruncLen(sample: CustomSample, forward: bool) -> int:
     medianQualitiesStr.pop(0)  # The first value will be "50%" and not a quality score
     medianQualities = [float(x) for x in medianQualitiesStr]
 
+    truncLen: Optional[int] = None
     highestScore = max(medianQualities)
+
     for index, qualityScore in enumerate(medianQualities):
         if qualityScore < highestScore * 0.7:
             truncLen = index
