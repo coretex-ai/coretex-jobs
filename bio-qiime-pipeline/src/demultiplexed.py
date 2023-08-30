@@ -9,6 +9,7 @@ from coretex import CustomDataset, SequenceDataset, CustomSample, SequenceSample
 from coretex.bioinformatics import ctx_qiime2
 
 from .utils import summarizeSample, convertMetadata
+from .caching import getCacheNameOne
 
 
 def importSample(inputPath: Path, sequenceType: str, inputFormat: str, outputDir: Path) -> Path:
@@ -78,7 +79,7 @@ def importDemultiplexedSamples(
     logging.info(">> [Microbiome analysis] Preparing data for import into QIIME2 format")
     outputDir = folder_manager.createTempFolder("import_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 1: Import",
+        getCacheNameOne(experiment),
         experiment.spaceId
     )
 
@@ -97,9 +98,6 @@ def importDemultiplexedSamples(
         inputFormat = "SingleEndFastqManifestPhred33V2"
 
     logging.info(">> [Microbiome analysis] Importing data...")
-    demuxZipPath = importSample(inputPath, sequenceType, inputFormat, outputDir)
-    demuxSample = ctx_qiime2.createSample("0-demux", outputDataset.id, demuxZipPath, experiment, "Step 1: Demultiplexing")
-
     metadataZipPath = importMetadata(dataset.metadata, outputDir, experiment.parameters["metadataFileName"])
     ctx_qiime2.createSample("0-import", outputDataset.id, metadataZipPath, experiment, "Step 1: Demultiplexing")
 

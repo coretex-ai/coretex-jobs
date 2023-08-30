@@ -8,6 +8,7 @@ from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
 from .utils import determineTruncLen, getMetadata
+from .caching import getCacheNameTwo
 
 
 def dada2DenoiseSingleSample(
@@ -166,7 +167,7 @@ def denoise(dataset: CustomDataset, experiment: Experiment, pairedEnd: bool) -> 
 
     outputDir = folder_manager.createTempFolder("denoise_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 2: Denoise",
+        getCacheNameTwo(experiment),
         experiment.spaceId
     )
 

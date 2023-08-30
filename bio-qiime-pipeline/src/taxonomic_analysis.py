@@ -5,6 +5,7 @@ from coretex import CustomDataset, CustomSample, Experiment, cache, folder_manag
 from coretex.bioinformatics import ctx_qiime2
 
 from .utils import getMetadata
+from .caching import getCacheNameFive
 
 
 def featureClassifierClassifySklearnSample(
@@ -100,7 +101,7 @@ def taxonomicAnalysis(
 
     outputDir = folder_manager.createTempFolder("taxonomic_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 5: Taxonomic analysis",
+        getCacheNameFive(experiment),
         experiment.spaceId
     )
 
