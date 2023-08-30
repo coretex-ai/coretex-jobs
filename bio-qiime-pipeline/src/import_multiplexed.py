@@ -8,6 +8,7 @@ from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
 from .utils import convertMetadata
+from .caching import getCacheNameOne
 
 
 FORWARD_FASTQ = "forward.fastq"
@@ -85,7 +86,7 @@ def prepareSequences(
 
 
 def importMultiplexed(
-    fastqSamples: List[CustomSample],
+    dataset: CustomDataset,
     experiment: Experiment
 ) -> CustomDataset:
 
@@ -93,7 +94,7 @@ def importMultiplexed(
 
     outputDir = folder_manager.createTempFolder("import_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 1: Import - Multiplexed",
+        getCacheNameOne(experiment),
         experiment.spaceId
     )
 
@@ -102,6 +103,7 @@ def importMultiplexed(
 
     logging.info(">> [Qiime: Import] Preparing multiplexed data for import into Qiime2")
 
+    fastqSamples = ctx_qiime2.getFastqMPSamples(dataset)
     for index, sample in enumerate(fastqSamples):
         logging.info(f">> [Qiime: Import] Importing sample {index}")
         sample.unzip()

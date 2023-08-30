@@ -6,7 +6,8 @@ import logging
 from coretex import CustomSample, CustomDataset, Experiment, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
-from src.utils import demuxSummarize, isPairedEnd
+from .utils import demuxSummarize, isPairedEnd
+from .caching import getCacheNameTwo
 
 
 def handleMetadata(sample: CustomSample, index: int,  outputDatasetId: int, experiment: Experiment) -> Path:
@@ -59,7 +60,7 @@ def demultiplexing(
 
     outputDir = folder_manager.createTempFolder("demux_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 2: Demultiplexing",
+        getCacheNameTwo(experiment),
         experiment.spaceId
     )
 

@@ -6,6 +6,8 @@ import logging
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
+from .caching import getCacheNameSix
+
 
 def phylogenyAlignToTreeMafftFasttreeSample(sample: CustomSample, outputDir: Path) -> Path:
     sequencesPath = Path(sample.path) / "rep-seqs.qza"
@@ -63,7 +65,7 @@ def phyogeneticDiversityAnalysis(
 
     outputDir = folder_manager.createTempFolder("tree_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 6: Phylogenetic tree",
+        getCacheNameSix(experiment),
         experiment.spaceId
     )
 

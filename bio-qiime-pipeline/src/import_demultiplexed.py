@@ -9,6 +9,7 @@ from coretex import SequenceDataset, CustomDataset, CustomSample, Experiment, Se
 from coretex.bioinformatics import ctx_qiime2
 
 from .utils import convertMetadata, demuxSummarize
+from .caching import getCacheNameOne
 
 
 def importSample(inputPath: Path, sequenceType: str, inputFormat: str, outputDir: Path) -> Path:
@@ -83,7 +84,7 @@ def importDemultiplexed(
     logging.info(">> [Qiime: Import] Preparing data for import into QIIME2")
     outputDir = folder_manager.createTempFolder("import_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 1: Import - Demultiplexed",
+        getCacheNameOne(experiment),
         experiment.spaceId
     )
 

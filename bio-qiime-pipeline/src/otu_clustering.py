@@ -6,6 +6,8 @@ import logging
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
+from .caching import getCacheNameFour
+
 
 def importReferenceDataset(dataset: CustomDataset, outputDir: Path, experiment: Experiment) -> Path:
     referenceCacheName = f"OTU Reference Dataset Imported to Qiime - {dataset.id}"
@@ -191,7 +193,7 @@ def otuClustering(
 
     outputDir = folder_manager.createTempFolder("otu_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 4: OTU clustering - {clusteringMethod}",
+        getCacheNameFour(experiment),
         experiment.spaceId
     )
 

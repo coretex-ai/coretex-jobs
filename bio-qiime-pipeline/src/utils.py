@@ -61,7 +61,7 @@ def columnNamePresent(metadataPath: Path, columnName: str) -> bool:
         for row in csv.reader(metadata, delimiter = "\t"):
             return columnName in row
 
-    raise RuntimeError(">> [Microbiome Analysis] Metadata file is empty")
+    raise RuntimeError(">> [Microbiome analysis] Metadata file is empty")
 
 
 def detectFileEncoding(path: Path) -> Optional[str]:
@@ -72,7 +72,7 @@ def detectFileEncoding(path: Path) -> Optional[str]:
 def convertMetadata(metadataPath: Path) -> Path:
     newMetadataPath = folder_manager.temp / f"{metadataPath.stem}.tsv"
     if metadataPath.suffix != ".csv" and metadataPath.suffix != ".tsv":
-        raise ValueError(">> [Microbiome Analysis] Metadata has to be either tsv or csv")
+        raise ValueError(">> [Microbiome analysis] Metadata has to be either tsv or csv")
 
     if metadataPath.suffix == ".csv":
         metadata = pd.read_csv(metadataPath, encoding = detectFileEncoding(metadataPath))
@@ -83,7 +83,7 @@ def convertMetadata(metadataPath: Path) -> Path:
         if columnName.lower() in CASEINSENSITIVE_NAMES or columnName in CASESENSITIVE_NAMES:
             break
 
-        raise ValueError(f">> [Microbiome Analysis] Sample ID column not found. Recognized column names are: (case insensitive) - {CASEINSENSITIVE_NAMES}, (case sensitive) - {CASESENSITIVE_NAMES}")
+        raise ValueError(f">> [Microbiome analysis] Sample ID column not found. Recognized column names are: (case insensitive) - {CASEINSENSITIVE_NAMES}, (case sensitive) - {CASESENSITIVE_NAMES}")
 
     metadata.columns.values[i] = "sampleid"
     for sampleId in metadata["sampleid"]:
