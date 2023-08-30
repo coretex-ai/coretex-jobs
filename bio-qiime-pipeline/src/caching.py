@@ -131,7 +131,7 @@ def getCache(cacheName: str, experiment: Experiment) -> CustomDataset:
 
             return cache
 
-    raise FileNotFoundError(">> [Microbiome analysis] Cache does not exist!")
+    raise ValueError(">> [Microbiome analysis] Cache does not exist!")
 
 
 def uploadCacheAsArtifact(cache: CustomDataset, experiment: Experiment) -> None:
