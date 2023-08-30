@@ -1,9 +1,7 @@
-from typing import Optional
-
 import logging
 
-from coretex import CustomDataset, Experiment, SequenceDataset
-from coretex.utils.hash import hashCacheName
+from coretex import CustomDataset, Experiment
+from coretex.utils import hashCacheName
 
 
 def getCacheNameOne(experiment: Experiment) -> str:
@@ -119,24 +117,36 @@ def getCacheNameFive(experiment: Experiment) -> str:
     return hashCacheName(prefix, "_".join(paramList)).replace("+", "0")
 
 
-def getCache(cacheName: str) -> Optional[CustomDataset]:
+def getCache(cacheName: str, experiment: Experiment) -> CustomDataset:
     logging.info(f">> [Microbiome analysis] Searching for cache {cacheName}")
 
     cacheHash = cacheName.split("_")[1]
     caches = CustomDataset.fetchAll(queryParameters = [f"name={cacheHash}", "include_sessions=1"])
 
-    if len(caches) == 0:
-        return None
-
     for cache in caches:
         if cache.count != 0:
-            return CustomDataset.fetchById(cache.id)
+            logging.info(">> [Microbiome analysis] Cache found!")
+            cache.download()
+            uploadCacheAsArtifact(cache, experiment)
 
-    return None
+            return cache
+
+    raise FileNotFoundError(">> [Microbiome analysis] Cache does not exist!")
 
 
 def uploadCacheAsArtifact(cache: CustomDataset, experiment: Experiment) -> None:
     stepName = cache.name.split(" - ")[1].split("_")[0]
     for sample in cache.samples:
-            sampleName = sample.name.split('_')[0]
-            experiment.createQiimeArtifact(f"{stepName}/{sampleName}", sample.zipPath)
+        sampleName = sample.name.split('_')[0]
+        experiment.createQiimeArtifact(f"{stepName}/{sampleName}", sample.zipPath)
+
+
+def cacheExists(cacheName: str) -> bool:
+    cacheHash = cacheName.split("_")[1]
+    caches = CustomDataset.fetchAll(queryParameters = [f"name={cacheHash}", "include_sessions=1"])
+
+    for cache in caches:
+        if cache.count != 0:
+            return True
+
+    return False
