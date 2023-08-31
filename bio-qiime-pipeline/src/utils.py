@@ -1,17 +1,14 @@
 from typing import Optional
 from pathlib import Path
-from zipfile import ZipFile
 
 import csv
-import shutil
+import logging
 
-import chardet
+import cchardet
 import pandas as pd
 
 from coretex import CustomSample, folder_manager
 from coretex.bioinformatics import ctx_qiime2
-
-import chardet
 
 
 FORWARD_SUMMARY_NAME = "forward-seven-number-summaries.tsv"
@@ -51,7 +48,7 @@ def determineTruncLen(sample: CustomSample, forward: bool) -> int:
 
     if not truncLen:
         strand = "Forward" if forward else "Reverse"
-        raise RuntimeError(f">> [Microbiome Analysis] {strand} read truncLen could not be determined automatically")
+        raise RuntimeError(f">> [Qiime: DADA2] {strand} read truncLen could not be determined automatically")
 
     return truncLen
 
@@ -61,53 +58,45 @@ def columnNamePresent(metadataPath: Path, columnName: str) -> bool:
         for row in csv.reader(metadata, delimiter = "\t"):
             return columnName in row
 
-    raise RuntimeError(">> [Microbiome analysis] Metadata file is empty")
+    raise RuntimeError(">> [Qiime: Import] Metadata file is empty")
 
 
 def detectFileEncoding(path: Path) -> Optional[str]:
+    if path.stat().st_size < 10:
+        raise ValueError(">> [Qiime: Import] Metadate file is too small")
+
     with path.open("rb") as file:
-        return chardet.detect(file.read(10))["encoding"]
+        encoding = cchardet.detect(file.read())["encoding"]
+
+    if encoding is None:
+        logging.warning(">> [Qiime: Import] Could not determine metadata encoding")
+
+    return encoding
 
 
 def convertMetadata(metadataPath: Path) -> Path:
     newMetadataPath = folder_manager.temp / f"{metadataPath.stem}.tsv"
     if metadataPath.suffix != ".csv" and metadataPath.suffix != ".tsv":
-        raise ValueError(">> [Microbiome analysis] Metadata has to be either tsv or csv")
+        raise ValueError(">> [Qiime: Import] Metadata has to be either tsv or csv")
 
     if metadataPath.suffix == ".csv":
         metadata = pd.read_csv(metadataPath, encoding = detectFileEncoding(metadataPath))
     else:
         metadata = pd.read_csv(metadataPath, encoding = detectFileEncoding(metadataPath), delimiter = "\t")
 
-    for i, columnName in enumerate(metadata.columns):
+    for columnName in metadata.columns:
         if columnName.lower() in CASEINSENSITIVE_NAMES or columnName in CASESENSITIVE_NAMES:
+            sampleIdColumn = metadata.pop(columnName)
+            metadata.insert(0, "sampleId", sampleIdColumn)
             break
 
-        raise ValueError(f">> [Microbiome analysis] Sample ID column not found. Recognized column names are: (case insensitive) - {CASEINSENSITIVE_NAMES}, (case sensitive) - {CASESENSITIVE_NAMES}")
+        raise ValueError(f">> [Qiime: Import] Sample ID column not found. Recognized column names are: (case insensitive) - {CASEINSENSITIVE_NAMES}, (case sensitive) - {CASESENSITIVE_NAMES}")
 
-    metadata.columns.values[i] = "sampleid"
-    for sampleId in metadata["sampleid"]:
+    for sampleId in metadata["sampleId"]:
         sampleIdSplit = str(sampleId).split("_")
         if len(sampleIdSplit) > 1:
-            metadata["sampleid"].replace(sampleId, sampleIdSplit[0], inplace = True)
+            metadata["sampleId"].replace(sampleId, sampleIdSplit[0], inplace = True)
 
     metadata.to_csv(newMetadataPath, "\t", index = False)
 
     return newMetadataPath
-
-
-def isPairedEnd(sample: CustomSample) -> bool:
-    sampleTemp = folder_manager.createTempFolder("qzaSample")
-    qzaPath = list(sample.path.iterdir())[0]
-
-    with ZipFile(qzaPath, "r") as qzaFile:
-        qzaFile.extractall(sampleTemp)
-
-    metadataPath = list(sampleTemp.rglob("*metadata.yaml"))[0]
-
-    with metadataPath.open("r") as metadata:
-        pairedEnd = "PairedEnd" in metadata.readlines()[1]
-
-    shutil.rmtree(sampleTemp)
-
-    return pairedEnd

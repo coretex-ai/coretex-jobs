@@ -37,51 +37,20 @@ def importMetadata(metadataPath: Path, outputDir: Path) -> Path:
     return outputPath
 
 
-def getFastq(sample: CustomSample, fileName: str) -> Optional[Path]:
-    foundFiles = list(sample.path.glob(f"*{fileName}"))
-    foundFiles.extend(list(sample.path.glob(f"*{fileName}.gz")))
+def prepareFastq(sample: CustomSample, fileName: str, sequenceDir: Path) -> Optional[Path]:
+    gzipPath = sample.joinPath(f"{fileName}.gz")
+    outputPath = sequenceDir / gzipPath.name
 
-    if len(foundFiles) > 1:
-        raise RuntimeError(f">> [Qiime: Import] Found multiple {fileName} files")
+    if gzipPath.exists():
+        gzipPath.link_to(outputPath)
+        return outputPath
 
-    return foundFiles[0] if len(foundFiles) == 1 else None
+    filePath = sample.joinPath(fileName)
+    if filePath.exists():
+        ctx_qiime2.compressGzip(filePath, outputPath)
+        return outputPath
 
-
-def prepareSequences(
-    barcodesPath: Path,
-    forwardPath: Path,
-    reversePath: Optional[Path]
-) -> Path:
-
-    sequenceFolderPath = folder_manager.createTempFolder("sequencesFolder")
-
-    newBarcodesPath = sequenceFolderPath / f"{BARCODES_FASTQ}.gz"
-    newForwardPath = sequenceFolderPath / f"{FORWARD_FASTQ}.gz"
-    newReversePath = sequenceFolderPath / f"{REVERSE_FASTQ}.gz"
-
-    if reversePath is None:
-        checkGz = [path.suffix == ".gz" for path in [barcodesPath, forwardPath]]
-    else:
-        checkGz = [path.suffix == ".gz" for path in [barcodesPath, forwardPath, reversePath]]
-
-    if all(checkGz):
-        barcodesPath.link_to(newBarcodesPath)
-        forwardPath.link_to(newForwardPath)
-
-        if reversePath is not None:
-            reversePath.link_to(newReversePath)
-
-        return sequenceFolderPath
-    elif not any(checkGz):
-        ctx_qiime2.compressGzip(barcodesPath, newBarcodesPath)
-        ctx_qiime2.compressGzip(forwardPath, newForwardPath)
-
-        if reversePath is not None:
-            ctx_qiime2.compressGzip(reversePath, newReversePath)
-
-        return sequenceFolderPath
-
-    raise RuntimeError(">> [Qiime: Import] All fastq files must be either gz compressed or not compressed. Found a mix of both")
+    return None
 
 
 def importMultiplexed(
@@ -104,16 +73,17 @@ def importMultiplexed(
         logging.info(f">> [Qiime: Import] Importing sample {index}")
         sample.unzip()
 
-        barcodesPath = getFastq(sample, BARCODES_FASTQ)
-        forwardPath = getFastq(sample, FORWARD_FASTQ)
-        reversePath = getFastq(sample, REVERSE_FASTQ)
+        sequenceFolderPath = folder_manager.createTempFolder("sequencesFolder")
+
+        barcodesPath = prepareFastq(sample, BARCODES_FASTQ, sequenceFolderPath)
+        forwardPath = prepareFastq(sample, FORWARD_FASTQ, sequenceFolderPath)
+        reversePath = prepareFastq(sample, REVERSE_FASTQ, sequenceFolderPath)
 
         metadataPath = sample.path / experiment.parameters["metadataFileName"]
 
         if forwardPath is None or barcodesPath is None or not metadataPath.exists():
             raise FileNotFoundError(f">> [Qiime: Import] Each sample must contain one metadata file, {FORWARD_FASTQ}, {BARCODES_FASTQ} and optionaly {REVERSE_FASTQ} in case of paired-end reads. {sample.name} fails to meet these requirements")
 
-        sequenceFolderPath = prepareSequences(barcodesPath, forwardPath, reversePath)
         sequenceType = "EMPPairedEndSequences" if reversePath else "EMPSingleEndSequences"
 
         logging.info(">> [Qiime: Import] Importing sample")

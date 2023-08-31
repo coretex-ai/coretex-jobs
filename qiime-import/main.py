@@ -16,7 +16,7 @@ def main(experiment: Experiment[CustomDataset]):
     if len(multiplexedFastqs) > 0:
         importMultiplexed(multiplexedFastqs, experiment, outputDir)
     else:
-        importDemultiplexed(SequenceDataset.fetchById(dataset.id), experiment, outputDir)
+        importDemultiplexed(SequenceDataset.decode(dataset.encode()), experiment, outputDir)
 
 
 if __name__ == "__main__":

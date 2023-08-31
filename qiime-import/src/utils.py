@@ -2,11 +2,11 @@ from typing import Optional
 from pathlib import Path
 
 import csv
-import pandas as pd
 
 from coretex import folder_manager
 
 import chardet
+import pandas as pd
 
 
 CASEINSENSITIVE_NAMES = ["id", "sampleid", "sample id", "sample-id", "featureid" ,"feature id", "feature-id", "sample_id", "sample.id"]
@@ -38,15 +38,16 @@ def convertMetadata(metadataPath: Path) -> Path:
 
     for i, columnName in enumerate(metadata.columns):
         if columnName.lower() in CASEINSENSITIVE_NAMES or columnName in CASESENSITIVE_NAMES:
+            sampleIdColumn = metadata.pop(columnName)
+            metadata.insert(0, "sampleId", sampleIdColumn)
             break
 
         raise ValueError(f">> [Qiime: Import] Sample ID column not found. Recognized column names are: (case insensitive) - {CASEINSENSITIVE_NAMES}, (case sensitive) - {CASESENSITIVE_NAMES}")
 
-    metadata.columns.values[i] = "sampleid"
-    for sampleId in metadata["sampleid"]:
+    for sampleId in metadata["sampleId"]:
         sampleIdSplit = str(sampleId).split("_")
         if len(sampleIdSplit) > 1:
-            metadata["sampleid"].replace(sampleId, sampleIdSplit[0], inplace = True)
+            metadata["sampleId"].replace(sampleId, sampleIdSplit[0], inplace = True)
 
     metadata.to_csv(newMetadataPath, "\t", index = False)
 

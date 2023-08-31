@@ -2,31 +2,13 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import logging
-import shutil
 
 from coretex import CustomSample, CustomDataset, Experiment, folder_manager
 from coretex.project import initializeProject
 from coretex.bioinformatics import ctx_qiime2
 
 
-def isPairedEnd(sample: CustomSample) -> bool:
-    sampleTemp = folder_manager.createTempFolder("qzaSample")
-    qzaPath = list(sample.path.iterdir())[0]
-
-    with ZipFile(qzaPath, "r") as qzaFile:
-        qzaFile.extractall(sampleTemp)
-
-    metadataPath = list(sampleTemp.rglob("*metadata.yaml"))[0]
-
-    with metadataPath.open("r") as metadata:
-        pairedEnd = "PairedEnd" in metadata.readlines()[1]
-
-    shutil.rmtree(sampleTemp)
-
-    return pairedEnd
-
-
-def handleMetadata(sample: CustomSample, index: int,  outputDatasetId: int, experiment: Experiment) -> Path:
+def forwardMetadata(sample: CustomSample, index: int,  outputDatasetId: int, experiment: Experiment) -> Path:
     ctx_qiime2.createSample(f"{index}-metadata", outputDatasetId, sample.zipPath, experiment, "Step 2: Demultiplexing")
     return ctx_qiime2.getMetadata(sample)
 
@@ -40,9 +22,7 @@ def demuxSummarize(sample: CustomSample, outputDir: Path) -> Path:
 
 
 def demuxEmpSample(sample: CustomSample, barcodesPath: Path, barcodeColumn: str, outputDir: Path, pairedEnd: bool) -> Path:
-    samplePath = Path(sample.path)
-
-    sequencesPath = samplePath / "multiplexed-sequences.qza"
+    sequencesPath = sample.path / "multiplexed-sequences.qza"
 
     demuxFilePath = outputDir / "demux.qza"
     demuxDetailsFilePath = outputDir / "demux-details.qza"
@@ -99,13 +79,13 @@ def main(experiment: Experiment[CustomDataset]):
         if metadataSample is None:
             raise ValueError(f">> [Qiime: Demux] Metadata sample not found")
 
-        metadataPath = handleMetadata(metadataSample, index, outputDataset.id, experiment)
+        metadataPath = forwardMetadata(metadataSample, index, outputDataset.id, experiment)
         demuxPath = demuxEmpSample(
             sample,
             metadataPath,
             experiment.parameters["barcodeColumn"],
             outputDir,
-            isPairedEnd(sample)
+            ctx_qiime2.isPairedEnd(sample)
         )
 
         demuxSample = ctx_qiime2.createSample(f"{index}-demux", outputDataset.id, demuxPath, experiment, "Step 2: Demultiplexing")

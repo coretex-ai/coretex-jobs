@@ -1,12 +1,8 @@
 --- Template description ---
 
-Demultiplexing sequences job template is based on Qiime2 Moving Pictures
-tutorial (https://docs.qiime2.org/2023.2/tutorials/moving-pictures/#demultiplexing-sequences).
-Qiime2 is a software tool used for processing BioInformatics sequences.
-
-Multiple samples can be pooled into a single sequencing run. This reduces the time and
-cost of sequencing. To differentiate between these samples, each of them had a unique
-barcode injected into them before sequencing them.
+Multiple samples can be pooled into a single sequencing run, which reduces the time and
+cost. To differentiate between these samples afterwards, each had a unique
+barcode injected into them before sequencing.
 
 Before doing any kind of analysis on sequence data, you first need to extract
 the sample data from sequences associated with every of the barcodes. This template

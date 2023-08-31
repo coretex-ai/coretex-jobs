@@ -41,7 +41,7 @@ def main(experiment: Experiment[CustomDataset]):
             demultiplexedDataset = demultiplexing(multiplexedDataset, experiment)
             demultiplexedDataset.download()
     else:
-        sequenceDataset = SequenceDataset.fetchById(initialDataset.id)
+        sequenceDataset = SequenceDataset.decode(initialDataset.encode())
         pairedEnd = sequenceDataset.isPairedEnd()
 
         if useCache and cacheExists(cacheNameOne):

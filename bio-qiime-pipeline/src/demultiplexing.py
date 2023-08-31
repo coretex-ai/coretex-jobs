@@ -6,19 +6,17 @@ import logging
 from coretex import CustomSample, CustomDataset, Experiment, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
-from .utils import demuxSummarize, isPairedEnd
+from .utils import demuxSummarize
 from .caching import getCacheNameTwo
 
 
-def handleMetadata(sample: CustomSample, index: int,  outputDatasetId: int, experiment: Experiment) -> Path:
+def forwardMetadata(sample: CustomSample, index: int,  outputDatasetId: int, experiment: Experiment) -> Path:
     ctx_qiime2.createSample(f"{index}-metadata", outputDatasetId, sample.zipPath, experiment, "Step 2: Demultiplexing")
     return ctx_qiime2.getMetadata(sample)
 
 
 def demuxEmpSample(sample: CustomSample, barcodesPath: Path, barcodeColumn: str, outputDir: Path, pairedEnd: bool) -> Path:
-    samplePath = Path(sample.path)
-
-    sequencesPath = samplePath / "multiplexed-sequences.qza"
+    sequencesPath = sample.path / "multiplexed-sequences.qza"
 
     demuxFilePath = outputDir / "demux.qza"
     demuxDetailsFilePath = outputDir / "demux-details.qza"
@@ -76,13 +74,13 @@ def demultiplexing(
         if metadataSample is None:
             raise ValueError(f">> [Qiime: Demux] Metadata sample not found")
 
-        metadataPath = handleMetadata(metadataSample, index, outputDataset.id, experiment)
+        metadataPath = forwardMetadata(metadataSample, index, outputDataset.id, experiment)
         demuxPath = demuxEmpSample(
             sample,
             metadataPath,
             experiment.parameters["barcodeColumn"],
             outputDir,
-            isPairedEnd(sample)
+            ctx_qiime2.isPairedEnd(sample)
         )
 
         demuxSample = ctx_qiime2.createSample(f"{index}-demux", outputDataset.id, demuxPath, experiment, "Step 2: Demultiplexing")

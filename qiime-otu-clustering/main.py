@@ -1,20 +1,42 @@
+from typing import Optional
 from pathlib import Path
 from zipfile import ZipFile
 
 import logging
+
+import qiime2
 
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.project import initializeProject
 from coretex.bioinformatics import ctx_qiime2
 
 
+def getQzaPath(sample: CustomSample) -> Optional[Path]:
+    try:
+        zipPath = sample.zipPath
+
+        # Test if the sample itself is a qza file
+        qiime2.Artifact.load(zipPath)
+
+        qzaPath = folder_manager.temp / f"{zipPath.stem}.qza"
+        zipPath.link_to(qzaPath)
+
+        return qzaPath
+    except (TypeError, ValueError):
+        qzaPaths = list(sample.path.glob("*.qza"))
+        if len(qzaPaths) == 1:
+            return qzaPaths[0]
+
+        return None
+
+
 def importReferenceDataset(dataset: CustomDataset, outputDir: Path, experiment: Experiment) -> Path:
     referenceCacheName = f"OTU Reference Dataset Imported to Qiime - {dataset.id}"
     caches = CustomDataset.fetchAll(queryParameters = [f"name={referenceCacheName}", "include_sessions=1"])
-    if len(caches) > 0:
-        if caches[0].count > 0:
-            dataset = CustomDataset.fetchById(caches[0].id)
-            logging.info(">> [Qiime: Clustering] Loading cached imported OTU reference sequences")
+    for cache in caches:
+        if cache.count > 0:
+            dataset = cache
+            break
 
     if dataset.count > 1:
         raise ValueError(f">> [Qiime: Clustering] Reference dataset must only contain one sample with the OTU fasta file. Found {len(dataset.samples)}")
@@ -24,16 +46,14 @@ def importReferenceDataset(dataset: CustomDataset, outputDir: Path, experiment: 
     sample.unzip()
 
     fastaPaths = list(sample.path.glob("*.fasta"))
-    qzaPaths = list(sample.path.glob("*.qza"))
+    qzaPath = getQzaPath(sample)
 
     # If the input refrerence sequences are not imported, i.e. they are in fasta format,
     # we import them and upload the output as a cache to Coretex
-    if len(fastaPaths) == 1 and len(qzaPaths) == 0:
+    if len(fastaPaths) == 1 and qzaPath is None:
         fastaPath = fastaPaths[0]
         qzaPath = outputDir / f"{fastaPath.stem}.qza"
         ctx_qiime2.toolsImport("FeatureData[Sequence]", str(fastaPath), str(qzaPath))
-
-        logging.info(">> [Qiime: Clustering] Caching imported OTU reference sequences")
 
         referenceCache = CustomDataset.createDataset(referenceCacheName, experiment.spaceId)
         if referenceCache is None:
@@ -49,8 +69,8 @@ def importReferenceDataset(dataset: CustomDataset, outputDir: Path, experiment: 
 
         return qzaPath
 
-    if len(qzaPaths) == 1 and len(fastaPaths) == 0:
-        return qzaPaths[0]
+    if qzaPath is not None and len(fastaPaths) == 0:
+        return qzaPath
 
     raise FileNotFoundError(">> [Qiime: Clustering] Reference dataset must contain a single sample with one file in either .fasta or .qza format")
 
@@ -173,7 +193,8 @@ def processSample(
         if clusteringMethod == "Closed Reference":
             logging.info(">> [Qiime: Clustering] Performing closed reference clustering")
             otuPath = closedReferenceClustering(sample, referenceSequencesPath, outputDir, percentIdentity)
-        else:  # Open Reference
+
+        if clusteringMethod == "Open Reference":
             logging.info(">> [Qiime: Clustering] Performing open reference custering")
             otuPath = openReferenceClustering(sample, referenceSequencesPath, outputDir, percentIdentity)
     else:
