@@ -4,30 +4,38 @@ from zipfile import ZipFile
 
 import logging
 
-import qiime2
+from qiime2.sdk.result import Artifact
+
+import qiime2.core.archive as archive
 
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
 from coretex.project import initializeProject
 from coretex.bioinformatics import ctx_qiime2
 
 
-def getQzaPath(sample: CustomSample) -> Optional[Path]:
+def isValidArtifact(filePath: Path) -> bool:
     try:
-        zipPath = sample.zipPath
+        archiver = archive.Archiver.load(filePath)
+    except ValueError:
+        return False
 
-        # Test if the sample itself is a qza file
-        qiime2.Artifact.load(zipPath)
+    return Artifact._is_valid_type(archiver.type)
 
+
+def getQzaPath(sample: CustomSample) -> Optional[Path]:
+    zipPath = sample.zipPath
+
+    if isValidArtifact(zipPath):
         qzaPath = folder_manager.temp / f"{zipPath.stem}.qza"
         zipPath.link_to(qzaPath)
 
         return qzaPath
-    except (TypeError, ValueError):
-        qzaPaths = list(sample.path.glob("*.qza"))
-        if len(qzaPaths) == 1:
-            return qzaPaths[0]
 
-        return None
+    qzaPaths = list(sample.path.glob("*.qza"))
+    if len(qzaPaths) == 1:
+        return qzaPaths[0]
+
+    return None
 
 
 def importReferenceDataset(dataset: CustomDataset, outputDir: Path, experiment: Experiment) -> Path:
