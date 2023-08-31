@@ -2,10 +2,11 @@ from typing import Optional
 from pathlib import Path
 
 import csv
+import logging
 
 from coretex import folder_manager
 
-import chardet
+import cchardet
 import pandas as pd
 
 
@@ -22,8 +23,16 @@ def columnNamePresent(metadataPath: Path, columnName: str) -> bool:
 
 
 def detectFileEncoding(path: Path) -> Optional[str]:
+    if path.stat().st_size < 10:
+        raise ValueError(">> [Qiime: Import] Metadate file is too small")
+
     with path.open("rb") as file:
-        return chardet.detect(file.read(10))["encoding"]
+        encoding = cchardet.detect(file.read())["encoding"]
+
+    if encoding is None:
+        logging.warning(">> [Qiime: Import] Could not determine metadata encoding")
+
+    return encoding
 
 
 def convertMetadata(metadataPath: Path) -> Path:
