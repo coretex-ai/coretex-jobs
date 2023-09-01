@@ -2,9 +2,8 @@ from pathlib import Path
 from zipfile import ZipFile
 
 from coretex import CustomDataset, CustomSample, Experiment, cache, folder_manager
+from coretex.project import initializeProject
 from coretex.bioinformatics import ctx_qiime2
-
-from .caching import getCacheNameFive
 
 
 def featureClassifierClassifySklearnSample(
@@ -88,19 +87,19 @@ def processSample(
     ctx_qiime2.createSample(f"{index}-taxonomy-bar-plots", outputDataset.id, taxaBarBlotsPath, experiment, "Step 5: Taxonomic Analysis")
 
 
-def taxonomicAnalysis(
-    importedDataset: CustomDataset,
-    denoisedDataset: CustomDataset,
-    experiment: Experiment
-) -> None:
+def main(experiment: Experiment[CustomDataset]):
+    experiment.dataset.download()
 
-    denoisedSamples = ctx_qiime2.getDenoisedSamples(denoisedDataset)
+    denoisedSamples = ctx_qiime2.getDenoisedSamples(experiment.dataset)
     if len(denoisedSamples) == 0:
         raise ValueError(">> [Qiime: Taxonomic Analysis] Dataset has 0 denoised samples")
 
+    importedDataset: CustomDataset = experiment.parameters["importedDataset"]
+    importedDataset.download()
+
     outputDir = folder_manager.createTempFolder("taxonomy_output")
     outputDataset = CustomDataset.createDataset(
-        getCacheNameFive(experiment),
+        f"{experiment.id} - Step 5: Taxonomic analysis",
         experiment.spaceId
     )
 
@@ -122,3 +121,7 @@ def taxonomicAnalysis(
             outputDataset,
             outputDir
         )
+
+
+if __name__ == "__main__":
+    initializeProject(main)

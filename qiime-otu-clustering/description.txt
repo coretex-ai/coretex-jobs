@@ -1,0 +1,48 @@
+--- Template description ---
+
+This job uses vsearch to perform OTU clustering with the de novo method.
+
+OTU stands for "Operational Taxonomic Unit." OTU clustering involves grouping
+similar DNA or RNA sequences together based on a predefined sequence similarity
+threshold. The similarity threshold is typically set at a certain percentage (e.g., 97%)
+of sequence identity. Sequences that share this level of
+similarity are grouped into the same OTU.
+
+The input is the dataset created by the third job in the Coretex Qiime Pipeline,
+DADA2. What gets used for the clustering is the feature table.
+
+The output is a BIOM file with OTUs.
+
+----------------------------
+
+--- Template parameters description ---
+
+--- dataset description ---
+A dataset which contains a featrue table generated in the third job form
+the Coretex Qiime pipeline, DADA2.
+---------------------------
+
+--- clusteringMethod description ---
+This parameter decides which method will be used for OTU clustering.
+Available methods are:
+    - De Novo
+    - Closed Reference
+    - Open Reference
+------------------------------------
+
+--- referenceDataset description ---
+A dataset that contains a single sample with the reference sequences either
+in a single .fasta file, or imported in a .qza file. If the file is in fasta
+it will be imported to .qza and upoaded as a cache to Coretex
+------------------------------------
+
+--- percentIdentity description ---
+In OTU clustering, sequences that share a certain level of sequence identity are
+considered to be part of the same taxonomic unit. This similarity threshold,
+often expressed as a percentage, determines how closely related sequences need
+to be in order to be grouped together. For example, if the percent identity
+threshold is set at 97%, it means that sequences with at least 97% identical
+bases are clustered into the same OTU.
+-----------------------------------
+
+------------------------------

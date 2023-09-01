@@ -4,9 +4,8 @@ from zipfile import ZipFile
 import logging
 
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
+from coretex.project import initializeProject
 from coretex.bioinformatics import ctx_qiime2
-
-from .caching import getCacheNameSix
 
 
 def phylogenyAlignToTreeMafftFasttreeSample(sample: CustomSample, outputDir: Path) -> Path:
@@ -54,18 +53,16 @@ def processSample(
     ctx_qiime2.createSample(f"{index}-phylogenetic-tree", outputDataset.id, treePath, experiment, "Step 6: Phylogenetic tree")
 
 
-def phyogeneticDiversityAnalysis(
-    dataset: CustomDataset,
-    experiment: Experiment
-) -> CustomDataset:
+def main(experiment: Experiment[CustomDataset]):
+    experiment.dataset.download()
 
-    denoisedSamples = ctx_qiime2.getDenoisedSamples(dataset)
+    denoisedSamples = ctx_qiime2.getDenoisedSamples(experiment.dataset)
     if len(denoisedSamples) == 0:
         raise ValueError(">> [Qiime: Phylogenetic Diversity] Dataset has 0 denoised samples")
 
     outputDir = folder_manager.createTempFolder("tree_output")
     outputDataset = CustomDataset.createDataset(
-        getCacheNameSix(experiment),
+        f"{experiment.id} - Step 6: Phylogenetic tree",
         experiment.spaceId
     )
 
@@ -76,5 +73,6 @@ def phyogeneticDiversityAnalysis(
         index = ctx_qiime2.sampleNumber(sample)
         processSample(index, sample, experiment, outputDataset, outputDir)
 
-    outputDataset.refresh()
-    return outputDataset
+
+if __name__ == "__main__":
+    initializeProject(main)

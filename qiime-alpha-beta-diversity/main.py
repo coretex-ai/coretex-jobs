@@ -2,13 +2,20 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import os
+import csv
 import logging
 
 from coretex import CustomDataset, CustomSample, Experiment, folder_manager
+from coretex.project import initializeProject
 from coretex.bioinformatics import CommandException, ctx_qiime2
 
-from .utils import columnNamePresent
-from .caching import getCacheNameSeven
+
+def columnNamePresent(metadataPath: Path, columnName: str) -> bool:
+    with metadataPath.open("r") as metadata:
+        for row in csv.reader(metadata, delimiter = "\t"):
+            return columnName in row
+
+    raise RuntimeError(">> [Qiime: Alpha & Beta Diversity] Metadata file is empty")
 
 
 def diversityCoreMetricsPhylogeneticSample(
@@ -301,13 +308,7 @@ def processSample(
         logging.error(">> [Qiime: Alpha & Beta Diversity] Failed to create alpha-rarefaction.qzv")
 
 
-def alphaBetaDiversityAnalysis(
-    importedDataset: CustomDataset,
-    denoisedDataset: CustomDataset,
-    phylogeneticDataset: CustomDataset,
-    experiment: Experiment
-) -> None:
-
+def main(experiment: Experiment[CustomDataset]):
     # If GPU is detected but not configured properly we have
     # to disable its usage for unifrac otherwise experiment
     # will crash
@@ -324,13 +325,21 @@ def alphaBetaDiversityAnalysis(
 
         logging.warning(">> [Qiime: Alpha & Beta Diversity] GPU will not be used for \"unifrac\" calculations")
 
-    phylogeneticTreeSamples = ctx_qiime2.getPhylogeneticTreeSamples(phylogeneticDataset)
+    experiment.dataset.download()
+
+    phylogeneticTreeSamples = ctx_qiime2.getPhylogeneticTreeSamples(experiment.dataset)
     if len(phylogeneticTreeSamples) == 0:
         raise ValueError(">> [Qiime: Alpha & Beta Diversity] Dataset has 0 phylogenetic tree samples")
 
+    importedDataset: CustomDataset = experiment.parameters["importedDataset"]
+    importedDataset.download()
+
+    denoisedDataset: CustomDataset = experiment.parameters["denoisedDataset"]
+    denoisedDataset.download()
+
     outputDir = folder_manager.createTempFolder("alpha_beta_output")
     outputDataset = CustomDataset.createDataset(
-        getCacheNameSeven(experiment),
+        f"{experiment.id} - Step 7: Alpha & Beta diversity",
         experiment.spaceId
     )
 
@@ -357,3 +366,7 @@ def alphaBetaDiversityAnalysis(
             outputDataset,
             outputDir
         )
+
+
+if __name__ == "__main__":
+    initializeProject(main)
