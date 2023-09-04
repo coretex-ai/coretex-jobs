@@ -8,8 +8,8 @@ from qiime2.sdk.result import Artifact
 
 import qiime2.core.archive as archive
 
-from coretex import CustomDataset, CustomSample, Experiment, folder_manager
-from coretex.project import initializeProject
+from coretex import CustomDataset, CustomSample, Run, folder_manager
+from coretex.job import initializeJob
 from coretex.bioinformatics import ctx_qiime2
 
 
@@ -38,7 +38,7 @@ def getQzaPath(sample: CustomSample) -> Optional[Path]:
     return None
 
 
-def importReferenceDataset(dataset: CustomDataset, outputDir: Path, experiment: Experiment) -> Path:
+def importReferenceDataset(dataset: CustomDataset, outputDir: Path, run: Run) -> Path:
     referenceCacheName = f"OTU Reference Dataset Imported to Qiime - {dataset.id}"
     caches = CustomDataset.fetchAll(queryParameters = [f"name={referenceCacheName}", "include_sessions=1"])
     for cache in caches:
@@ -63,7 +63,7 @@ def importReferenceDataset(dataset: CustomDataset, outputDir: Path, experiment: 
         qzaPath = outputDir / f"{fastaPath.stem}.qza"
         ctx_qiime2.toolsImport("FeatureData[Sequence]", str(fastaPath), str(qzaPath))
 
-        referenceCache = CustomDataset.createDataset(referenceCacheName, experiment.spaceId)
+        referenceCache = CustomDataset.createDataset(referenceCacheName, run.spaceId)
         if referenceCache is None:
             logging.error(">> [Qiime: Clustering] Failed to create imported reference sequences cache")
             return qzaPath
@@ -175,7 +175,7 @@ def deNovoClustering(sample: CustomSample, outputDir: Path, percentIdentity: flo
 def processSample(
     index: int,
     sample: CustomSample,
-    experiment: Experiment,
+    run: Run,
     outputDataset: CustomDataset,
     outputDir: Path,
     clusteringMethod: str
@@ -186,18 +186,18 @@ def processSample(
     sampleOutputDir = outputDir / str(sample.id)
     sampleOutputDir.mkdir()
 
-    percentIdentity = experiment.parameters["percentIdentity"]
+    percentIdentity = run.parameters["percentIdentity"]
     if percentIdentity <=0 or percentIdentity > 1:
         raise ValueError(">> [Qiime: Clustering] The percent identity parameter must be between 0 and 1.")
 
-    referenceDataset = experiment.parameters["referenceDataset"]
+    referenceDataset = run.parameters["referenceDataset"]
 
     if clusteringMethod == "De Novo":
         logging.info(">> [Qiime: Clustering] Performing de novo clustering")
-        otuPath = deNovoClustering(sample, sampleOutputDir, experiment.parameters["percentIdentity"])
+        otuPath = deNovoClustering(sample, sampleOutputDir, run.parameters["percentIdentity"])
     elif referenceDataset is not None:
         logging.info(">> [Qiime: Clustering] Importing reference dataset")
-        referenceSequencesPath = importReferenceDataset(referenceDataset, outputDir, experiment)
+        referenceSequencesPath = importReferenceDataset(referenceDataset, outputDir, run)
         if clusteringMethod == "Closed Reference":
             logging.info(">> [Qiime: Clustering] Performing closed reference clustering")
             otuPath = closedReferenceClustering(sample, referenceSequencesPath, outputDir, percentIdentity)
@@ -208,23 +208,23 @@ def processSample(
     else:
         raise ValueError(">> [Qiime: Clustering] referenceDataset parameter must not be empty in case of closed or open reference clustering")
 
-    ctx_qiime2.createSample(f"{index}-otu-clusters", outputDataset.id, otuPath, experiment, "Step 4: OTU clustering")
+    ctx_qiime2.createSample(f"{index}-otu-clusters", outputDataset.id, otuPath, run, "Step 4: OTU clustering")
 
 
-def main(experiment: Experiment[CustomDataset]):
-    dataset = experiment.dataset
+def main(run: Run[CustomDataset]):
+    dataset = run.dataset
     dataset.download()
 
     denoisedSamples = ctx_qiime2.getDenoisedSamples(dataset)
     if len(denoisedSamples) == 0:
         raise ValueError(">> [Qiime: Clustering] Dataset has 0 denoised samples")
 
-    clusteringMethod = experiment.parameters["clusteringMethod"]
+    clusteringMethod = run.parameters["clusteringMethod"]
 
     outputDir = folder_manager.createTempFolder("otu_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 4: OTU clustering - {clusteringMethod}",
-        experiment.spaceId
+        f"{run.id} - Step 4: OTU clustering - {clusteringMethod}",
+        run.spaceId
     )
 
     if outputDataset is None:
@@ -232,8 +232,8 @@ def main(experiment: Experiment[CustomDataset]):
 
     for sample in denoisedSamples:
         index = ctx_qiime2.sampleNumber(sample)
-        processSample(index, sample, experiment, outputDataset, outputDir, clusteringMethod)
+        processSample(index, sample, run, outputDataset, outputDir, clusteringMethod)
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    initializeJob(main)

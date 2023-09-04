@@ -12,7 +12,7 @@ from sklearn.feature_selection import SelectPercentile, f_classif
 
 import numpy as np
 
-from coretex import Experiment, CustomDataset, ExperimentStatus, folder_manager
+from coretex import Run, CustomDataset, RunStatus, folder_manager
 
 from .cache_json import loadJsonCache, jsonCacheExists, cacheJson, isJsonCacheValid, getJsonName
 from .cache_matrix import loadMatrixCache, matrixCacheExists, cacheMatrix, isMatrixCacheValid, getMatrixName
@@ -291,7 +291,7 @@ def selectPercentile(
 
 def loadDataAtlas(
     dataset: CustomDataset,
-    experiment: Experiment[CustomDataset]
+    run: Run[CustomDataset]
 ) -> MatrixTuple:
 
     """
@@ -300,7 +300,7 @@ def loadDataAtlas(
         Parameters
         ----------
         dataset: CustomDataset
-            The Coretex dataset we are using for the experiment
+            The Coretex dataset we are using for the run
 
         Returns
         -------
@@ -315,22 +315,22 @@ def loadDataAtlas(
                 Dictionary mapping between taxon ids and their encodings
     """
 
-    sampleOrigin = experiment.parameters["sampleOrigin"]
-    sequencingTechnique = experiment.parameters["sequencingTechnique"]
-    useCache = experiment.parameters["cache"]
-    validate = experiment.parameters["validation"]
+    sampleOrigin = run.parameters["sampleOrigin"]
+    sequencingTechnique = run.parameters["sequencingTechnique"]
+    useCache = run.parameters["cache"]
+    validate = run.parameters["validation"]
 
     cacheNameMatrix = getMatrixName(
         dataset.name,
         sampleOrigin,
         sequencingTechnique,
-        experiment.parameters["percentile"],
-        experiment.parameters["quantize"]
+        run.parameters["percentile"],
+        run.parameters["quantize"]
     )
 
     # Level 2 cache of the fully processed data ready for training
     if useCache and matrixCacheExists(cacheNameMatrix) and isMatrixCacheValid(cacheNameMatrix):
-        experiment.updateStatus(ExperimentStatus.inProgress, "Loading processed data from cache")
+        run.updateStatus(RunStatus.inProgress, "Loading processed data from cache")
         return loadMatrixCache(cacheNameMatrix, validate)
 
     cacheNameJson = getJsonName(
@@ -341,17 +341,17 @@ def loadDataAtlas(
 
     # Level 1 cache of the assambled dataset into Sample objects
     if useCache and jsonCacheExists(cacheNameJson) and isJsonCacheValid(cacheNameJson):
-        experiment.updateStatus(ExperimentStatus.inProgress, "Loading assembled dataset from cache")
+        run.updateStatus(RunStatus.inProgress, "Loading assembled dataset from cache")
         sampleData, uniqueTaxons, uniqueBodySite = loadJsonCache(cacheNameJson)
-        return prepareForTrainingAtlas(experiment, sampleData, uniqueTaxons, uniqueBodySite, cacheNameMatrix)
+        return prepareForTrainingAtlas(run, sampleData, uniqueTaxons, uniqueBodySite, cacheNameMatrix)
 
     logging.info(">> [MicrobiomeForensics] Downloading dataset...")
-    experiment.updateStatus(ExperimentStatus.inProgress, "Downloading dataset...")
+    run.updateStatus(RunStatus.inProgress, "Downloading dataset...")
     dataset.download()
 
     validateDataset(dataset)
 
-    experiment.updateStatus(ExperimentStatus.inProgress, "Loading data from the dataset")
+    run.updateStatus(RunStatus.inProgress, "Loading data from the dataset")
     logging.info(">> [MicrobiomeForensics] Loading data")
 
     mappedPath, infoPath = getDatasetPath(dataset)
@@ -375,7 +375,7 @@ def loadDataAtlas(
 
     if validate:
         # In the case of validation the same dictionaries will be used as during training
-        modelPath = folder_manager.modelsFolder / str(experiment.parameters["trainedModel"])
+        modelPath = folder_manager.modelsFolder / str(run.parameters["trainedModel"])
 
         with open(modelPath / "uniqueTaxons.pkl", "rb") as f:
             uniqueTaxons = pickle.load(f)
@@ -437,17 +437,17 @@ def loadDataAtlas(
     logging.info(f">> [MicrobiomeForensics] Loaded data in: {(time.time() - startTime):.1f}s")
 
     if useCache and isJsonCacheValid(cacheNameJson):
-        experiment.updateStatus(ExperimentStatus.inProgress, "Saving assembled dataset to cache")
-        cacheJson(cacheNameJson, sampleData, uniqueTaxons, uniqueBodySite, experiment.spaceId)
+        run.updateStatus(RunStatus.inProgress, "Saving assembled dataset to cache")
+        cacheJson(cacheNameJson, sampleData, uniqueTaxons, uniqueBodySite, run.spaceId)
 
     if validate:
         sampleData = removeBadSamples(sampleData, uniqueTaxons, uniqueBodySite)
 
-    return prepareForTrainingAtlas(experiment, sampleData, uniqueTaxons, uniqueBodySite, cacheNameMatrix)
+    return prepareForTrainingAtlas(run, sampleData, uniqueTaxons, uniqueBodySite, cacheNameMatrix)
 
 
 def prepareForTrainingAtlas(
-    experiment: Experiment[CustomDataset],
+    run: Run[CustomDataset],
     mappedSampleObjList: list[Sample],
     uniqueTaxons: dict[str, int],
     uniqueBodySite: dict[str, int],
@@ -479,9 +479,9 @@ def prepareForTrainingAtlas(
                 Dictionary mapping between taxon ids and their encodings
     """
 
-    quantize = experiment.parameters["quantize"]
+    quantize = run.parameters["quantize"]
 
-    experiment.updateStatus(ExperimentStatus.inProgress, "Preparing data for training")
+    run.updateStatus(RunStatus.inProgress, "Preparing data for training")
 
     sampleIdList: list[str] = []
     rowIndices: list[int] = []
@@ -520,16 +520,16 @@ def prepareForTrainingAtlas(
     inputMatrix, percentileModel = selectPercentile(
         inputMatrix,
         outputMatrix,
-        experiment.parameters["percentile"],
-        experiment.parameters["validation"],
-        experiment.parameters["trainedModel"]
+        run.parameters["percentile"],
+        run.parameters["validation"],
+        run.parameters["trainedModel"]
     )
 
     logging.info(">> [MicrobiomeForensics] Matrices generated")
     logging.info(f">> [MicrobiomeForensics] Input matrix shape: {inputMatrix.shape}. Output matrix shape: {outputMatrix.shape}")
 
-    if experiment.parameters["cache"] and not experiment.parameters["validation"] and isMatrixCacheValid(cacheNameMatrix):
-        experiment.updateStatus(ExperimentStatus.inProgress, "Uploading processed data to cache")
+    if run.parameters["cache"] and not run.parameters["validation"] and isMatrixCacheValid(cacheNameMatrix):
+        run.updateStatus(RunStatus.inProgress, "Uploading processed data to cache")
         cacheMatrix(
             cacheNameMatrix,
             inputMatrix,
@@ -538,9 +538,9 @@ def prepareForTrainingAtlas(
             uniqueBodySite,
             uniqueTaxons,
             percentileModel,
-            experiment.spaceId
+            run.spaceId
         )
 
-    plots(mappedSampleObjList, experiment)
+    plots(mappedSampleObjList, run)
 
     return MatrixTuple(inputMatrix, outputMatrix, sampleIdList, uniqueBodySite, uniqueTaxons)

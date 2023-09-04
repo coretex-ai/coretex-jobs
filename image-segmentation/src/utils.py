@@ -7,7 +7,7 @@ import tensorflow as tf
 import numpy as np
 import cv2
 
-from coretex import ExecutingExperiment
+from coretex import ExecutingRun
 from coretex.folder_management import FolderManager
 
 
@@ -30,7 +30,7 @@ def saveDatasetPredictions(group: str, model: KerasModel, dataset: tf.data.Datas
 
         cv2.imwrite(imagePath, mask.numpy())
 
-        artifact = ExecutingExperiment.current().createArtifact(
+        artifact = ExecutingRun.current().createArtifact(
             imagePath,
             os.path.join(group, imageFileName)
         )

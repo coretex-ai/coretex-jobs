@@ -47,7 +47,7 @@ from utils.metrics import ConfusionMatrix, ap_per_class, box_iou
 from utils.plots import output_to_target, plot_images, plot_val_study
 from utils.torch_utils import select_device, time_sync
 
-from coretex import ComputerVisionDataset, Experiment
+from coretex import ComputerVisionDataset, Run
 
 
 def save_one_txt(predn, save_conf, shape, file):
@@ -99,7 +99,7 @@ def process_batch(detections, labels, iouv):
 
 @torch.no_grad()
 def run(
-        experiment: Experiment[ComputerVisionDataset],
+        run: Run[ComputerVisionDataset],
         dataset: ComputerVisionDataset,
         weights=None,  # model.pt path(s)
         batch_size=32,  # batch size
@@ -185,7 +185,7 @@ def run(
         pad = 0.0 if task in ('speed', 'benchmark') else 0.5
         rect = False if task == 'benchmark' else pt  # square inference for benchmarks
         task = task if task in ('train', 'val', 'test') else 'val'  # path to train/val/test images
-        dataloader = create_dataloader(experiment,
+        dataloader = create_dataloader(run,
                                        dataset,
                                        imgsz,
                                        batch_size,

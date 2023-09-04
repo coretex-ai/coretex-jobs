@@ -4,7 +4,7 @@ from zipfile import ZipFile
 
 import logging
 
-from coretex import CustomDataset, CustomSample, Experiment, folder_manager
+from coretex import CustomDataset, CustomSample, Run, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
 from .utils import convertMetadata
@@ -56,15 +56,15 @@ def prepareFastq(sample: CustomSample, fileName: str, sequenceDir: Path) -> Opti
 
 def importMultiplexed(
     dataset: CustomDataset,
-    experiment: Experiment
+    run: Run
 ) -> CustomDataset:
 
     logging.info(">> [Qiime: Import] Multiplexed samples detected. Procceeding with demultiplexing")
 
     outputDir = folder_manager.createTempFolder("import_output")
     outputDataset = CustomDataset.createDataset(
-        getCacheNameOne(experiment),
-        experiment.spaceId
+        getCacheNameOne(run),
+        run.spaceId
     )
 
     if outputDataset is None:
@@ -83,7 +83,7 @@ def importMultiplexed(
         forwardPath = prepareFastq(sample, FORWARD_FASTQ, sequenceFolderPath)
         reversePath = prepareFastq(sample, REVERSE_FASTQ, sequenceFolderPath)
 
-        metadataPath = sample.path / experiment.parameters["metadataFileName"]
+        metadataPath = sample.path / run.parameters["metadataFileName"]
 
         if forwardPath is None or barcodesPath is None or not metadataPath.exists():
             raise FileNotFoundError(f">> [Qiime: Import] Each sample must contain one metadata file, {FORWARD_FASTQ}, {BARCODES_FASTQ} and optionaly {REVERSE_FASTQ} in case of paired-end reads. {sample.name} fails to meet these requirements")
@@ -93,10 +93,10 @@ def importMultiplexed(
         logging.info(">> [Qiime: Import] Importing sample")
         importedFilePath = importSample(sequenceFolderPath, sequenceType, outputDir)
         logging.info(">> [Qiime: Import] Uploading sample")
-        ctx_qiime2.createSample(f"{index}-import", outputDataset.id, importedFilePath, experiment, "Step 1: Import")
+        ctx_qiime2.createSample(f"{index}-import", outputDataset.id, importedFilePath, run, "Step 1: Import")
 
         zippedMetadataPath = importMetadata(metadataPath, outputDir)
-        ctx_qiime2.createSample(f"{index}-metadata", outputDataset.id, zippedMetadataPath, experiment, "Step 1: Import")
+        ctx_qiime2.createSample(f"{index}-metadata", outputDataset.id, zippedMetadataPath, run, "Step 1: Import")
 
     outputDataset.refresh()
     return outputDataset

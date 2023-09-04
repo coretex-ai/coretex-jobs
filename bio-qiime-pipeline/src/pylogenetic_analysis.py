@@ -3,7 +3,7 @@ from zipfile import ZipFile
 
 import logging
 
-from coretex import CustomDataset, CustomSample, Experiment, folder_manager
+from coretex import CustomDataset, CustomSample, Run, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
 from .caching import getCacheNameSix
@@ -38,7 +38,7 @@ def phylogenyAlignToTreeMafftFasttreeSample(sample: CustomSample, outputDir: Pat
 def processSample(
     index: int,
     sample: CustomSample,
-    experiment: Experiment,
+    run: Run,
     outputDataset: CustomDataset,
     outputDir: Path
 ) -> None:
@@ -51,12 +51,12 @@ def processSample(
     # Phylogenetic diversity analysis
     logging.info(">> [Qiime: Phylogenetic Diversity] Generating phylogenetic tree")
     treePath = phylogenyAlignToTreeMafftFasttreeSample(sample, sampleOutputDir)
-    ctx_qiime2.createSample(f"{index}-phylogenetic-tree", outputDataset.id, treePath, experiment, "Step 6: Phylogenetic tree")
+    ctx_qiime2.createSample(f"{index}-phylogenetic-tree", outputDataset.id, treePath, run, "Step 6: Phylogenetic tree")
 
 
 def phyogeneticDiversityAnalysis(
     dataset: CustomDataset,
-    experiment: Experiment
+    run: Run
 ) -> CustomDataset:
 
     denoisedSamples = ctx_qiime2.getDenoisedSamples(dataset)
@@ -65,8 +65,8 @@ def phyogeneticDiversityAnalysis(
 
     outputDir = folder_manager.createTempFolder("tree_output")
     outputDataset = CustomDataset.createDataset(
-        getCacheNameSix(experiment),
-        experiment.spaceId
+        getCacheNameSix(run),
+        run.spaceId
     )
 
     if outputDataset is None:
@@ -74,7 +74,7 @@ def phyogeneticDiversityAnalysis(
 
     for sample in denoisedSamples:
         index = ctx_qiime2.sampleNumber(sample)
-        processSample(index, sample, experiment, outputDataset, outputDir)
+        processSample(index, sample, run, outputDataset, outputDir)
 
     outputDataset.refresh()
     return outputDataset

@@ -11,7 +11,7 @@ from scipy import sparse
 import numpy as np
 import xgboost as xgb
 
-from coretex import Experiment, CustomDataset, ExperimentStatus, folder_manager
+from coretex import Run, CustomDataset, RunStatus, folder_manager
 
 from .utils import savePredictionFile
 
@@ -26,11 +26,11 @@ class Progress(TrainingCallback):
     def __init__(
         self, updateRound: int,
         evalSet: list[tuple[sparse.csr_matrix, np.ndarray]],
-        experiment: Experiment
+        run: Run
     ) -> None:
 
         self.updateRound = updateRound
-        self.experiment = experiment
+        self.run = run
         self.eval = xgb.DMatrix(evalSet[0][0], label = evalSet[0][1])
         self.yEval = evalSet[0][1]
 
@@ -46,7 +46,7 @@ class Progress(TrainingCallback):
                     # This happens if there is only 1 class to predict
                     acc = 1 - np.average(np.absolute(self.yEval - yPred))
 
-                self.experiment.submitMetrics({
+                self.run.submitMetrics({
                     "loss": (epoch + 1, loss),
                     "accuracy": (epoch + 1, acc)
                 })
@@ -58,7 +58,7 @@ class Progress(TrainingCallback):
 
 
 def train(
-    experiment: Experiment[CustomDataset],
+    run: Run[CustomDataset],
     inputTable: sparse.csr_matrix,
     outputTable: np.ndarray,
     uniqueBodySites: dict[str, int],
@@ -69,13 +69,13 @@ def train(
     savePredictionFilePath = folder_manager.temp / "body_site_predictions.csv"
     modelPath = folder_manager.temp / "modelFolder"
 
-    experiment.updateStatus(ExperimentStatus.inProgress, "Training XGBoost model")
+    run.updateStatus(RunStatus.inProgress, "Training XGBoost model")
 
-    learningRate = experiment.parameters["learningRate"]
-    epochs = experiment.parameters["epochs"]
-    earlyStopping = experiment.parameters["earlyStopping"]
-    validationSplit = experiment.parameters["validationSplit"]
-    useGpu = experiment.parameters["useGpu"]
+    learningRate = run.parameters["learningRate"]
+    epochs = run.parameters["epochs"]
+    earlyStopping = run.parameters["earlyStopping"]
+    validationSplit = run.parameters["validationSplit"]
+    useGpu = run.parameters["useGpu"]
 
     xTrain, xTest, yTrain, yTest = train_test_split(
         inputTable,
@@ -88,7 +88,7 @@ def train(
     logging.info(">> [MicrobiomeForensics] Instantiating XGBClassifier and starting training")
 
     evalSet = [(xTest, yTest)]
-    progress = Progress(10, evalSet, experiment)
+    progress = Progress(10, evalSet, run)
 
     treeMethod = "gpu_hist" if useGpu else "exact"
 
@@ -111,10 +111,10 @@ def train(
     accuracy = accuracy_score(yTest, yPred)
     logging.info(f">> [MicrobiomeForensics] Training finished in {trainTime:>0.1f}s with accuracy: {accuracy * 100:>0.2f}%")
 
-    experiment.updateStatus(ExperimentStatus.inProgress, "Saving model and associated data")
+    run.updateStatus(RunStatus.inProgress, "Saving model and associated data")
 
     savePredictionFile(
-        experiment,
+        run,
         savePredictionFilePath,
         xTrain,
         xTest,

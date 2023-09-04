@@ -7,14 +7,14 @@ from sklearn.metrics import accuracy_score
 
 import numpy as np
 
-from coretex import Experiment, ExperimentStatus, CustomDataset, folder_manager
+from coretex import Run, RunStatus, CustomDataset, folder_manager
 
 from .utils import getKey
 from .model import Model
 from .dataset import loadDataset, createBatches
 
 
-def savePredictionFile(experiment: Experiment[CustomDataset], predictions: np.ndarray, trueLabels: np.ndarray, sampleIds: list, uniqueBodySite: dict[str, int]) -> None:
+def savePredictionFile(run: Run[CustomDataset], predictions: np.ndarray, trueLabels: np.ndarray, sampleIds: list, uniqueBodySite: dict[str, int]) -> None:
     predictionFilePath = folder_manager.temp / "body_site_predictions.csv"
 
     with predictionFilePath.open("a+") as f:
@@ -23,15 +23,15 @@ def savePredictionFile(experiment: Experiment[CustomDataset], predictions: np.nd
         for i in range(len(trueLabels)):
             writer.writerow([sampleIds[i],  getKey(uniqueBodySite, trueLabels[i]), getKey(uniqueBodySite, predictions[i])])
 
-    experiment.createArtifact(predictionFilePath, "body_site_predictions.csv")
+    run.createArtifact(predictionFilePath, "body_site_predictions.csv")
 
 
-def validate(experiment: Experiment[CustomDataset], datasetPath: Path, uniqueBodySites: dict[str, int], uniqueTaxons: dict[str, int], trainedModelId: int) -> None:
+def validate(run: Run[CustomDataset], datasetPath: Path, uniqueBodySites: dict[str, int], uniqueTaxons: dict[str, int], trainedModelId: int) -> None:
     trainedModelPath = folder_manager.modelsFolder / str(trainedModelId)
 
-    experiment.updateStatus(ExperimentStatus.inProgress, "Running validation with pretrained LSPIN model")
+    run.updateStatus(RunStatus.inProgress, "Running validation with pretrained LSPIN model")
 
-    batchSize = experiment.parameters["batchSize"]
+    batchSize = run.parameters["batchSize"]
 
     sampleCount = len(list(datasetPath.iterdir()))
 
@@ -53,7 +53,7 @@ def validate(experiment: Experiment[CustomDataset], datasetPath: Path, uniqueBod
     logging.info(f">> [MicrobiomeForensics] Validation finished, accuracy: {round(accuracy * 100, 2)}%")
 
     savePredictionFile(
-        experiment,
+        run,
         yPred,
         yTrue,
         sampleIds,

@@ -1,12 +1,12 @@
-from typing import Tuple, Optional
+from typing import Optional
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 
 import logging
 
-from coretex import Experiment, CustomDataset, CustomSample, folder_manager, SequenceDataset, SequenceSample
-from coretex.project import initializeProject
-from coretex.bioinformatics import cutadaptTrim, isPairedEnd
+from coretex import Run, CustomSample, folder_manager, SequenceDataset, SequenceSample
+from coretex.job import initializeJob
+from coretex.bioinformatics import cutadaptTrim
 
 
 def forwardMetadata(sample: CustomSample, outputDataset: SequenceDataset) -> None:
@@ -59,11 +59,11 @@ def trimPairedEnd(
     uploadTrimmedReads(forwardFile.name.split("_")[0], outputDataset, forwardFile, reverseFile)
 
 
-def main(experiment: Experiment[SequenceDataset]) -> None:
-    forwardAdapter = experiment.parameters["forwardAdapter"]
-    reverseAdapter = experiment.parameters["reverseAdapter"]
+def main(run: Run[SequenceDataset]) -> None:
+    forwardAdapter = run.parameters["forwardAdapter"]
+    reverseAdapter = run.parameters["reverseAdapter"]
 
-    dataset = experiment.dataset
+    dataset = run.dataset
     pairedEnd = dataset.isPairedEnd()
 
     if forwardAdapter is None:
@@ -76,7 +76,7 @@ def main(experiment: Experiment[SequenceDataset]) -> None:
     if pairedEnd:
         reverseReadsFolder = folder_manager.createTempFolder("revereseReads")
 
-    outputDataset = SequenceDataset.createDataset(f"{experiment.id} - Cutadapt Output", experiment.spaceId)
+    outputDataset = SequenceDataset.createDataset(f"{run.id} - Cutadapt Output", run.spaceId)
     if outputDataset is None:
         raise RuntimeError(">> [Microbiome analysis] Failed to create coretex dataset")
 
@@ -104,4 +104,4 @@ def main(experiment: Experiment[SequenceDataset]) -> None:
 
 
 if __name__ == "__main__":
-    initializeProject(main, SequenceDataset)
+    initializeJob(main, SequenceDataset)

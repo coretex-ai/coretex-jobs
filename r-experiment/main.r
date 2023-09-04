@@ -8,18 +8,18 @@ library(reticulate)
 use_condaenv(condaEnvironmentPath)
 
 os <- import("os")
-ctxProject <- import("coretex.project")
+ctxJob <- import("coretex.job")
 ctxFolderManager <- import("coretex.folder_manager")
 
-main <- function(experiment) {
+main <- function(run) {
     # FolderManager.temp is used for temporary file storage
-    # temp directory is cleared when the experiment execution is finished
+    # temp directory is cleared when the run execution is finished
     plotPath <- os$path$join(ctxFolderManager$temp, "plot.png")
 
-    # Experiment.parameters contain parameters entered when the experiment
+    # Run.parameters contain parameters entered when the run
     # was created on Coretex.ai
-    mean <- experiment$parameters[["mean"]]
-    sd <- experiment$parameters[["sd"]]
+    mean <- run$parameters[["mean"]]
+    sd <- run$parameters[["sd"]]
 
     print(">> [R Example] Plotting normal distribution...")
     print(sprintf(">> [R Example] Mean value: %.2f, Standard deviation value: %.2f", mean, sd))
@@ -37,14 +37,14 @@ main <- function(experiment) {
     plot(x, y, type = "l", lwd = 2, axes = FALSE, xlab = "", ylab = "")
     dev.off()
 
-    # Experiment.createArtifact is used to store any kind of file to
-    # Coretex.ai Experiment artifacts
-    if (is.null(experiment$createArtifact(plotPath, "plot.png"))) {
+    # Run.createArtifact is used to store any kind of file to
+    # Coretex.ai Run artifacts
+    if (is.null(run$createArtifact(plotPath, "plot.png"))) {
         print(">> [R Example] Failed to create Artifact with name \"plot.png\"")
     } else {
         print(">> [R Example] Artifact with name \"plot.png\" created")
     }
 }
 
-# initializeProject must be called with a function to start the experiment execution
-ctxProject$initializeProject(main, args = args)
+# initializeJob must be called with a function to start the run execution
+ctxJob$initializeJob(main, args = args)

@@ -5,7 +5,7 @@ from zipfile import ZipFile
 import csv
 import logging
 
-from coretex import SequenceDataset, CustomDataset, CustomSample, Experiment, SequenceSample, folder_manager
+from coretex import SequenceDataset, CustomDataset, CustomSample, Run, SequenceSample, folder_manager
 from coretex.bioinformatics import ctx_qiime2
 
 from .utils import convertMetadata, demuxSummarize
@@ -72,7 +72,7 @@ def createManifestPaired(samples: List[SequenceSample], manifestPath: Path) -> P
 
 def importDemultiplexed(
     dataset: SequenceDataset,
-    experiment: Experiment,
+    run: Run,
     pairedEnd: bool
 ) -> CustomDataset:
 
@@ -84,8 +84,8 @@ def importDemultiplexed(
     logging.info(">> [Qiime: Import] Preparing data for import into QIIME2")
     outputDir = folder_manager.createTempFolder("import_output")
     outputDataset = CustomDataset.createDataset(
-        getCacheNameOne(experiment),
-        experiment.spaceId
+        getCacheNameOne(run),
+        run.spaceId
     )
 
     if outputDataset is None:
@@ -107,17 +107,17 @@ def importDemultiplexed(
     importZipPath = importSample(inputPath, sequenceType, inputFormat, outputDir)
 
     logging.info(">> [Qiime: Import] Uploading sample")
-    demuxSample = ctx_qiime2.createSample("0-demux", outputDataset.id, importZipPath, experiment, "Step 1: Import")
+    demuxSample = ctx_qiime2.createSample("0-demux", outputDataset.id, importZipPath, run, "Step 1: Import")
 
-    metadataZipPath = importMetadata(dataset.metadata, outputDir, experiment.parameters["metadataFileName"])
-    ctx_qiime2.createSample("0-metadata", outputDataset.id, metadataZipPath, experiment, "Step 1: Import")
+    metadataZipPath = importMetadata(dataset.metadata, outputDir, run.parameters["metadataFileName"])
+    ctx_qiime2.createSample("0-metadata", outputDataset.id, metadataZipPath, run, "Step 1: Import")
 
     demuxSample.download()
     demuxSample.unzip()
 
     logging.info(">> [Qiime: Import] Creating summarization...")
     visualizationPath = demuxSummarize(demuxSample, outputDir)
-    ctx_qiime2.createSample("0-summary", outputDataset.id, visualizationPath, experiment, "Step 1: Import")
+    ctx_qiime2.createSample("0-summary", outputDataset.id, visualizationPath, run, "Step 1: Import")
 
     outputDataset.refresh()
     return outputDataset

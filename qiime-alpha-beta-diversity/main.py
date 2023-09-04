@@ -5,8 +5,8 @@ import os
 import csv
 import logging
 
-from coretex import CustomDataset, CustomSample, Experiment, folder_manager
-from coretex.project import initializeProject
+from coretex import CustomDataset, CustomSample, Run, folder_manager
+from coretex.job import initializeJob
 from coretex.bioinformatics import CommandException, ctx_qiime2
 
 
@@ -51,7 +51,7 @@ def diversityAlphaGroupSignificance(
     sampleIndex: int,
     outputDatasetId: int,
     outputPath: Path,
-    experiment: Experiment
+    run: Run
 ):
 
     ctx_qiime2.diversityAlphaGroupSignificance(
@@ -64,7 +64,7 @@ def diversityAlphaGroupSignificance(
         f"{sampleIndex}-{outputPath.stem}",
         outputDatasetId,
         outputPath,
-        experiment,
+        run,
         "Step 7: Alpha & Beta diversity analysis"
     )
 
@@ -76,7 +76,7 @@ def diversityBetaGroupSignificance(
     sampleIndex: int,
     outputDatasetId: int,
     outputPath: Path,
-    experiment: Experiment
+    run: Run
 ):
 
     ctx_qiime2.diversityBetaGroupSignificance(
@@ -91,7 +91,7 @@ def diversityBetaGroupSignificance(
         f"{sampleIndex}-{outputPath.stem}",
         outputDatasetId,
         outputPath,
-        experiment,
+        run,
         "Step 7: Alpha & Beta diversity analysis"
     )
 
@@ -102,7 +102,7 @@ def emperorPlot(
     sampleIndex: int,
     outputDatasetId: int,
     outputPath: Path,
-    experiment: Experiment
+    run: Run
 ):
 
     ctx_qiime2.emperorPlot(
@@ -116,7 +116,7 @@ def emperorPlot(
         f"{sampleIndex}-{outputPath.stem}",
         outputDatasetId,
         outputPath,
-        experiment,
+        run,
         "Step 7: Alpha & Beta diversity analysis"
     )
 
@@ -129,7 +129,7 @@ def diversityAlphaRarefaction(
     sampleIndex: int,
     outputDatasetId: int,
     outputPath: Path,
-    experiment: Experiment
+    run: Run
 ):
     ctx_qiime2.diversityAlphaRarefaction(
         str(tablePath),
@@ -143,7 +143,7 @@ def diversityAlphaRarefaction(
         f"{sampleIndex}-{outputPath.stem}",
         outputDatasetId,
         outputPath,
-        experiment,
+        run,
         "Step 7: Alpha & Beta diversity analysis"
     )
 
@@ -153,7 +153,7 @@ def processSample(
     sample: CustomSample,
     metadataSample: CustomSample,
     denoisedSample: CustomSample,
-    experiment: Experiment,
+    run: Run,
     outputDataset: CustomDataset,
     outputDir: Path
 ):
@@ -166,7 +166,7 @@ def processSample(
     sampleOutputDir.mkdir()
 
     metadataPath = ctx_qiime2.getMetadata(metadataSample)
-    targetTypeColumn = experiment.parameters["targetTypeColumn"]
+    targetTypeColumn = run.parameters["targetTypeColumn"]
 
     if not columnNamePresent(metadataPath, targetTypeColumn):
         logging.error(f">> [Qiime: Alpha & Beta Diversity] targetTypeColumn")
@@ -182,7 +182,7 @@ def processSample(
         coreMetricsPath = diversityCoreMetricsPhylogeneticSample(
             sample,
             denoisedSample.joinPath("table.qza"),
-            experiment.parameters["samplingDepth"],
+            run.parameters["samplingDepth"],
             metadataPath,
             sampleOutputDir
         )
@@ -191,7 +191,7 @@ def processSample(
             f"{index}-core-metrics-phylogenetic",
             outputDataset.id,
             coreMetricsPath,
-            experiment,
+            run,
             "Step 7: Alpha & Beta diversity analysis"
         )
     except CommandException:
@@ -210,7 +210,7 @@ def processSample(
             index,
             outputDataset.id,
             sampleOutputDir / "faith-pd-group-significance.qzv",
-            experiment
+            run
         )
     except CommandException:
         logging.error(">> [Qiime: Alpha & Beta Diversity] Failed to create faith_pd_vector.qza")
@@ -223,7 +223,7 @@ def processSample(
             index,
             outputDataset.id,
             sampleOutputDir / "evenness-group-significance.qzv",
-            experiment
+            run
         )
     except CommandException:
         logging.error(">> [Qiime: Alpha & Beta Diversity] Failed to create evenness_vector.qza")
@@ -243,7 +243,7 @@ def processSample(
             index,
             outputDataset.id,
             sampleOutputDir / "unweighted-unifrac-body-site-significance.qzv",
-            experiment
+            run
         )
     except CommandException:
         logging.error(">> [Qiime: Alpha & Beta Diversity] Failed to create unweighted_unifrac_distance_matrix.qza")
@@ -256,7 +256,7 @@ def processSample(
             index,
             outputDataset.id,
             sampleOutputDir / "unweighted-unifrac-subject-group-significance.qzv",
-            experiment
+            run
         )
     except CommandException:
         logging.error(">> [Qiime: Alpha & Beta Diversity] Failed to create unweighted_unifrac_distance_matrix.qza")
@@ -270,8 +270,8 @@ def processSample(
             metadataPath,
             index,
             outputDataset.id,
-            sampleOutputDir / "unweighted-unifrac-emperor-days-since-experiment-start.qzv",
-            experiment
+            sampleOutputDir / "unweighted-unifrac-emperor-days-since-run-start.qzv",
+            run
         )
     except CommandException:
         logging.error(">> [Qiime: Alpha & Beta Diversity] Failed to create unweighted-unifrac-emperor-days-since-experiment-start.qzv")
@@ -284,7 +284,7 @@ def processSample(
             index,
             outputDataset.id,
             sampleOutputDir / "bray-curtis-emperor-days-since-experiment-start.qzv",
-            experiment
+            run
         )
     except CommandException:
         logging.error(">> [Qiime: Alpha & Beta Diversity] Failed to create bray-curtis-emperor-days-since-experiment-start.qzv")
@@ -297,20 +297,20 @@ def processSample(
         diversityAlphaRarefaction(
             denoisedSample.joinPath("table.qza"),
             sample.joinPath("rooted-tree.qza"),
-            experiment.parameters["maxDepth"],
+            run.parameters["maxDepth"],
             metadataPath,
             index,
             outputDataset.id,
             sampleOutputDir / "alpha-rarefaction.qzv",
-            experiment
+            run
         )
     except CommandException:
         logging.error(">> [Qiime: Alpha & Beta Diversity] Failed to create alpha-rarefaction.qzv")
 
 
-def main(experiment: Experiment[CustomDataset]):
+def main(run: Run[CustomDataset]):
     # If GPU is detected but not configured properly we have
-    # to disable its usage for unifrac otherwise experiment
+    # to disable its usage for unifrac otherwise run
     # will crash
     try:
         from py3nvml import py3nvml
@@ -325,22 +325,22 @@ def main(experiment: Experiment[CustomDataset]):
 
         logging.warning(">> [Qiime: Alpha & Beta Diversity] GPU will not be used for \"unifrac\" calculations")
 
-    experiment.dataset.download()
+    run.dataset.download()
 
-    phylogeneticTreeSamples = ctx_qiime2.getPhylogeneticTreeSamples(experiment.dataset)
+    phylogeneticTreeSamples = ctx_qiime2.getPhylogeneticTreeSamples(run.dataset)
     if len(phylogeneticTreeSamples) == 0:
         raise ValueError(">> [Qiime: Alpha & Beta Diversity] Dataset has 0 phylogenetic tree samples")
 
-    importedDataset: CustomDataset = experiment.parameters["importedDataset"]
+    importedDataset: CustomDataset = run.parameters["importedDataset"]
     importedDataset.download()
 
-    denoisedDataset: CustomDataset = experiment.parameters["denoisedDataset"]
+    denoisedDataset: CustomDataset = run.parameters["denoisedDataset"]
     denoisedDataset.download()
 
     outputDir = folder_manager.createTempFolder("alpha_beta_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 7: Alpha & Beta diversity",
-        experiment.spaceId
+        f"{run.id} - Step 7: Alpha & Beta diversity",
+        run.spaceId
     )
 
     if outputDataset is None:
@@ -362,11 +362,11 @@ def main(experiment: Experiment[CustomDataset]):
             sample,
             metadataSample,
             denoisedSample,
-            experiment,
+            run,
             outputDataset,
             outputDir
         )
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    initializeJob(main)

@@ -6,7 +6,7 @@ import logging
 
 import requests
 
-from coretex import Experiment, CustomDataset, CustomSample, folder_manager
+from coretex import Run, CustomDataset, CustomSample, folder_manager
 from coretex.utils.file import isGzip, gzipDecompress
 from coretex.utils.hash import hashCacheName
 from coretex.bioinformatics import sequence_alignment as sa
@@ -91,16 +91,16 @@ def loadGenome(dataset: CustomDataset) -> Path:
     return list(Path(sample.path).iterdir())[0]
 
 
-def index(experiment: Experiment[CustomDataset]) -> Path:
+def index(run: Run[CustomDataset]) -> Path:
     genomeIndexDir = folder_manager.createTempFolder("genome")
 
-    genomeUrl: Optional[str] = experiment.parameters["genomeUrl"]
+    genomeUrl: Optional[str] = run.parameters["genomeUrl"]
     if genomeUrl is not None:
         downloadPath = folder_manager.temp / genomeUrl.split("/")[-1]
         filename = downloadPath.stem if downloadPath.suffix == ".gz" else downloadPath.name
         cacheName = hashCacheName(filename, genomeUrl)
     else:
-        referenceDataset = experiment.parameters["referenceDataset"]
+        referenceDataset = run.parameters["referenceDataset"]
         cacheName = f"{referenceDataset.id}_genomeCache"
 
     cache = getCache(cacheName)
@@ -125,6 +125,6 @@ def index(experiment: Experiment[CustomDataset]) -> Path:
     logging.info(">> [Sequence Alignment] Reference genome succesfully indexed")
 
     if cache is None or not isCacheValid(cache):
-        saveCache(cacheName, folder_manager.temp, genomeIndexDir, experiment.spaceId)
+        saveCache(cacheName, folder_manager.temp, genomeIndexDir, run.spaceId)
 
     return genomePrefix

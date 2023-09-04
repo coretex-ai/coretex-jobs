@@ -4,7 +4,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 import logging
 
-from coretex import CustomDataset, Experiment, CustomSample, folder_manager
+from coretex import CustomDataset, Run, CustomSample, folder_manager
 
 
 def loadIndexed(dataset: CustomDataset) -> list[Path]:
@@ -31,10 +31,10 @@ def clearDirectory(directory: Path) -> None:
         file.unlink()
 
 
-def uploadToCoretex(experiment: Experiment[CustomDataset], groups: list[Path]) -> None:
+def uploadToCoretex(run: Run[CustomDataset], groups: list[Path]) -> None:
     zipOut = Path(folder_manager.createTempFolder("zipOut"))
 
-    dataset = CustomDataset.createDataset(f"{experiment.id} - Separated Sequences", experiment.spaceId)
+    dataset = CustomDataset.createDataset(f"{run.id} - Separated Sequences", run.spaceId)
     if dataset is None:
         raise RuntimeError(">> [SequenceSeparation] Failed to create output dataset")
 

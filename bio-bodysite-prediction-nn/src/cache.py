@@ -6,7 +6,7 @@ import zipfile
 import pickle
 import time
 
-from coretex import Experiment, CustomDataset, CustomSample, folder_manager
+from coretex import Run, CustomDataset, CustomSample, folder_manager
 from coretex.utils.hash import hashCacheName
 
 from .utils import plots
@@ -69,7 +69,7 @@ def cacheDataset(
     logging.info(">> [MicrobiomeForensics] Successfuly cached assembled dataset")
 
 
-def loadCache(experiment: Experiment[CustomDataset], cacheName: str) -> tuple[Path, dict[str, int], dict[str, int]]:
+def loadCache(run: Run[CustomDataset], cacheName: str) -> tuple[Path, dict[str, int], dict[str, int]]:
     logging.info(">> [MicrobiomeForensics] Loading assembled dataset to cache")
     start = time.time()
 
@@ -106,7 +106,7 @@ def loadCache(experiment: Experiment[CustomDataset], cacheName: str) -> tuple[Pa
 
     datasetLen = len(list(datasetPath.iterdir()))
 
-    plots(experiment, classDistribution, taxonDistribution, datasetLen)
+    plots(run, classDistribution, taxonDistribution, datasetLen)
 
     return datasetPath, uniqueBodySites, uniqueTaxons, datasetLen
 

@@ -8,8 +8,8 @@ import tensorflowjs as tfjs
 import tensorflow as tf
 import coremltools
 
-from coretex import Model, Dataset, cache, Experiment, folder_manager
-from coretex.project import initializeProject
+from coretex import Model, Dataset, cache, Run, folder_manager
+from coretex.job import initializeJob
 
 
 classes = [
@@ -63,17 +63,17 @@ def saveCoremlModel(savedModelPath: str) -> None:
     model.save(f"{modelPath}/model.mlmodel")
 
 
-def saveJSModel(loadModelPath: str, modelPath: Path, modelTfjsPath: str, experiment: Experiment[Dataset], coretexModel: Model) -> None:
+def saveJSModel(loadModelPath: str, modelPath: Path, modelTfjsPath: str, run: Run[Dataset], coretexModel: Model) -> None:
     tfjs.converters.convert_tf_saved_model(
         loadModelPath,
         modelTfjsPath
     )
 
     coretexModel.saveModelDescriptor(modelPath, {
-        "project_task": experiment.spaceTask,
+        "project_task": run.spaceTask,
         "labels": classes,
         "modelName": coretexModel.name,
-        "description": experiment.description,
+        "description": run.description,
 
         "input_description": """
             The height/width must be multiple of 32.
@@ -115,27 +115,27 @@ def saveJSModel(loadModelPath: str, modelPath: Path, modelTfjsPath: str, experim
     })
 
 
-def main(experiment: Experiment[Dataset]) -> None:
+def main(run: Run[Dataset]) -> None:
     modelPath = folder_manager.createTempFolder("model")
 
-    tfjsModelUrl = experiment.parameters["tfjsModelUrl"]
+    tfjsModelUrl = run.parameters["tfjsModelUrl"]
     tfjsFilename = "multipose_tfjs.zip"
     tfjsModelPath = os.path.join(modelPath, "tensorflowjs-model")
 
-    savedModelUrl = experiment.parameters["savedModelUrl"]
+    savedModelUrl = run.parameters["savedModelUrl"]
     savedModelFilename = "multipose_savedModel.zip"
 
-    coretexModel = Model.createModel(experiment.name, experiment.id, 0.9139, {})
+    coretexModel = Model.createModel(run.name, run.id, 0.9139, {})
     logging.info(f">> [Workspace] Model accuracy is: {coretexModel.accuracy}")
 
     savedModelPath = fetchModelFile(savedModelUrl, savedModelFilename)
 
     saveCoremlModel(savedModelPath)
     saveTfLiteModel(savedModelPath)
-    saveJSModel(fetchModelFile(tfjsModelUrl, tfjsFilename), modelPath, tfjsModelPath, experiment, coretexModel)
+    saveJSModel(fetchModelFile(tfjsModelUrl, tfjsFilename), modelPath, tfjsModelPath, run, coretexModel)
 
     coretexModel.upload(modelPath)
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    initializeJob(main)

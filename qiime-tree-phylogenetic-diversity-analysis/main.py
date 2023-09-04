@@ -3,8 +3,8 @@ from zipfile import ZipFile
 
 import logging
 
-from coretex import CustomDataset, CustomSample, Experiment, folder_manager
-from coretex.project import initializeProject
+from coretex import CustomDataset, CustomSample, Run, folder_manager
+from coretex.job import initializeJob
 from coretex.bioinformatics import ctx_qiime2
 
 
@@ -37,7 +37,7 @@ def phylogenyAlignToTreeMafftFasttreeSample(sample: CustomSample, outputDir: Pat
 def processSample(
     index: int,
     sample: CustomSample,
-    experiment: Experiment,
+    run: Run,
     outputDataset: CustomDataset,
     outputDir: Path
 ) -> None:
@@ -50,20 +50,20 @@ def processSample(
     # Phylogenetic diversity analysis
     logging.info(">> [Qiime: Phylogenetic Diversity] Generating phylogenetic tree")
     treePath = phylogenyAlignToTreeMafftFasttreeSample(sample, sampleOutputDir)
-    ctx_qiime2.createSample(f"{index}-phylogenetic-tree", outputDataset.id, treePath, experiment, "Step 6: Phylogenetic tree")
+    ctx_qiime2.createSample(f"{index}-phylogenetic-tree", outputDataset.id, treePath, run, "Step 6: Phylogenetic tree")
 
 
-def main(experiment: Experiment[CustomDataset]):
-    experiment.dataset.download()
+def main(run: Run[CustomDataset]):
+    run.dataset.download()
 
-    denoisedSamples = ctx_qiime2.getDenoisedSamples(experiment.dataset)
+    denoisedSamples = ctx_qiime2.getDenoisedSamples(run.dataset)
     if len(denoisedSamples) == 0:
         raise ValueError(">> [Qiime: Phylogenetic Diversity] Dataset has 0 denoised samples")
 
     outputDir = folder_manager.createTempFolder("tree_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 6: Phylogenetic tree",
-        experiment.spaceId
+        f"{run.id} - Step 6: Phylogenetic tree",
+        run.spaceId
     )
 
     if outputDataset is None:
@@ -71,8 +71,8 @@ def main(experiment: Experiment[CustomDataset]):
 
     for sample in denoisedSamples:
         index = ctx_qiime2.sampleNumber(sample)
-        processSample(index, sample, experiment, outputDataset, outputDir)
+        processSample(index, sample, run, outputDataset, outputDir)
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    initializeJob(main)

@@ -9,7 +9,7 @@ from pandas import DataFrame
 
 import pandas as pd
 
-from coretex import CustomDataset, Experiment
+from coretex import CustomDataset, Run
 
 from .data_type import DataType
 

@@ -9,8 +9,8 @@ import tensorflow as tf
 import tensorflowjs as tfjs
 import coremltools
 
-from coretex import ExperimentStatus, Model, ImageSegmentationDataset, ExecutingExperiment, Metric, MetricType
-from coretex.project import initializeProject
+from coretex import RunStatus, Model, ImageSegmentationDataset, ExecutingRun, Metric, MetricType
+from coretex.job import initializeJob
 from coretex.folder_management import FolderManager
 
 from src.model import UNetModel
@@ -47,7 +47,7 @@ def saveTFJSModelFromTFModel(model: KerasModel, path: str) -> None:
     shutil.rmtree(tensorflowModelPath)
 
 
-def saveJSModel(model: KerasModel, experiment: ExecutingExperiment[ImageSegmentationDataset], coretexModel: Model):
+def saveJSModel(model: KerasModel, run: ExecutingRun[ImageSegmentationDataset], coretexModel: Model):
     modelPath = FolderManager.instance().getTempFolder("model")
     saveTFJSModelFromTFModel(model, modelPath)
 
@@ -56,14 +56,14 @@ def saveJSModel(model: KerasModel, experiment: ExecutingExperiment[ImageSegmenta
             "label": clazz.label,
             "color": clazz.color
         }
-        for clazz in experiment.dataset.classes
+        for clazz in run.dataset.classes
     ]
 
     coretexModel.saveModelDescriptor(modelPath, {
-        "project_task": experiment.spaceTask,
+        "project_task": run.spaceTask,
         "labels": labels,
         "modelName": coretexModel.name,
-        "description": experiment.description,
+        "description": run.description,
 
         "input_description": "RGB image",
         "input_shape": model.input_shape,
@@ -73,47 +73,47 @@ def saveJSModel(model: KerasModel, experiment: ExecutingExperiment[ImageSegmenta
     })
 
 
-def main(experiment: ExecutingExperiment[ImageSegmentationDataset]):
-    experiment.createMetrics([
-        Metric.create("loss", "epoch", MetricType.int, "value", MetricType.float, [0, experiment.parameters["epochs"]]),
-        Metric.create("accuracy", "epoch", MetricType.int, "value", MetricType.float, [0, experiment.parameters["epochs"]], [0, 1])
+def main(run: ExecutingRun[ImageSegmentationDataset]):
+    run.createMetrics([
+        Metric.create("loss", "epoch", MetricType.int, "value", MetricType.float, [0, run.parameters["epochs"]]),
+        Metric.create("accuracy", "epoch", MetricType.int, "value", MetricType.float, [0, run.parameters["epochs"]], [0, 1])
     ])
 
     # path to which the model will be saved after training
     FolderManager.instance().createTempFolder("model")
 
-    experiment.updateStatus(ExperimentStatus.inProgress, "Downloading dataset")
-    experiment.dataset.download()
+    run.updateStatus(RunStatus.inProgress, "Downloading dataset")
+    run.dataset.download()
 
-    excludedClasses: list[str] = experiment.parameters["excludedClasses"]
+    excludedClasses: list[str] = run.parameters["excludedClasses"]
     logging.info(f">> [Workspace] Excluding classes: {excludedClasses}")
-    experiment.dataset.classes.exclude(excludedClasses)
+    run.dataset.classes.exclude(excludedClasses)
 
-    count, dataset = loadDataset(experiment.dataset, experiment)
+    count, dataset = loadDataset(run.dataset, run)
     trainCount, trainBatches, testCount, testBatches = createBatches(
         dataset,
         count,
-        experiment.parameters["validationSplit"],
-        experiment.parameters["bufferSize"],
-        experiment.parameters["batchSize"],
-        experiment.parameters["imageSize"]
+        run.parameters["validationSplit"],
+        run.parameters["bufferSize"],
+        run.parameters["batchSize"],
+        run.parameters["imageSize"]
     )
 
     # + 1 because we also have a background class
-    classCount = len(experiment.dataset.classes) + 1
-    model = UNetModel(classCount, experiment.parameters["imageSize"])
+    classCount = len(run.dataset.classes) + 1
+    model = UNetModel(classCount, run.parameters["imageSize"])
 
     sample = testBatches.take(1).take(1)
     saveDatasetPredictions("BeforeTraining", model, sample)
 
-    experiment.updateStatus(ExperimentStatus.inProgress, "Training the model")
+    run.updateStatus(RunStatus.inProgress, "Training the model")
 
-    epochs: int = experiment.parameters["epochs"]
+    epochs: int = run.parameters["epochs"]
     history: History = model.fit(
         trainBatches,
         epochs = epochs,
-        steps_per_epoch = trainCount // experiment.parameters["batchSize"],
-        validation_steps = testCount // experiment.parameters["batchSize"] // experiment.parameters["validationSubSplits"],
+        steps_per_epoch = trainCount // run.parameters["batchSize"],
+        validation_steps = testCount // run.parameters["batchSize"] // run.parameters["validationSubSplits"],
         validation_data = testBatches,
         callbacks = [DisplayCallback(model, sample, epochs)],
         verbose = 0,
@@ -123,11 +123,11 @@ def main(experiment: ExecutingExperiment[ImageSegmentationDataset]):
     # Runs prediction for all test data and uploads it to coretex as artifacts
     saveDatasetPredictions("AfterTraining", model, testBatches)
 
-    experiment.updateStatus(ExperimentStatus.inProgress, "Postprocessing model")
+    run.updateStatus(RunStatus.inProgress, "Postprocessing model")
 
     coretexModel = Model.createModel(
-        experiment.name,
-        experiment.id,
+        run.name,
+        run.id,
         history.history["accuracy"][-1],  # gets the accuracy after last epoch
         {}
     )
@@ -136,10 +136,10 @@ def main(experiment: ExecutingExperiment[ImageSegmentationDataset]):
 
     saveLiteModel(model)
     saveCoremlModel(model)
-    saveJSModel(model, experiment, coretexModel)
+    saveJSModel(model, run, coretexModel)
 
     coretexModel.upload(FolderManager.instance().getTempFolder("model"))
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    initializeJob(main)

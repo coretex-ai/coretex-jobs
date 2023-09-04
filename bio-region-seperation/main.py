@@ -2,8 +2,8 @@ from pathlib import Path
 
 import logging
 
-from coretex import Experiment, CustomDataset, folder_manager
-from coretex.project import initializeProject
+from coretex import Run, CustomDataset, folder_manager
+from coretex.job import initializeJob
 from coretex.bioinformatics import sequence_alignment as sa
 
 from src.index import index
@@ -13,31 +13,31 @@ from src.utils import loadIndexed, clearDirectory, uploadToCoretex, prepareGroup
 from src.filepaths import BWA, SAMTOOLS
 
 
-def main(experiment: Experiment[CustomDataset]) -> None:
+def main(run: Run[CustomDataset]) -> None:
     outDir = Path(folder_manager.createTempFolder("output"))
     samDir = Path(folder_manager.createTempFolder("sam"))
     bamDir = Path(folder_manager.createTempFolder("bam"))
 
-    groupNames: list[str] = experiment.parameters["separationGroups"]
-    thresholds: list[int] = experiment.parameters["separationThresholds"]
+    groupNames: list[str] = run.parameters["separationGroups"]
+    thresholds: list[int] = run.parameters["separationThresholds"]
 
     sa.chmodX(Path(BWA))
     sa.chmodX(Path(SAMTOOLS))
 
-    if experiment.parameters["useBacteriaLib"]:
+    if run.parameters["useBacteriaLib"]:
         raise NotImplementedError(">> [Region Separation] useBacteriaLib has not been implemented yet, use dataset 7153 with referenceDatasetIndexed as True insted")
 
     logging.info(">> [Region Separation] Downloading dataset")
-    experiment.dataset.download()
-    inputFiles = sa.loadFa(experiment.dataset)
+    run.dataset.download()
+    inputFiles = sa.loadFa(run.dataset)
 
-    if not experiment.parameters["referenceDatasetIndexed"]:
+    if not run.parameters["referenceDatasetIndexed"]:
         logging.info(">> [Region Separation] Index reference genome")
-        referenceDirs = index(experiment.parameters["referenceDataset"])
+        referenceDirs = index(run.parameters["referenceDataset"])
 
     else:
         logging.info(">> [Region Separation] Loading indexed reference dataset")
-        referenceDirs = loadIndexed(experiment.parameters["referenceDataset"])
+        referenceDirs = loadIndexed(run.parameters["referenceDataset"])
 
     groups, thresholds = prepareGroups(groupNames, thresholds, outDir)
 
@@ -49,13 +49,13 @@ def main(experiment: Experiment[CustomDataset]) -> None:
         sam2bam(samDir, bamDir)
 
         logging.info(f">> [Region Separation] Starting read separation into groups for {inputFile.name}")
-        separate(bamDir, inputFile, groups, thresholds, experiment.parameters["newReadIndicator"])
+        separate(bamDir, inputFile, groups, thresholds, run.parameters["newReadIndicator"])
 
         clearDirectory(samDir)
         clearDirectory(bamDir)
 
-    uploadToCoretex(experiment, groups)
+    uploadToCoretex(run, groups)
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    initializeJob(main)

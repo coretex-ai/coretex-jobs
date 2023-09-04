@@ -6,30 +6,30 @@ import time
 
 from sklearn.metrics import accuracy_score
 
-from coretex import Experiment, CustomDataset, ExperimentStatus, folder_manager
+from coretex import Run, CustomDataset, RunStatus, folder_manager
 
 from .utils import savePredictionFile
 from .model import Model
 from .dataset import loadDataset, createBatches
 
 
-def train(experiment: Experiment[CustomDataset], datasetPath: Path, uniqueBodySites: dict[str, int], uniqueTaxons: dict[str, int]) -> float:
+def train(run: Run[CustomDataset], datasetPath: Path, uniqueBodySites: dict[str, int], uniqueTaxons: dict[str, int]) -> float:
     savePredictionFilePath = folder_manager.temp / "body_site_predictions.csv"
     modelPath = folder_manager.temp / "modelFolder"
 
-    experiment.updateStatus(ExperimentStatus.inProgress, "Training LSPIN model")
+    run.updateStatus(RunStatus.inProgress, "Training LSPIN model")
 
-    validationSplit = experiment.parameters["validationSplit"]
-    hiddenLayers = experiment.parameters["hiddenLayers"]
-    learningRate = experiment.parameters["learningRate"]
-    epochs = experiment.parameters["epochs"]
-    displayStep = experiment.parameters["displayStep"]
-    batchSize = experiment.parameters["batchSize"]
-    bufferSize = experiment.parameters["bufferSize"]
-    activationFunc = experiment.parameters["activationFunction"]
-    batchNorm = experiment.parameters["batchNorm"]
-    seed = experiment.parameters["randomSeed"]
-    lZeroLambda = experiment.parameters["lambda"]
+    validationSplit = run.parameters["validationSplit"]
+    hiddenLayers = run.parameters["hiddenLayers"]
+    learningRate = run.parameters["learningRate"]
+    epochs = run.parameters["epochs"]
+    displayStep = run.parameters["displayStep"]
+    batchSize = run.parameters["batchSize"]
+    bufferSize = run.parameters["bufferSize"]
+    activationFunc = run.parameters["activationFunction"]
+    batchNorm = run.parameters["batchNorm"]
+    seed = run.parameters["randomSeed"]
+    lZeroLambda = run.parameters["lambda"]
 
     if not (0 <= validationSplit and validationSplit <= 1):
         raise RuntimeError(f">> [MicrobiomeForensics] Validation split must be between 0 and 1. Got {validationSplit}")
@@ -68,7 +68,7 @@ def train(experiment: Experiment[CustomDataset], datasetPath: Path, uniqueBodySi
     logging.info(">> [MicrobiomeForensics] Starting training")
 
     start = time.time()
-    model.train(experiment, trainData, testData, trainBatches, testBatches, epochs, learningRate)
+    model.train(run, trainData, testData, trainBatches, testBatches, epochs, learningRate)
     trainTime = time.time() - start
 
     yPred, yTest = model.test(testData, testBatches)
@@ -85,10 +85,10 @@ def train(experiment: Experiment[CustomDataset], datasetPath: Path, uniqueBodySi
     for path in datasetPath.iterdir():
         sampleIds.append(path.name)
 
-    experiment.updateStatus(ExperimentStatus.inProgress, "Saving model and associated data")
+    run.updateStatus(RunStatus.inProgress, "Saving model and associated data")
 
     savePredictionFile(
-        experiment,
+        run,
         savePredictionFilePath,
         trainCount,
         testCount,

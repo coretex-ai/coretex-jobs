@@ -4,21 +4,21 @@ import pickle
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
-from coretex import CustomDataset, Experiment, Model, folder_manager
-from coretex.project import initializeProject
+from coretex import CustomDataset, Run, Model, folder_manager
+from coretex.job import initializeJob
 
 from src.dataset import extractTestTrainData, loadDataset
 
 
-def saveModel(experiment: Experiment[CustomDataset], accuracy: float, trainColumnCount: int, labels: list[str]):
-    model = Model.createModel(experiment.name, experiment.id, accuracy, {})
+def saveModel(run: Run[CustomDataset], accuracy: float, trainColumnCount: int, labels: list[str]):
+    model = Model.createModel(run.name, run.id, accuracy, {})
     modelPath = folder_manager.temp / "model"
 
     model.saveModelDescriptor(modelPath, {
-        "project_task": experiment.spaceTask,
+        "project_task": run.spaceTask,
         "labels": labels,
         "modelName": model.name,
-        "description": experiment.description,
+        "description": run.description,
 
         "input_description": """
             Input shape is [numberOfSamples, columnValues]
@@ -41,28 +41,28 @@ def saveModel(experiment: Experiment[CustomDataset], accuracy: float, trainColum
     model.upload(modelPath)
 
 
-def main(experiment: Experiment[CustomDataset]):
+def main(run: Run[CustomDataset]):
     modelPath = folder_manager.createTempFolder("model")
 
     train, test, labels = loadDataset(
-        experiment.dataset,
-        experiment.parameters["validationSplit"],
-        experiment.parameters["labelColumn"],
-        experiment.parameters["excludeColumns"]
+        run.dataset,
+        run.parameters["validationSplit"],
+        run.parameters["labelColumn"],
+        run.parameters["excludeColumns"]
     )
 
     xTrain, xTest, yTrain, yTest = extractTestTrainData(
         train,
         test,
-        experiment.parameters["labelColumn"]
+        run.parameters["labelColumn"]
     )
 
     logging.info(">> [Tabular Data Diagnostics] Starting with training the model...")
 
     classifier = RandomForestClassifier(
-        n_estimators = int(experiment.parameters["nEstimators"]),
-        max_depth = int(experiment.parameters["maxDepth"]),
-        min_samples_split = int(experiment.parameters["minSamplesSplit"]),
+        n_estimators = int(run.parameters["nEstimators"]),
+        max_depth = int(run.parameters["maxDepth"]),
+        min_samples_split = int(run.parameters["minSamplesSplit"]),
         criterion = 'entropy',
         random_state = 0
     )
@@ -84,14 +84,14 @@ def main(experiment: Experiment[CustomDataset]):
     test.to_csv(validationDfPath, index = True)
 
     logging.info(f">> [Tabular Data Diagnostics] Creating validation.csv in artifacts...")
-    experiment.createArtifact(validationDfPath, validationDfPath.name)
+    run.createArtifact(validationDfPath, validationDfPath.name)
 
     with open(modelName, 'wb') as modelFile:
         pickle.dump(classifier, modelFile, -1)
 
     logging.info(f">> [Tabular Data Diagnostics] Saving model to Coretex...")
-    saveModel(experiment, accuracy, xTrain.shape[1], labels)
+    saveModel(run, accuracy, xTrain.shape[1], labels)
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    initializeJob(main)

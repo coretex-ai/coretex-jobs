@@ -4,7 +4,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 import logging
 
-from coretex import Experiment, SequenceDataset, CustomSample, SequenceSample, folder_manager
+from coretex import Run, SequenceDataset, CustomSample, SequenceSample, folder_manager
 from coretex.bioinformatics import cutadaptTrim
 
 
@@ -65,9 +65,9 @@ def trimPairedEnd(
     uploadTrimmedReads(forwardFile.name.split("_")[0], outputDataset, forwardFile, reverseFile)
 
 
-def primerTrimming(dataset: SequenceDataset, experiment: Experiment, pairedEnd: bool) -> SequenceDataset:
-    forwardAdapter = experiment.parameters["forwardAdapter"]
-    reverseAdapter = experiment.parameters["reverseAdapter"]
+def primerTrimming(dataset: SequenceDataset, run: Run, pairedEnd: bool) -> SequenceDataset:
+    forwardAdapter = run.parameters["forwardAdapter"]
+    reverseAdapter = run.parameters["reverseAdapter"]
 
     # In case no adapter in entered, "X" will act as placeholder as no
     # sequence should start with the letter X
@@ -81,7 +81,7 @@ def primerTrimming(dataset: SequenceDataset, experiment: Experiment, pairedEnd: 
     if pairedEnd:
         reverseReadsFolder = folder_manager.createTempFolder("revereseReads")
 
-    outputDataset = SequenceDataset.createDataset(f"{experiment.id} - Cutadapt Output", experiment.spaceId)
+    outputDataset = SequenceDataset.createDataset(f"{run.id} - Cutadapt Output", run.spaceId)
     if outputDataset is None:
         raise RuntimeError(">> [Microbiome analysis] Failed to create coretex dataset")
 

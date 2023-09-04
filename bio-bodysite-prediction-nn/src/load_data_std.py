@@ -8,14 +8,14 @@ import logging
 import pickle
 import time
 
-from coretex import Experiment, CustomDataset, ExperimentStatus, folder_manager
+from coretex import Run, CustomDataset, RunStatus, folder_manager
 
 from .utils import savePlotFig
 from .objects import Sample, Taxon
 
 
 def loadDataStd(
-    experiment: Experiment[CustomDataset],
+    run: Run[CustomDataset],
     dataset: CustomDataset,
     datasetPath: Path,
     level: int,
@@ -24,15 +24,15 @@ def loadDataStd(
 ) -> tuple[int, int, dict[str, int], dict[str, int], list[int]]:
 
     logging.info(">> [MicrobiomeForensics] Downloading dataset...")
-    experiment.updateStatus(ExperimentStatus.inProgress, "Downloading dataset...")
+    run.updateStatus(RunStatus.inProgress, "Downloading dataset...")
     dataset.download()
 
-    experiment.updateStatus(ExperimentStatus.inProgress, "Loading data")
+    run.updateStatus(RunStatus.inProgress, "Loading data")
 
     taxonDistributionSavePath = folder_manager.temp / "taxon_histogram.png"
     classDistributionSavePath = folder_manager.temp / "body_site_histogram.png"
 
-    datasetLen = len(experiment.dataset.samples)
+    datasetLen = len(run.dataset.samples)
     if datasetLen < 10:
         raise RuntimeError(f">> [BioInformatics] You have insufficient number of samples in your dataset ({datasetLen})")
 
@@ -94,7 +94,7 @@ def loadDataStd(
     taxonDistribution = {k:v for k, v in taxonDistribution.items() if v > (max(taxonDistributionValues)/10)}
 
     savePlotFig(
-        experiment,
+        run,
         classDistribution,
         classDistributionSavePath,
         "body_site_histogram.png",
@@ -105,7 +105,7 @@ def loadDataStd(
     )
 
     savePlotFig(
-        experiment,
+        run,
         taxonDistribution,
         taxonDistributionSavePath,
         "taxon_histogram.png",

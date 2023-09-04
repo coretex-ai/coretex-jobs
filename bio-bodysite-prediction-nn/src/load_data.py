@@ -7,7 +7,7 @@ import logging
 import time
 import pickle
 
-from coretex import Experiment, CustomDataset, ExperimentStatus, folder_manager
+from coretex import Run, CustomDataset, RunStatus, folder_manager
 
 from .cache import cacheExists, cacheDataset, loadCache, getCacheName, isCacheValid
 from .utils import getBodySite, plots, validateDataset
@@ -181,7 +181,7 @@ def processByteBatch(
 
 
 def loadDataAtlas(
-    experiment: Experiment[CustomDataset],
+    run: Run[CustomDataset],
     dataset: CustomDataset,
     datasetPath: Path,
     sampleOrigin: list[str],
@@ -197,7 +197,7 @@ def loadDataAtlas(
         Parameters
         ----------
         dataset: CustomDataset
-            The Coretex dataset we are using for the experiment
+            The Coretex dataset we are using for the run
         datasetPath : Path
             A path object tied to the directory where all the samples are stored
             after processing
@@ -214,16 +214,16 @@ def loadDataAtlas(
 
     cacheName = getCacheName(dataset.name, sampleOrigin, sequencingTechnique)
     if useCache and cacheExists(cacheName) and isCacheValid(cacheName):
-        experiment.updateStatus(ExperimentStatus.inProgress, "Loading assembled dataset from cache")
-        return loadCache(experiment, cacheName)
+        run.updateStatus(RunStatus.inProgress, "Loading assembled dataset from cache")
+        return loadCache(run, cacheName)
 
     logging.info(">> [MicrobiomeForensics] Downloading dataset...")
-    experiment.updateStatus(ExperimentStatus.inProgress, "Downloading dataset...")
+    run.updateStatus(RunStatus.inProgress, "Downloading dataset...")
     dataset.download()
 
     validateDataset(dataset)
 
-    experiment.updateStatus(ExperimentStatus.inProgress, "Loading data from the dataset")
+    run.updateStatus(RunStatus.inProgress, "Loading data from the dataset")
     logging.info(">> [MicrobiomeForensics] Loading data")
 
     mappedPath, infoPath = getDatasetPath(dataset)
@@ -327,10 +327,10 @@ def loadDataAtlas(
 
     datasetLen = len(list(datasetPath.iterdir()))
 
-    plots(experiment, classDistribution, taxonDistribution, datasetLen)
+    plots(run, classDistribution, taxonDistribution, datasetLen)
 
     if useCache and isCacheValid(cacheName):
-        experiment.updateStatus(ExperimentStatus.inProgress, "Saving assembled dataset to cache")
+        run.updateStatus(RunStatus.inProgress, "Saving assembled dataset to cache")
         cachePath = folder_manager.createTempFolder("tempCache")
         cacheDataset(
             cacheName,
@@ -338,7 +338,7 @@ def loadDataAtlas(
             cachePath,
             classDistribution,
             taxonDistribution,
-            experiment.spaceId
+            run.spaceId
         )
 
     return  uniqueBodySite, uniqueTaxons, datasetLen
