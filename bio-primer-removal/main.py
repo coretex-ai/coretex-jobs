@@ -64,6 +64,8 @@ def main(run: Run[SequenceDataset]) -> None:
     reverseAdapter = run.parameters["reverseAdapter"]
 
     dataset = run.dataset
+    dataset.download()
+
     pairedEnd = dataset.isPairedEnd()
 
     if forwardAdapter is None:
