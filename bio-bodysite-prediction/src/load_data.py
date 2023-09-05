@@ -498,9 +498,9 @@ def prepareForTrainingAtlas(
         outputMatrix[i] = uniqueBodySite[sample.bodySite]
 
         # Asseble the future input matrix into three lists, with each index between them representing a data point
-        for j, taxon in enumerate(sample.taxons):
+        for taxon in sample.taxons:
             rowIndices.append(i) # The sample index (x coordinate / row of the matrix)
-            columnIndices.append(uniqueTaxons[taxon.taxonId]) # The feature (y coordinate / column of the matrix)
+            columnIndices.append(uniqueTaxons[taxon.taxonId.rstrip("\x00")]) # The feature (y coordinate / column of the matrix)
             matrixData.append(taxon.count) # The value that is represented by x and y
 
     inputMatrixShape = (len(mappedSampleObjList), len(uniqueTaxons))
