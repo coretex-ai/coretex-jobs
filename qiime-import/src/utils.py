@@ -45,12 +45,13 @@ def convertMetadata(metadataPath: Path) -> Path:
     else:
         metadata = pd.read_csv(metadataPath, encoding = detectFileEncoding(metadataPath), delimiter = "\t")
 
-    for i, columnName in enumerate(metadata.columns):
+    for columnName in metadata.columns:
         if columnName.lower() in CASEINSENSITIVE_NAMES or columnName in CASESENSITIVE_NAMES:
             sampleIdColumn = metadata.pop(columnName)
             metadata.insert(0, "sampleId", sampleIdColumn)
             break
 
+    if metadata.columns[0] is not "sampleId":
         raise ValueError(f">> [Qiime: Import] Sample ID column not found. Recognized column names are: (case insensitive) - {CASEINSENSITIVE_NAMES}, (case sensitive) - {CASESENSITIVE_NAMES}")
 
     for sampleId in metadata["sampleId"]:
