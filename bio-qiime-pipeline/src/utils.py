@@ -90,6 +90,7 @@ def convertMetadata(metadataPath: Path) -> Path:
             metadata.insert(0, "sampleId", sampleIdColumn)
             break
 
+    if metadata.columns[0] is not "sampleId":
         raise ValueError(f">> [Qiime: Import] Sample ID column not found. Recognized column names are: (case insensitive) - {CASEINSENSITIVE_NAMES}, (case sensitive) - {CASESENSITIVE_NAMES}")
 
     for sampleId in metadata["sampleId"]:
