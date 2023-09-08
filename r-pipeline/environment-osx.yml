@@ -1,0 +1,22 @@
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.8.15
+  - pip=22.3.1
+  - r-base
+  - r-reticulate
+  - r-devtools=2.4.5
+  - r-vegan=2.6.4
+  - r-data.table
+  - r-readr
+  - r-remotes
+  - r-forcats=0.5.2
+  - bioconductor-dada2=1.26.0
+  - bioconductor-phyloseq=1.42.0
+  - bioconductor-decipher=2.26.0
+  - mafft
+  - fasttree
+  - pip:
+    - -r requirements.txt

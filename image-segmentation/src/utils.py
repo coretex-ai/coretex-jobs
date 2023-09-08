@@ -24,7 +24,7 @@ def saveDatasetPredictions(group: str, model: KerasModel, dataset: tf.data.Datas
         imageFileName = f"prediction_{index + 1}.png"
         imagePath = folder_manager.temp / imageFileName
 
-        cv2.imwrite(imagePath, mask.numpy())
+        cv2.imwrite(str(imagePath), mask.numpy())
 
         artifact = currentExperiment().createArtifact(
             imagePath,
