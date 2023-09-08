@@ -5,7 +5,6 @@ library(reticulate)
 builtins <- import_builtins()
 zipfile <- import("zipfile")
 ctx <- import("coretex")
-ctx_project <- import("coretex.project")
 ctx_folder_manager <- import("coretex.folder_manager")
 
 # Contents
@@ -1346,4 +1345,4 @@ main <- function(experiment) {
     betaDiversity(experiment, pseq, pseq_bac, pseq_bac_normal, ctx_folder_manager$createTempFolder("beta_diversity"))
 }
 
-ctx_project$initializeProject(main, args = args)
+ctx$initializeRProject(main, args)

@@ -5,8 +5,7 @@ from zipfile import ZipFile
 import logging
 import csv
 
-from coretex import CustomDataset, CustomSample, Experiment, folder_manager
-from coretex.project import initializeProject
+from coretex import CustomDataset, CustomSample, Experiment, folder_manager, currentExperiment
 from coretex.bioinformatics import ctx_qiime2
 
 
@@ -193,7 +192,9 @@ def processSample(
     ctx_qiime2.createSample(f"{index}-feature-table-tabulate-seqs", outputDataset.id, featureTableMapPath, experiment, "Step 3: DADA2")
 
 
-def main(experiment: Experiment[CustomDataset]):
+def main() -> None:
+    experiment: Experiment[CustomDataset] = currentExperiment()
+
     dataset = experiment.dataset
     dataset.download()
 
@@ -239,4 +240,4 @@ def main(experiment: Experiment[CustomDataset]):
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    main()

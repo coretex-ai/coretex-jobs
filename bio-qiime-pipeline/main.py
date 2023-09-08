@@ -1,7 +1,6 @@
 import logging
 
-from coretex import SequenceDataset, Experiment, CustomDataset
-from coretex.project import initializeProject
+from coretex import SequenceDataset, Experiment, CustomDataset, currentExperiment
 
 from src.primer_trimming import primerTrimming
 from src.import_multiplexed import importMultiplexed
@@ -15,7 +14,9 @@ from src.alpha_beta_diversity import alphaBetaDiversityAnalysis
 from src.caching import getCache, cacheExists, getCacheNameOne, getCacheNameTwo, getCacheNameThree, getCacheNameFour, getCacheNameFive, getCacheNameSix, getCacheNameSeven
 
 
-def main(experiment: Experiment[CustomDataset]):
+def main():
+    experiment: Experiment[CustomDataset] = currentExperiment()
+
     useCache = experiment.parameters["useCache"]
     initialDataset = experiment.dataset
     initialDataset.download()
@@ -108,4 +109,4 @@ def main(experiment: Experiment[CustomDataset]):
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    main()

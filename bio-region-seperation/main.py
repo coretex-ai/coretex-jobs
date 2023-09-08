@@ -2,8 +2,7 @@ from pathlib import Path
 
 import logging
 
-from coretex import Experiment, CustomDataset, folder_manager
-from coretex.project import initializeProject
+from coretex import Experiment, CustomDataset, folder_manager, currentExperiment
 from coretex.bioinformatics import sequence_alignment as sa
 
 from src.index import index
@@ -13,7 +12,9 @@ from src.utils import loadIndexed, clearDirectory, uploadToCoretex, prepareGroup
 from src.filepaths import BWA, SAMTOOLS
 
 
-def main(experiment: Experiment[CustomDataset]) -> None:
+def main() -> None:
+    experiment: Experiment[CustomDataset] = currentExperiment()
+
     outDir = Path(folder_manager.createTempFolder("output"))
     samDir = Path(folder_manager.createTempFolder("sam"))
     bamDir = Path(folder_manager.createTempFolder("bam"))
@@ -58,4 +59,4 @@ def main(experiment: Experiment[CustomDataset]) -> None:
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    main()

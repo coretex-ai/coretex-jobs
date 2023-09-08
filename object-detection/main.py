@@ -6,8 +6,7 @@ import logging
 
 import numpy as np
 
-from coretex import ComputerVisionDataset, Experiment, Model, augmentDataset, Metric, MetricType, folder_manager
-from coretex.project import initializeProject
+from coretex import ComputerVisionDataset, Experiment, Model, augmentDataset, Metric, MetricType, folder_manager, currentExperiment
 
 import src.train as train
 import src.detect as detect
@@ -29,7 +28,8 @@ def hasAnnotations(dataset: ComputerVisionDataset, excludedClasses: list[str]) -
     return annotationCount > 0
 
 
-def main(experiment: Experiment[ComputerVisionDataset]):
+def main() -> None:
+    experiment: Experiment[ComputerVisionDataset] = currentExperiment()
 
     if not experiment.parameters["validation"]:
         epochs = experiment.parameters["epochs"]
@@ -136,4 +136,4 @@ def main(experiment: Experiment[ComputerVisionDataset]):
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    main()

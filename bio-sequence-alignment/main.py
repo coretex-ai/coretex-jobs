@@ -2,8 +2,7 @@ from pathlib import Path
 
 import logging
 
-from coretex import Experiment, CustomDataset
-from coretex.project import initializeProject
+from coretex import Experiment, CustomDataset, currentExperiment
 from coretex.bioinformatics import sequence_alignment as sa
 
 from src.index import index
@@ -12,7 +11,9 @@ from src.sam2bam import sam2bam
 from src.filepaths import BWA, SAMTOOLS
 
 
-def main(experiment: Experiment[CustomDataset]) -> None:
+def main() -> None:
+    experiment: Experiment[CustomDataset] = currentExperiment()
+
     sa.chmodX(Path(BWA))
     sa.chmodX(Path(SAMTOOLS))
 
@@ -28,4 +29,4 @@ def main(experiment: Experiment[CustomDataset]) -> None:
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    main()

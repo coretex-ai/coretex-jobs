@@ -4,8 +4,7 @@ import pickle
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
-from coretex import CustomDataset, Experiment, Model, folder_manager
-from coretex.project import initializeProject
+from coretex import CustomDataset, Experiment, Model, folder_manager, currentExperiment
 
 from src.dataset import extractTestTrainData, loadDataset
 
@@ -41,7 +40,9 @@ def saveModel(experiment: Experiment[CustomDataset], accuracy: float, trainColum
     model.upload(modelPath)
 
 
-def main(experiment: Experiment[CustomDataset]):
+def main() -> None:
+    experiment: Experiment[CustomDataset] = currentExperiment()
+
     modelPath = folder_manager.createTempFolder("model")
 
     train, test, labels = loadDataset(
@@ -94,4 +95,4 @@ def main(experiment: Experiment[CustomDataset]):
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    main()

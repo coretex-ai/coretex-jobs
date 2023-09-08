@@ -1,7 +1,6 @@
 import logging
 
-from coretex import CustomDataset, Experiment, Model, MetricType, Metric, folder_manager
-from coretex.project import initializeProject
+from coretex import CustomDataset, Experiment, Model, MetricType, Metric, folder_manager, currentExperiment
 
 from src.train import train
 from src.utils import saveModel
@@ -10,7 +9,9 @@ from src.load_data import loadDataAtlas
 from src.load_data_std import loadDataStd, prepareForTrainingStd
 
 
-def validation(experiment: Experiment[CustomDataset]) -> None:
+def validation() -> None:
+    experiment: Experiment[CustomDataset] = currentExperiment()
+
     trainedModelId = experiment.parameters["trainedModel"]
 
     if trainedModelId is None:
@@ -60,4 +61,4 @@ def main(experiment: Experiment[CustomDataset]) -> None:
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    main()

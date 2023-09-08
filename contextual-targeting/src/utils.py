@@ -1,8 +1,7 @@
 from zipfile import ZipFile
 from pathlib import Path
 
-from coretex import cache
-from coretex.folder_management import FolderManager
+from coretex import cache, folder_manager
 
 
 def fetchModelFile(modelUrl: str, modelName: str, modelSuffix: str) -> Path:
@@ -10,10 +9,8 @@ def fetchModelFile(modelUrl: str, modelName: str, modelSuffix: str) -> Path:
         cache.storeUrl(modelUrl, modelName)
 
     modelPath = cache.getPath(modelUrl)
-    if modelPath is None:
-        raise ValueError
 
     with ZipFile(modelPath, "r") as zipFile:
-        zipFile.extractall(FolderManager.instance().cache)
+        zipFile.extractall(folder_manager.cache)
 
     return modelPath.with_suffix(modelSuffix)

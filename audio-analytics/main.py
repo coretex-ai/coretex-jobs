@@ -2,16 +2,17 @@ from typing import Optional
 
 import logging
 
-from coretex import CustomDataset, Experiment
+from coretex import CustomDataset, Experiment, currentExperiment
 from coretex.nlp import AudioTranscriber
-from coretex.project import initializeProject
 
 from src import text_search
 from src.utils import createTranscriptionArtfacts, fetchModelFile
 from src.occurence import NamedEntityRecognitionResult
 
 
-def main(experiment: Experiment[CustomDataset]) -> None:
+def main() -> None:
+    experiment: Experiment[CustomDataset] = currentExperiment()
+
     pbmmUrl = experiment.parameters["modelPbmmUrl"]
     scorerUrl = experiment.parameters["modelScorerUrl"]
     pbmmName = "deepspeech-0.8.2-model.pbmm"
@@ -50,4 +51,4 @@ def main(experiment: Experiment[CustomDataset]) -> None:
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    main()
