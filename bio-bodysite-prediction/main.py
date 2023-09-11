@@ -9,9 +9,7 @@ from src.load_data import loadDataAtlas
 from src.load_data_std import loadDataStd, prepareForTrainingStd
 
 
-def validation() -> None:
-    experiment: Experiment[CustomDataset] = currentExperiment()
-
+def validation(experiment: Experiment[CustomDataset]) -> None:
     trainedModelId = experiment.parameters["trainedModel"]
 
     if trainedModelId is None:
@@ -56,7 +54,9 @@ def training(experiment: Experiment[CustomDataset]) -> None:
     saveModel(accuracy, uniqueBodySites, datasetLen, len(uniqueTaxons), experiment)
 
 
-def main(experiment: Experiment[CustomDataset]) -> None:
+def main() -> None:
+    experiment: Experiment[CustomDataset] = currentExperiment()
+
     validation(experiment) if experiment.parameters["validation"] else training(experiment)
 
 
