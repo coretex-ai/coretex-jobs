@@ -70,7 +70,7 @@ def main():
     if useCache and cacheExists(cacheNameThree):
         denoisedDataset = getCache(cacheNameThree, experiment)
     else:
-        logging.info(">> [Microbiome analysis] Step 2: Denoise")
+        logging.info(">> [Microbiome analysis] Step 3: DADA2")
         denoisedDataset = denoise(demultiplexedDataset, experiment, pairedEnd)
         denoisedDataset.download()
 
