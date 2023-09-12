@@ -9,9 +9,7 @@ import tensorflow as tf
 import tensorflowjs as tfjs
 import coremltools
 
-from coretex import ExperimentStatus, Model, ImageSegmentationDataset, ExecutingExperiment, Metric, MetricType
-from coretex.project import initializeProject
-from coretex.folder_management import FolderManager
+from coretex import ExperimentStatus, Model, ImageSegmentationDataset, Experiment, Metric, MetricType, currentExperiment, folder_manager
 
 from src.model import UNetModel
 from src.dataset import loadDataset, createBatches
@@ -20,7 +18,7 @@ from src.utils import saveDatasetPredictions
 
 
 def saveLiteModel(model: KerasModel):
-    modelPath = FolderManager.instance().getTempFolder("model")
+    modelPath = folder_manager.temp / "model"
     converter = tf.lite.TFLiteConverter.from_keras_model(model)
     tflite_model = converter.convert()
 
@@ -29,7 +27,7 @@ def saveLiteModel(model: KerasModel):
 
 
 def saveCoremlModel(model: KerasModel):
-    modelPath = FolderManager.instance().getTempFolder("model")
+    modelPath = folder_manager.temp / "model"
     model = coremltools.converters.convert(model)
     model.save(f"{modelPath}/model.mlmodel")
 
@@ -47,8 +45,8 @@ def saveTFJSModelFromTFModel(model: KerasModel, path: str) -> None:
     shutil.rmtree(tensorflowModelPath)
 
 
-def saveJSModel(model: KerasModel, experiment: ExecutingExperiment[ImageSegmentationDataset], coretexModel: Model):
-    modelPath = FolderManager.instance().getTempFolder("model")
+def saveJSModel(model: KerasModel, experiment: Experiment[ImageSegmentationDataset], coretexModel: Model):
+    modelPath = folder_manager.temp / "model"
     saveTFJSModelFromTFModel(model, modelPath)
 
     labels = [
@@ -73,14 +71,16 @@ def saveJSModel(model: KerasModel, experiment: ExecutingExperiment[ImageSegmenta
     })
 
 
-def main(experiment: ExecutingExperiment[ImageSegmentationDataset]):
+def main() -> None:
+    experiment: Experiment[ImageSegmentationDataset] = currentExperiment()
+
     experiment.createMetrics([
         Metric.create("loss", "epoch", MetricType.int, "value", MetricType.float, [0, experiment.parameters["epochs"]]),
         Metric.create("accuracy", "epoch", MetricType.int, "value", MetricType.float, [0, experiment.parameters["epochs"]], [0, 1])
     ])
 
     # path to which the model will be saved after training
-    FolderManager.instance().createTempFolder("model")
+    folder_manager.createTempFolder("model")
 
     experiment.updateStatus(ExperimentStatus.inProgress, "Downloading dataset")
     experiment.dataset.download()
@@ -138,8 +138,8 @@ def main(experiment: ExecutingExperiment[ImageSegmentationDataset]):
     saveCoremlModel(model)
     saveJSModel(model, experiment, coretexModel)
 
-    coretexModel.upload(FolderManager.instance().getTempFolder("model"))
+    coretexModel.upload(folder_manager.temp / "model")
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    main()

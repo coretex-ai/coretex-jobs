@@ -1,14 +1,9 @@
 args <- commandArgs(trailingOnly = TRUE)
 
-# TODO: Figure out a way to avoid specifying
-# environment when running R experiments locally
-condaEnvironmentPath <- args[1]
-
 library(reticulate)
-use_condaenv(condaEnvironmentPath)
 
 os <- import("os")
-ctxProject <- import("coretex.project")
+ctx <- import("coretex")
 ctxFolderManager <- import("coretex.folder_manager")
 
 main <- function(experiment) {
@@ -47,4 +42,4 @@ main <- function(experiment) {
 }
 
 # initializeProject must be called with a function to start the experiment execution
-ctxProject$initializeProject(main, args = args)
+ctx$initializeRProject(main, args)

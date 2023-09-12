@@ -8,7 +8,7 @@ from keras.callbacks import Callback
 
 import tensorflow as tf
 
-from coretex import ExecutingExperiment
+from coretex import currentExperiment
 
 from .utils import saveDatasetPredictions
 
@@ -39,7 +39,7 @@ class DisplayCallback(Callback):
 
     def on_epoch_end(self, epoch: int, logs = None):
         if logs is not None:
-            if not ExecutingExperiment.current().submitMetrics({
+            if not currentExperiment().submitMetrics({
                 "loss": (epoch + 1, logs["loss"]),
                 "accuracy": (epoch + 1, logs["accuracy"])
             }):

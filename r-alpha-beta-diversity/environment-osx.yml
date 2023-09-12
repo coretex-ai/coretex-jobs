@@ -1,0 +1,16 @@
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.8.15
+  - pip=22.3.1
+  - r-base
+  - r-reticulate
+  - r-vegan=2.6.4
+  - r-data.table
+  - r-remotes
+  - r-forcats=0.5.2
+  - bioconductor-phyloseq=1.42.0
+  - pip:
+    - -r requirements.txt

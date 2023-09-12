@@ -3,10 +3,8 @@ from pathlib import Path
 
 import logging
 
-from coretex import CustomDataset, ExecutingExperiment, CustomSample
+from coretex import CustomDataset, Experiment, CustomSample, currentExperiment, folder_manager
 from coretex.nlp import AudioTranscriber, Transcription
-from coretex.project import initializeProject
-from coretex.folder_management import FolderManager
 
 import matplotlib.pyplot as plt
 
@@ -32,7 +30,7 @@ def transcribe(dataset: CustomDataset, parameters: Dict[str, Any]) -> List[Tuple
     return transcriber.transcribe(dataset, parameters["batchSize"])
 
 
-def plotResults(experiment: ExecutingExperiment, results: Dict[int, float], directory: Path) -> None:
+def plotResults(experiment: Experiment, results: Dict[int, float], directory: Path) -> None:
     x = list(results.keys())
     y = [results[key] for key in x]
 
@@ -50,7 +48,9 @@ def plotResults(experiment: ExecutingExperiment, results: Dict[int, float], dire
         logging.error(">> Failed to save artifact for: results.png")
 
 
-def main(experiment: ExecutingExperiment[CustomDataset]) -> None:
+def main() -> None:
+    experiment: Experiment[CustomDataset] = currentExperiment()
+
     logging.info(">> Downloading dataset and models from coretex web...")
     experiment.dataset.download()
 
@@ -70,9 +70,9 @@ def main(experiment: ExecutingExperiment[CustomDataset]) -> None:
         logging.info(f">> sample: {sample.name} is {(similarity * 100):.2f} % similar to target")
         results[sample.id] = similarity
 
-    chartDirectory = Path(FolderManager.instance().createTempFolder("charts"))
+    chartDirectory = folder_manager.createTempFolder("charts")
     plotResults(experiment, results, chartDirectory)
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    main()

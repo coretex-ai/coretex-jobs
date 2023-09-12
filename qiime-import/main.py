@@ -1,12 +1,13 @@
-from coretex import Experiment, CustomDataset, SequenceDataset, folder_manager
-from coretex.project import initializeProject
+from coretex import Experiment, CustomDataset, SequenceDataset, folder_manager, currentExperiment
 from coretex.bioinformatics import ctx_qiime2
 
 from src.multiplexed import importMultiplexed
 from src.demultiplexed import importDemultiplexed
 
 
-def main(experiment: Experiment[CustomDataset]):
+def main() -> None:
+    experiment: Experiment[CustomDataset] = currentExperiment()
+
     dataset = experiment.dataset
     dataset.download()
 
@@ -20,4 +21,4 @@ def main(experiment: Experiment[CustomDataset]):
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    main()

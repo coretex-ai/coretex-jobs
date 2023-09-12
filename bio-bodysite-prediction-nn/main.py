@@ -1,8 +1,7 @@
 import logging
 import pickle
 
-from coretex import CustomDataset, Experiment, Model, MetricType, Metric, folder_manager
-from coretex.project import initializeProject
+from coretex import CustomDataset, Experiment, Model, MetricType, Metric, folder_manager, currentExperiment
 
 from src.train import train
 from src.utils import saveModel
@@ -105,9 +104,11 @@ def training(experiment: Experiment[CustomDataset]) -> None:
     saveModel(experiment, accuracy, uniqueBodySites, datasetLen, len(uniqueTaxons))
 
 
-def main(experiment: Experiment[CustomDataset]) -> None:
+def main() -> None:
+    experiment: Experiment[CustomDataset] = currentExperiment()
+
     validation(experiment) if experiment.parameters["validation"] else training(experiment)
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    main()

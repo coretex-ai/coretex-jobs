@@ -5,8 +5,7 @@ import os
 import csv
 import logging
 
-from coretex import CustomDataset, CustomSample, Experiment, folder_manager
-from coretex.project import initializeProject
+from coretex import CustomDataset, CustomSample, Experiment, folder_manager, currentExperiment
 from coretex.bioinformatics import CommandException, ctx_qiime2
 
 
@@ -308,7 +307,9 @@ def processSample(
         logging.error(">> [Qiime: Alpha & Beta Diversity] Failed to create alpha-rarefaction.qzv")
 
 
-def main(experiment: Experiment[CustomDataset]):
+def main() -> None:
+    experiment: Experiment[CustomDataset] = currentExperiment()
+
     # If GPU is detected but not configured properly we have
     # to disable its usage for unifrac otherwise experiment
     # will crash
@@ -369,4 +370,4 @@ def main(experiment: Experiment[CustomDataset]):
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    main()

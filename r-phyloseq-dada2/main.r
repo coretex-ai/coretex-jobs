@@ -5,7 +5,6 @@ library(reticulate)
 builtins <- import_builtins()
 zipfile <- import("zipfile")
 ctx <- import("coretex")
-ctx_project <- import("coretex.project")
 ctx_folder_manager <- import("coretex.folder_manager")
 
 # Contents
@@ -728,4 +727,4 @@ main <- function(experiment) {
     pseq_sample <- ctx$CustomSample$createCustomSample("phyloseq-object", output_dataset$id, pseq_archive_path)
 }
 
-ctx_project$initializeProject(main, args = args)
+ctx$initializeRProject(main, args)

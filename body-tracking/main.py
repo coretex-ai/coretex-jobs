@@ -8,8 +8,7 @@ import tensorflowjs as tfjs
 import tensorflow as tf
 import coremltools
 
-from coretex import Model, Dataset, cache, Experiment, folder_manager
-from coretex.project import initializeProject
+from coretex import Model, cache, Experiment, folder_manager, currentExperiment
 
 
 classes = [
@@ -63,7 +62,7 @@ def saveCoremlModel(savedModelPath: str) -> None:
     model.save(f"{modelPath}/model.mlmodel")
 
 
-def saveJSModel(loadModelPath: str, modelPath: Path, modelTfjsPath: str, experiment: Experiment[Dataset], coretexModel: Model) -> None:
+def saveJSModel(loadModelPath: str, modelPath: Path, modelTfjsPath: str, experiment: Experiment, coretexModel: Model) -> None:
     tfjs.converters.convert_tf_saved_model(
         loadModelPath,
         modelTfjsPath
@@ -115,7 +114,9 @@ def saveJSModel(loadModelPath: str, modelPath: Path, modelTfjsPath: str, experim
     })
 
 
-def main(experiment: Experiment[Dataset]) -> None:
+def main() -> None:
+    experiment: Experiment = currentExperiment()
+
     modelPath = folder_manager.createTempFolder("model")
 
     tfjsModelUrl = experiment.parameters["tfjsModelUrl"]
@@ -138,4 +139,4 @@ def main(experiment: Experiment[Dataset]) -> None:
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    main()

@@ -3,8 +3,7 @@ from zipfile import ZipFile
 
 import logging
 
-from coretex import CustomDataset, CustomSample, Experiment, folder_manager
-from coretex.project import initializeProject
+from coretex import CustomDataset, CustomSample, Experiment, folder_manager, currentExperiment
 from coretex.bioinformatics import ctx_qiime2
 
 
@@ -53,7 +52,9 @@ def processSample(
     ctx_qiime2.createSample(f"{index}-phylogenetic-tree", outputDataset.id, treePath, experiment, "Step 6: Phylogenetic tree")
 
 
-def main(experiment: Experiment[CustomDataset]):
+def main() -> None:
+    experiment: Experiment[CustomDataset] = currentExperiment()
+
     experiment.dataset.download()
 
     denoisedSamples = ctx_qiime2.getDenoisedSamples(experiment.dataset)
@@ -75,4 +76,4 @@ def main(experiment: Experiment[CustomDataset]):
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    main()

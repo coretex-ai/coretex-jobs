@@ -8,8 +8,7 @@ from qiime2.sdk.result import Artifact
 
 import qiime2.core.archive as archive
 
-from coretex import CustomDataset, CustomSample, Experiment, folder_manager
-from coretex.project import initializeProject
+from coretex import CustomDataset, CustomSample, Experiment, folder_manager, currentExperiment
 from coretex.bioinformatics import ctx_qiime2
 
 
@@ -211,7 +210,9 @@ def processSample(
     ctx_qiime2.createSample(f"{index}-otu-clusters", outputDataset.id, otuPath, experiment, "Step 4: OTU clustering")
 
 
-def main(experiment: Experiment[CustomDataset]):
+def main() -> None:
+    experiment: Experiment[CustomDataset] = currentExperiment()
+
     dataset = experiment.dataset
     dataset.download()
 
@@ -236,4 +237,4 @@ def main(experiment: Experiment[CustomDataset]):
 
 
 if __name__ == "__main__":
-    initializeProject(main)
+    main()
