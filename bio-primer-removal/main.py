@@ -1,16 +1,11 @@
-from typing import Tuple, Optional
+from typing import Optional
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 
 import logging
 
-from coretex import Experiment, CustomDataset, CustomSample, folder_manager, SequenceDataset, SequenceSample, currentExperiment
-from coretex.bioinformatics import cutadaptTrim, isPairedEnd
-
-
-def forwardMetadata(sample: CustomSample, outputDataset: SequenceDataset) -> None:
-    if CustomSample.createCustomSample("_metadata", outputDataset.id, sample.zipPath) is None:
-        raise RuntimeError(">> [Microbiome analysis] Failed to forward metadata to the output dataset")
+from coretex import Experiment, CustomSample, folder_manager, SequenceDataset, SequenceSample, currentExperiment
+from coretex.bioinformatics import cutadaptTrim
 
 
 def uploadTrimmedReads(sampleName: str, dataset: SequenceDataset, forwardFile: Path, reverseFile: Optional[Path] = None):
@@ -80,11 +75,14 @@ def main() -> None:
     if pairedEnd:
         reverseReadsFolder = folder_manager.createTempFolder("revereseReads")
 
-    outputDataset = SequenceDataset.createDataset(f"{experiment.id} - Cutadapt Output", experiment.spaceId)
+    outputDataset = SequenceDataset.createSequenceDataset(
+        f"{experiment.id} - Cutadapt Output",
+        experiment.spaceId,
+        dataset.metadata.zipPath
+    )
+
     if outputDataset is None:
         raise RuntimeError(">> [Microbiome analysis] Failed to create coretex dataset")
-
-    forwardMetadata(dataset.metadata, outputDataset)
 
     for sample in dataset.samples:
         sample.unzip()
