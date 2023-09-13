@@ -1,11 +1,11 @@
-from typing import Tuple, Optional
+from typing import Optional
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 
 import logging
 
-from coretex import Experiment, CustomDataset, CustomSample, folder_manager, SequenceDataset, SequenceSample, currentExperiment
-from coretex.bioinformatics import cutadaptTrim, isPairedEnd
+from coretex import Experiment, CustomSample, folder_manager, SequenceDataset, SequenceSample, currentExperiment
+from coretex.bioinformatics import cutadaptTrim
 
 
 def uploadTrimmedReads(sampleName: str, dataset: SequenceDataset, forwardFile: Path, reverseFile: Optional[Path] = None):
