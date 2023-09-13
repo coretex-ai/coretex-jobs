@@ -320,7 +320,7 @@ def train(experiment: Experiment[ComputerVisionDataset], hyp, callbacks):  # hyp
 
     for epoch in range(start_epoch, val_num_epochs):  # epoch ------------------------------------------------------------------
         currentEpoch = epoch - start_epoch
-        logging.debug(f">> [Object Detection] Started epoch: {currentEpoch + 1}/{endEpoch}")
+        logging.info(f">> [Object Detection] Started epoch: {currentEpoch + 1}/{endEpoch}")
 
         logging.debug(">> [Object Detection] on_train_epoch_start")
         callbacks.run('on_train_epoch_start')
