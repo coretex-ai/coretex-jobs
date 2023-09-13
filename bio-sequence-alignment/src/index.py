@@ -14,6 +14,9 @@ from coretex.bioinformatics import sequence_alignment as sa
 from .filepaths import BWA
 
 
+GENOME_SUFFIXES = [".fasta", ".fna", ".fa"]
+
+
 def saveCache(cacheName: str, temp: Path, genomeIndexDir: Path, spaceId: int) -> None:
     genomeDataset = CustomDataset.createDataset(
         cacheName,
@@ -46,7 +49,9 @@ def loadCache(cache: CustomDataset) -> Path:
     sample = cache.samples[0]
     sample.unzip()
 
-    return list(Path(sample.path).iterdir())[0]
+    genomeIndexFilePath = list(Path(sample.path).iterdir())[0]
+
+    return genomeIndexFilePath.parent / genomeIndexFilePath.stem
 
 
 def isCacheValid(cache: CustomDataset) -> bool:
@@ -88,7 +93,9 @@ def loadGenome(dataset: CustomDataset) -> Path:
     sample = dataset.samples[0]
     sample.unzip()
 
-    return list(Path(sample.path).iterdir())[0]
+    for path in sample.path.iterdir():
+        if any([path.suffix == genomeSuffix for genomeSuffix in GENOME_SUFFIXES]):
+            return path
 
 
 def index(experiment: Experiment[CustomDataset]) -> Path:
