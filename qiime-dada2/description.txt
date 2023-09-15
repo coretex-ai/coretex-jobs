@@ -1,6 +1,6 @@
 --- Template description ---
 
-This job uses DADA2 to perform donoising, error correction and other DADA2
+This task uses DADA2 to perform donoising, error correction and other DADA2
 functions.
 
 Input data are demultiplexed sequences in "fastq" format which should have been
