@@ -3,7 +3,7 @@ from pathlib import Path
 
 import logging
 
-from coretex import CustomDataset, Experiment, CustomSample, currentExperiment, folder_manager
+from coretex import CustomDataset, TaskRun, CustomSample, currentTaskRun, folder_manager
 from coretex.nlp import AudioTranscriber, Transcription
 
 import matplotlib.pyplot as plt
@@ -30,7 +30,7 @@ def transcribe(dataset: CustomDataset, parameters: Dict[str, Any]) -> List[Tuple
     return transcriber.transcribe(dataset, parameters["batchSize"])
 
 
-def plotResults(experiment: Experiment, results: Dict[int, float], directory: Path) -> None:
+def plotResults(taskRun: TaskRun, results: Dict[int, float], directory: Path) -> None:
     x = list(results.keys())
     y = [results[key] for key in x]
 
@@ -44,23 +44,23 @@ def plotResults(experiment: Experiment, results: Dict[int, float], directory: Pa
     plt.savefig(chartPath)
     plt.close()
 
-    if not experiment.createArtifact(str(chartPath), "results.png"):
+    if not taskRun.createArtifact(str(chartPath), "results.png"):
         logging.error(">> Failed to save artifact for: results.png")
 
 
 def main() -> None:
-    experiment: Experiment[CustomDataset] = currentExperiment()
+    taskRun: TaskRun[CustomDataset] = currentTaskRun()
 
     logging.info(">> Downloading dataset and models from coretex web...")
-    experiment.dataset.download()
+    taskRun.dataset.download()
 
     logging.info(">> Generating embedding for target")
-    targetEmbedding = embedding.generate(experiment.parameters["target"])
+    targetEmbedding = embedding.generate(taskRun.parameters["target"])
 
     results: Dict[int, float] = {}
 
     # will perform transcription only on audio samples, text samples are only tokenized
-    for sample, transcription in transcribe(experiment.dataset, experiment.parameters):
+    for sample, transcription in transcribe(taskRun.dataset, taskRun.parameters):
         logging.info(f">> Generating embeddings for sample: {sample.name}")
         textEmbedding = embedding.generate(transcription.text)
 
@@ -71,7 +71,7 @@ def main() -> None:
         results[sample.id] = similarity
 
     chartDirectory = folder_manager.createTempFolder("charts")
-    plotResults(experiment, results, chartDirectory)
+    plotResults(taskRun, results, chartDirectory)
 
 
 if __name__ == "__main__":

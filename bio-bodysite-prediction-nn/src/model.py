@@ -11,7 +11,7 @@ from tensorflow import Tensor
 import numpy as np
 import tensorflow as tf
 
-from coretex import Experiment
+from coretex import TaskRun
 
 from .utils import convertFromOneHot
 
@@ -241,7 +241,7 @@ class Model(tf.keras.Model):
 
     def train(
         self,
-        experiment: Experiment,
+        taskRun: TaskRun,
         train_data: tf.data.Dataset,
         test_data: tf.data.Dataset,
         train_batches: int,
@@ -289,7 +289,7 @@ class Model(tf.keras.Model):
             self.valid_loss.reset_states()
             self.valid_accuracy.reset_states()
 
-            experiment.submitMetrics({
+            taskRun.submitMetrics({
                 "train_loss": (epoch + 1, float(train_loss)),
                 "train_accuracy": (epoch + 1, float(train_acc)),
                 "valid_loss": (epoch + 1, float(valid_loss)),

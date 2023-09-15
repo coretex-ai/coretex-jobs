@@ -1,6 +1,6 @@
 import logging
 
-from coretex import SequenceDataset, Experiment, CustomDataset, currentExperiment
+from coretex import SequenceDataset, TaskRun, CustomDataset, currentTaskRun
 
 from src.primer_trimming import primerTrimming
 from src.import_multiplexed import importMultiplexed
@@ -15,50 +15,50 @@ from src.caching import getCache, cacheExists, getCacheNameOne, getCacheNameTwo,
 
 
 def main():
-    experiment: Experiment[CustomDataset] = currentExperiment()
+    taskRun: TaskRun[CustomDataset] = currentTaskRun()
 
-    useCache = experiment.parameters["useCache"]
-    initialDataset = experiment.dataset
+    useCache = taskRun.parameters["useCache"]
+    initialDataset = taskRun.dataset
     initialDataset.download()
 
     pairedEnd = None
 
-    cacheNameOne = getCacheNameOne(experiment)
-    if experiment.parameters["barcodeColumn"]:
+    cacheNameOne = getCacheNameOne(taskRun)
+    if taskRun.parameters["barcodeColumn"]:
         if useCache and cacheExists(cacheNameOne):
-            multiplexedDataset = getCache(cacheNameOne, experiment)
+            multiplexedDataset = getCache(cacheNameOne, taskRun)
         else:
             # Step 1: Import multiplexed sequences to QIIME2
             logging.info(">> [Microbiome analysis] Step 1: Import - Multiplexed")
-            multiplexedDataset = importMultiplexed(initialDataset, experiment)
+            multiplexedDataset = importMultiplexed(initialDataset, taskRun)
             multiplexedDataset.download()
 
-        cacheNameTwo = getCacheNameTwo(experiment)
+        cacheNameTwo = getCacheNameTwo(taskRun)
         if useCache and cacheExists(cacheNameTwo):
-            demultiplexedDataset = getCache(cacheNameTwo, experiment)
+            demultiplexedDataset = getCache(cacheNameTwo, taskRun)
         else:
             # Step 2: Demultiplexing
             logging.info(">> [Microbiome analysis] Step 2: Demultiplexing")
-            demultiplexedDataset = demultiplexing(multiplexedDataset, experiment)
+            demultiplexedDataset = demultiplexing(multiplexedDataset, taskRun)
             demultiplexedDataset.download()
     else:
         sequenceDataset = SequenceDataset.decode(initialDataset.encode())
         pairedEnd = sequenceDataset.isPairedEnd()
 
         if useCache and cacheExists(cacheNameOne):
-            demultiplexedDataset = getCache(cacheNameOne, experiment)
+            demultiplexedDataset = getCache(cacheNameOne, taskRun)
         else:
             # Primer Trimming with Cutadapt
-            if experiment.parameters["forwardAdapter"] or experiment.parameters["reverseAdapter"]:
+            if taskRun.parameters["forwardAdapter"] or taskRun.parameters["reverseAdapter"]:
                 logging.info(">> [Microbiome analysis] Trimming primers based on provided adapter sequences with cutadapt")
-                sequenceDataset = primerTrimming(sequenceDataset, experiment, pairedEnd)
+                sequenceDataset = primerTrimming(sequenceDataset, taskRun, pairedEnd)
                 sequenceDataset.download()
 
             # Step 1: Import demultiplexed sequences to QIIME2
             logging.info(">> [Microbiome analysis] Step 1: Import - Demultiplexed")
             demultiplexedDataset = importDemultiplexed(
                 sequenceDataset,
-                experiment,
+                taskRun,
                 pairedEnd
             )
             demultiplexedDataset.download()
@@ -66,46 +66,46 @@ def main():
         logging.info(">> [Microbiome analysis] Skipping \"Step 2: Demultiplexing\" because data is already demultiplexed")
 
     # Step 3: DADA2
-    cacheNameThree = getCacheNameThree(experiment)
+    cacheNameThree = getCacheNameThree(taskRun)
     if useCache and cacheExists(cacheNameThree):
-        denoisedDataset = getCache(cacheNameThree, experiment)
+        denoisedDataset = getCache(cacheNameThree, taskRun)
     else:
         logging.info(">> [Microbiome analysis] Step 3: DADA2")
-        denoisedDataset = denoise(demultiplexedDataset, experiment, pairedEnd)
+        denoisedDataset = denoise(demultiplexedDataset, taskRun, pairedEnd)
         denoisedDataset.download()
 
     # Step 4: OTU Clustering
-    cacheNameFour = getCacheNameFour(experiment)
+    cacheNameFour = getCacheNameFour(taskRun)
     if useCache and cacheExists(cacheNameFour):
-        clusteredDataset = getCache(cacheNameFour, experiment)
+        clusteredDataset = getCache(cacheNameFour, taskRun)
     else:
         logging.info(">> [Microbiome analysis] Step: 4 OTU Clustering")
-        otuClustering(denoisedDataset, experiment)
+        otuClustering(denoisedDataset, taskRun)
 
     # Step 5: Taxonomic Analysis
-    cacheNameFive = getCacheNameFive(experiment)
+    cacheNameFive = getCacheNameFive(taskRun)
     if useCache and cacheExists(cacheNameFive):
-        taxonomicDataset = getCache(cacheNameFive, experiment)
+        taxonomicDataset = getCache(cacheNameFive, taskRun)
     else:
         logging.info(">> [Microbiome analysis] Step 5: Taxonomic Analysis")
-        taxonomicAnalysis(demultiplexedDataset, denoisedDataset, experiment)
+        taxonomicAnalysis(demultiplexedDataset, denoisedDataset, taskRun)
 
     # Step 6: Phylogenetic Diversity Analysis
-    cacheNameSix = getCacheNameSix(experiment)
+    cacheNameSix = getCacheNameSix(taskRun)
     if useCache and cacheExists(cacheNameSix):
-        phylogeneticDataset = getCache(cacheNameSix, experiment)
+        phylogeneticDataset = getCache(cacheNameSix, taskRun)
     else:
         logging.info(">> [Microbiome analysis] Step 6: Phylogenetic Diversity Analysis")
-        phylogeneticDataset = phyogeneticDiversityAnalysis(denoisedDataset, experiment)
+        phylogeneticDataset = phyogeneticDiversityAnalysis(denoisedDataset, taskRun)
         phylogeneticDataset.download()
 
     # Step 7: Alpha and Beta Diversity Analysis
-    cacheNameSeven = getCacheNameSeven(experiment)
+    cacheNameSeven = getCacheNameSeven(taskRun)
     if useCache and cacheExists(cacheNameSeven):
-        alphaBetaDataset = getCache(cacheNameSeven, experiment)
+        alphaBetaDataset = getCache(cacheNameSeven, taskRun)
     else:
         logging.info(">> [Microbiome analysis] Step 7: Alpha and Beta Diversity Analysis")
-        alphaBetaDiversityAnalysis(demultiplexedDataset, denoisedDataset, phylogeneticDataset, experiment)
+        alphaBetaDiversityAnalysis(demultiplexedDataset, denoisedDataset, phylogeneticDataset, taskRun)
 
 
 if __name__ == "__main__":

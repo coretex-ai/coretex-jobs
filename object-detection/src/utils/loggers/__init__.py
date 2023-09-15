@@ -183,7 +183,7 @@ class Loggers():
             self.wandb.finish_run()
 
     def on_params_update(self, params):
-        # Update hyperparams or configs of the experiment
+        # Update hyperparams or configs of the TaskRun
         # params: A dict containing {param: value} pairs
         if self.wandb:
             self.wandb.wandb_run.config.update(params, allow_val_change=True)

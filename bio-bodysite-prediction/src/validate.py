@@ -6,13 +6,13 @@ from sklearn.metrics import accuracy_score
 
 import numpy as np
 
-from coretex import Experiment, ExperimentStatus, folder_manager
+from coretex import TaskRun, TaskRunStatus, folder_manager
 
 from .utils import getKey
 
 
 def savePredictionFile(
-    experiment: Experiment,
+    taskRun: TaskRun,
     predictions: np.ndarray,
     outputMatrix: np.ndarray,
     sampleIdList: list,
@@ -31,11 +31,11 @@ def savePredictionFile(
                 getKey(uniqueBodySite, predictions[i])
             ])
 
-    experiment.createArtifact(predictionFilePath, "body_site_predictions.csv")
+    taskRun.createArtifact(predictionFilePath, "body_site_predictions.csv")
 
 
 def validate(
-    experiment: Experiment,
+    taskRun: TaskRun,
     inputMatrix: np.ndarray,
     output: np.ndarray,
     uniqueBodySites: dict[str, int],
@@ -45,7 +45,7 @@ def validate(
 
     trainedModelPath = folder_manager.modelsFolder / str(trainedModelId)
 
-    experiment.updateStatus(ExperimentStatus.inProgress, "Running validation with pretrained XGBoost model")
+    taskRun.updateStatus(TaskRunStatus.inProgress, "Running validation with pretrained XGBoost model")
     logging.info(">> [MicrobiomeForensics] Starting validation with pretrained XGBClassifier model")
 
     model = XGBClassifier()
@@ -57,7 +57,7 @@ def validate(
     logging.info(f">> [MicrobiomeForensics] Validation finished, accuracy: {round(accuracy * 100, 2)}%")
 
     savePredictionFile(
-        experiment,
+        taskRun,
         predictions,
         output,
         sampleIdList,

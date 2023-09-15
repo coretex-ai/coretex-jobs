@@ -34,7 +34,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import SGD, lr_scheduler
 # from tqdm.auto import tqdm
 
-from coretex import ComputerVisionDataset, Experiment, folder_manager
+from coretex import ComputerVisionDataset, TaskRun, folder_manager
 from coretex import cache
 
 
@@ -63,16 +63,16 @@ def getWeightsPath(weightsUrl: str) -> str:
     return cachePath.with_suffix('.pt')
 
 
-def train(experiment: Experiment[ComputerVisionDataset], hyp, callbacks):  # hyp is path/to/hyp.yaml or hyp dictionary
+def train(taskRun: TaskRun[ComputerVisionDataset], hyp, callbacks):  # hyp is path/to/hyp.yaml or hyp dictionary
     logging.info(">> [Object Detection] Training started")
 
-    val_num_epochs = experiment.parameters["epochs"]
-    val_batch_size = experiment.parameters["batchSize"]
-    weightDecay = experiment.parameters["weightDecay"]
-    momentum = experiment.parameters["momentum"]
-    learningRate = experiment.parameters["learningRate"]
-    val_weights = getWeightsPath(experiment.parameters["weightsUrl"])
-    val_img_size = experiment.parameters["imageSize"]  # DEFAULT IMAGE SIZE
+    val_num_epochs = taskRun.parameters["epochs"]
+    val_batch_size = taskRun.parameters["batchSize"]
+    weightDecay = taskRun.parameters["weightDecay"]
+    momentum = taskRun.parameters["momentum"]
+    learningRate = taskRun.parameters["learningRate"]
+    val_weights = getWeightsPath(taskRun.parameters["weightsUrl"])
+    val_img_size = taskRun.parameters["imageSize"]  # DEFAULT IMAGE SIZE
     device = select_device('', batch_size=val_batch_size)
 
     # DDP mode
@@ -134,11 +134,11 @@ def train(experiment: Experiment[ComputerVisionDataset], hyp, callbacks):  # hyp
     # train_path, val_path = data_dict['train'], data_dict['val']
     # nc = int(data_dict['nc'])  # number of classes
     # names = data_dict['names']  # class namessss
-    nc = len(experiment.dataset.classes)
+    nc = len(taskRun.dataset.classes)
     if nc <= 0:
         raise Exception(f">> [Workplace Safety] Tried to run training on invalid ({nc}) number of classes")
 
-    names = experiment.dataset.classes.labels
+    names = taskRun.dataset.classes.labels
     assert len(names) == nc, f'{len(names)} names found for nc={nc} dataset'  # check
     # is_coco = isinstance(val_path, str) and val_path.endswith('coco/val2017.txt')  # COCO dataset
     is_coco = False
@@ -239,8 +239,8 @@ def train(experiment: Experiment[ComputerVisionDataset], hyp, callbacks):  # hyp
     # Trainloader
     logging.debug(">> [Object Detection] Initializing DataLoader for training")
 
-    train_loader, dataset = create_dataloader(experiment,
-                                              experiment.dataset,
+    train_loader, dataset = create_dataloader(taskRun,
+                                              taskRun.dataset,
                                               imgsz,
                                               val_batch_size // WORLD_SIZE,
                                               gs,
@@ -260,8 +260,8 @@ def train(experiment: Experiment[ComputerVisionDataset], hyp, callbacks):  # hyp
     if RANK in [-1, 0]:
         logging.debug(">> [Object Detection] Initializing DataLoader for validation")
 
-        val_loader = create_dataloader(experiment,
-                                       experiment.dataset,
+        val_loader = create_dataloader(taskRun,
+                                       taskRun.dataset,
                                        imgsz,
                                        val_batch_size // WORLD_SIZE * 2,
                                        gs,
@@ -413,8 +413,8 @@ def train(experiment: Experiment[ComputerVisionDataset], hyp, callbacks):  # hyp
             final_epoch = (epoch + 1 == val_num_epochs)
             if not final_epoch:  # Calculate mAP
                 results, maps, _, f1 = val.run(
-                    experiment,
-                    experiment.dataset,
+                    taskRun,
+                    taskRun.dataset,
                     batch_size=val_batch_size // WORLD_SIZE * 2,
                     imgsz=imgsz,
                     model=ema.ema,
@@ -425,7 +425,7 @@ def train(experiment: Experiment[ComputerVisionDataset], hyp, callbacks):  # hyp
                     compute_loss=compute_loss
                 )
 
-            if not experiment.submitMetrics({
+            if not taskRun.submitMetrics({
                 "loss": (epoch, float(loss.cpu().detach().numpy()[0])),
                 "mAP@0.5": (epoch, float(results[2])),
                 "mAP@0.5:0.95": (epoch, float(results[3]))
@@ -477,8 +477,8 @@ def train(experiment: Experiment[ComputerVisionDataset], hyp, callbacks):  # hyp
                 if f is best:
                     logging.info(f'\nValidating {f}...')
                     results, _, _, f1 = val.run(
-                        experiment,
-                        experiment.dataset,
+                        taskRun,
+                        taskRun.dataset,
                         batch_size=val_batch_size // WORLD_SIZE * 2,
                         imgsz=imgsz,
                         model=attempt_load(f, device).half(),
@@ -500,7 +500,7 @@ def train(experiment: Experiment[ComputerVisionDataset], hyp, callbacks):  # hyp
     return results, f1
 
 
-def main(experiment: Experiment[ComputerVisionDataset], callbacks=Callbacks()) -> float:
+def main(taskRun: TaskRun[ComputerVisionDataset], callbacks=Callbacks()) -> float:
     # Checks
     if RANK in (-1, 0):
         check_git_status()
@@ -510,7 +510,7 @@ def main(experiment: Experiment[ComputerVisionDataset], callbacks=Callbacks()) -
     hyp = check_yaml(hyp)  # checks
 
     # Train
-    _, f1 = train(experiment, hyp, callbacks)
+    _, f1 = train(taskRun, hyp, callbacks)
 
     if WORLD_SIZE > 1 and RANK == 0:
         logging.info('Destroying process group... ')

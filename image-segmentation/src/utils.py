@@ -7,7 +7,7 @@ import tensorflow as tf
 import numpy as np
 import cv2
 
-from coretex import currentExperiment, folder_manager
+from coretex import currentTaskRun, folder_manager
 
 
 def createMask(predictionMask: np.ndarray) -> tf.Tensor:
@@ -26,7 +26,7 @@ def saveDatasetPredictions(group: str, model: KerasModel, dataset: tf.data.Datas
 
         cv2.imwrite(str(imagePath), mask.numpy())
 
-        artifact = currentExperiment().createArtifact(
+        artifact = currentTaskRun().createArtifact(
             imagePath,
             os.path.join(group, imageFileName)
         )

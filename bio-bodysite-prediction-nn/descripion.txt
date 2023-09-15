@@ -18,14 +18,14 @@ uniqueTaxons: number of unique taxons in the dataset
 
 Output of the model is a 1D array with integers representing different bodysites.
 
-Expected experiment runtime on GPU with 1GB of MBA data is ~30 minutes.
+Expected TaskRun runtime on GPU with 1GB of MBA data is ~30 minutes.
 
-System specifications on which the experiments were run:
+System specifications on which the TaskRuns were run:
     - CPU: AMD Ryzen 7 1800X Eight-Core Processor
     - GPU: Nvidia GeForce GTX 1080 Ti 12 GB VRAM
     - RAM: 32 GB 2666 MHz DDR4
 
-Experiment parameters:
+TaskRun parameters:
 Batch size: 512
 Buffer size: 512
 HIdden layers: [256, 256, 128]
@@ -51,7 +51,7 @@ A dataset which contains OTU abundance data. Supported dataset formats are:
 ---------------------------
 
 --- validation description ---
-Defines if experiment will be run in training or validation mode.
+Defines if TaskRun will be executed in training or validation mode.
 If the value is set to false (unchecked) training mode will run,
 and if the value is set to true (checked) then validation mode will be run.
 
@@ -210,7 +210,7 @@ randomization deterministic)
 
 --- cache ---
 If set to true (checked) processed dataset will be cached to speed up the
-following runs of the experiment which uses the same dataset and parameter
+following runs of the task which uses the same dataset and parameter
 configurations.
 
 Caching is only implemented for MBA (Microbe Atlas) data. After the dataset

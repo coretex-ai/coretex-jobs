@@ -1,6 +1,6 @@
 import logging
 
-from coretex import CustomDataset, Experiment, Model, MetricType, Metric, folder_manager, currentExperiment
+from coretex import CustomDataset, TaskRun, Model, MetricType, Metric, folder_manager, currentTaskRun
 
 from src.train import train
 from src.utils import saveModel
@@ -9,55 +9,55 @@ from src.load_data import loadDataAtlas
 from src.load_data_std import loadDataStd, prepareForTrainingStd
 
 
-def validation(experiment: Experiment[CustomDataset]) -> None:
-    trainedModelId = experiment.parameters["trainedModel"]
+def validation(taskRun: TaskRun[CustomDataset]) -> None:
+    trainedModelId = taskRun.parameters["trainedModel"]
 
     if trainedModelId is None:
-        raise RuntimeError(">> [MicrobiomeForensics] In order to start the validation process You have to type in \"trainedModel\" in experiment parameters")
+        raise RuntimeError(">> [MicrobiomeForensics] In order to start the validation process You have to type in \"trainedModel\" in TaskRun parameters")
 
-    logging.info(f">> [MicrobiomeForensics] Fetching pretrained model from Coretex. Model id: {experiment.parameters['trainedModel']}")
+    logging.info(f">> [MicrobiomeForensics] Fetching pretrained model from Coretex. Model id: {taskRun.parameters['trainedModel']}")
 
     trainedModel = Model.fetchById(trainedModelId)
     trainedModel.download()
 
-    inputMatrix, outputMatrix, sampleIdList, uniqueBodySites, _ = loadDataAtlas(experiment.dataset, experiment)
+    inputMatrix, outputMatrix, sampleIdList, uniqueBodySites, _ = loadDataAtlas(taskRun.dataset, taskRun)
 
-    validate(experiment, inputMatrix, outputMatrix, uniqueBodySites, sampleIdList, trainedModelId)
+    validate(taskRun, inputMatrix, outputMatrix, uniqueBodySites, sampleIdList, trainedModelId)
 
 
-def training(experiment: Experiment[CustomDataset]) -> None:
-    epochs = experiment.parameters["epochs"]
+def training(taskRun: TaskRun[CustomDataset]) -> None:
+    epochs = taskRun.parameters["epochs"]
 
-    experiment.createMetrics([
+    taskRun.createMetrics([
         Metric.create("loss", "epoch", MetricType.int, "loss", MetricType.float, [0, epochs]),
         Metric.create("accuracy", "epoch", MetricType.int, "accuracy", MetricType.float, [0, epochs], [0, 1])
     ])
 
     folder_manager.createTempFolder("modelFolder")
 
-    if experiment.parameters["datasetType"] == 1:
+    if taskRun.parameters["datasetType"] == 1:
         logging.info(">> [MicrobiomeForensics] Standard data selected")
 
-        level, datasetLen, uniqueTaxons, uniqueBodySites = loadDataStd(experiment.dataset, experiment)
-        inputMatrix, outputMatrix, sampleIdList = prepareForTrainingStd(level, datasetLen, uniqueTaxons, uniqueBodySites, experiment)
+        level, datasetLen, uniqueTaxons, uniqueBodySites = loadDataStd(taskRun.dataset, taskRun)
+        inputMatrix, outputMatrix, sampleIdList = prepareForTrainingStd(level, datasetLen, uniqueTaxons, uniqueBodySites, taskRun)
 
-        accuracy = train(experiment, inputMatrix, outputMatrix, uniqueBodySites, uniqueTaxons, sampleIdList)
+        accuracy = train(taskRun, inputMatrix, outputMatrix, uniqueBodySites, uniqueTaxons, sampleIdList)
 
     else:
         logging.info(">> [MicrobiomeForensics] Raw Microbe Atlas data selected")
 
-        inputMatrix, outputMatrix, sampleIdList, uniqueBodySites, uniqueTaxons = loadDataAtlas(experiment.dataset, experiment)
+        inputMatrix, outputMatrix, sampleIdList, uniqueBodySites, uniqueTaxons = loadDataAtlas(taskRun.dataset, taskRun)
         datasetLen = inputMatrix.shape[0]
 
-        accuracy = train(experiment, inputMatrix, outputMatrix, uniqueBodySites, uniqueTaxons, sampleIdList)
+        accuracy = train(taskRun, inputMatrix, outputMatrix, uniqueBodySites, uniqueTaxons, sampleIdList)
 
-    saveModel(accuracy, uniqueBodySites, datasetLen, len(uniqueTaxons), experiment)
+    saveModel(accuracy, uniqueBodySites, datasetLen, len(uniqueTaxons), taskRun)
 
 
 def main() -> None:
-    experiment: Experiment[CustomDataset] = currentExperiment()
+    taskRun: TaskRun[CustomDataset] = currentTaskRun()
 
-    validation(experiment) if experiment.parameters["validation"] else training(experiment)
+    validation(taskRun) if taskRun.parameters["validation"] else training(taskRun)
 
 
 if __name__ == "__main__":

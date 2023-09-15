@@ -10,7 +10,7 @@ from numpy.typing import ArrayLike
 import numpy as np
 import matplotlib.pyplot as plt
 
-from coretex import CustomDataset, Experiment, Model, folder_manager
+from coretex import CustomDataset, TaskRun, Model, folder_manager
 
 
 def jsonPretty(data, savePath) -> None:
@@ -18,17 +18,17 @@ def jsonPretty(data, savePath) -> None:
         json.dump(data, write_file, indent=4)
 
 
-def saveModel(experiment: Experiment[CustomDataset], accuracy: float, uniqueBodySites: dict[str, int], lenOfData: int, numOfUniqueTaxons: int) -> None:
+def saveModel(taskRun: TaskRun[CustomDataset], accuracy: float, uniqueBodySites: dict[str, int], lenOfData: int, numOfUniqueTaxons: int) -> None:
     modelPath = folder_manager.temp / "modelFolder"
 
     labels = list(uniqueBodySites.keys())
 
-    model = Model.createModel(experiment.name, experiment.id, accuracy, {})
+    model = Model.createModel(taskRun.name, taskRun.id, accuracy, {})
     model.saveModelDescriptor(modelPath, {
-        "project_task": experiment.spaceTask,
+        "project_task": taskRun.spaceTask,
         "labels": labels,
         "modelName": model.name,
-        "description": experiment.description,
+        "description": taskRun.description,
 
         "input_description": """
             Input shape is [len(dataOfSamples), len(listOfUniqueTaxons)]
@@ -67,13 +67,13 @@ def getBodySite(lineId: str, dataDict: dict[str, str]) -> Optional[tuple[str, st
     return valueSplit[0], valueSplit[1]
 
 
-def saveFeatureTable(experiment: Experiment[CustomDataset], featureTablePath: str, tableInput: np.ndarray) -> None:
+def saveFeatureTable(taskRun: TaskRun[CustomDataset], featureTablePath: str, tableInput: np.ndarray) -> None:
     np.savetxt(featureTablePath, tableInput, delimiter=",", fmt = "%i")
-    experiment.createArtifact(featureTablePath, "feature_table.csv")
+    taskRun.createArtifact(featureTablePath, "feature_table.csv")
 
 
 def savePlotFig(
-    experiment: Experiment[CustomDataset],
+    taskRun: TaskRun[CustomDataset],
     distributionDict: dict,
     savePath: str,
     fileName: str,
@@ -100,11 +100,11 @@ def savePlotFig(
         plt.xticks(rotation = 45, ha = "right")
 
     plt.savefig(savePath, bbox_inches = "tight")
-    experiment.createArtifact(savePath, fileName)
+    taskRun.createArtifact(savePath, fileName)
 
 
 def savePredictionFile(
-    experiment: Experiment[CustomDataset],
+    taskRun: TaskRun[CustomDataset],
     savePath: str,
     trainCount: int,
     testCount: int,
@@ -135,7 +135,7 @@ def savePredictionFile(
                 ])
                 z += 1
 
-    experiment.createArtifact(savePath, "body_site_predictions.csv")
+    taskRun.createArtifact(savePath, "body_site_predictions.csv")
 
 
 def validateDataset(dataset: CustomDataset) -> None:
@@ -149,10 +149,10 @@ def validateDataset(dataset: CustomDataset) -> None:
         raise ValueError(">> Invalid Dataset. Dataset sample must contain a \".mapped\" file and \"samples.env.info\"")
 
 
-def plots(experiment: Experiment[CustomDataset], classDistribution: dict[str, int], taxonDistribution: dict[str, int], datasetLen: int) -> None:
+def plots(taskRun: TaskRun[CustomDataset], classDistribution: dict[str, int], taxonDistribution: dict[str, int], datasetLen: int) -> None:
 
     """
-        Creates taxon_histogram.png and body_site_histogram.png in experiment artifacts.
+        Creates taxon_histogram.png and body_site_histogram.png in TaskRun artifacts.
 
         Parameters
         ----------
@@ -174,7 +174,7 @@ def plots(experiment: Experiment[CustomDataset], classDistribution: dict[str, in
         raise RuntimeError(f">> [MicrobiomeForensics] You have insufficient number of samples in your dataset ({datasetLen})")
 
     savePlotFig(
-        experiment,
+        taskRun,
         classDistribution,
         classDistributionSavePath,
         "body_site_histogram.png",
@@ -185,7 +185,7 @@ def plots(experiment: Experiment[CustomDataset], classDistribution: dict[str, in
     )
 
     savePlotFig(
-        experiment,
+        taskRun,
         taxonDistribution,
         taxonDistributionSavePath,
         "taxon_histogram.png",

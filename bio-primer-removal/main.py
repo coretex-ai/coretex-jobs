@@ -4,7 +4,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 import logging
 
-from coretex import Experiment, CustomSample, folder_manager, SequenceDataset, SequenceSample, currentExperiment
+from coretex import TaskRun, CustomSample, folder_manager, SequenceDataset, SequenceSample, currentTaskRun
 from coretex.bioinformatics import cutadaptTrim
 
 
@@ -54,13 +54,13 @@ def trimPairedEnd(
 
 
 def main() -> None:
-    experiment: Experiment[SequenceDataset] = currentExperiment()
-    experiment.setDatasetType(SequenceDataset)
+    taskRun: TaskRun[SequenceDataset] = currentTaskRun()
+    taskRun.setDatasetType(SequenceDataset)
 
-    forwardAdapter = experiment.parameters["forwardAdapter"]
-    reverseAdapter = experiment.parameters["reverseAdapter"]
+    forwardAdapter = taskRun.parameters["forwardAdapter"]
+    reverseAdapter = taskRun.parameters["reverseAdapter"]
 
-    dataset = experiment.dataset
+    dataset = taskRun.dataset
     dataset.download()
 
     pairedEnd = dataset.isPairedEnd()
@@ -76,8 +76,8 @@ def main() -> None:
         reverseReadsFolder = folder_manager.createTempFolder("revereseReads")
 
     outputDataset = SequenceDataset.createSequenceDataset(
-        f"{experiment.id} - Cutadapt Output",
-        experiment.spaceId,
+        f"{taskRun.id} - Cutadapt Output",
+        taskRun.spaceId,
         dataset.metadata.zipPath
     )
 
