@@ -41,5 +41,5 @@ main <- function(taskRun) {
     }
 }
 
-# initializeProject must be called with a function to start the TaskRun execution
-ctx$initializeRProject(main, args)
+# initializeTask must be called with a function to start the TaskRun execution
+ctx$initializeRTask(main, args)

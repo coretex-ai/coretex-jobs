@@ -649,4 +649,4 @@ main <- function(taskRun) {
     betaDiversity(taskRun, pseq, pseq_bac, pseq_bac_normal, ctx_folder_manager$createTempFolder("beta_diversity"))
 }
 
-ctx$initializeRProject(main, args)
+ctx$initializeRTask(main, args)
