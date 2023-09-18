@@ -14,7 +14,7 @@ def saveModel(taskRun: TaskRun[CustomDataset], accuracy: float, trainColumnCount
     modelPath = folder_manager.temp / "model"
 
     model.saveModelDescriptor(modelPath, {
-        "project_task": taskRun.projectType,
+        "project_task": taskRun.spaceTask,
         "labels": labels,
         "modelName": model.name,
         "description": taskRun.description,

@@ -48,7 +48,7 @@ def cacheJson(
     sampleData: list[Sample],
     uniqueTaxons: dict[str, int],
     uniqueBodySite: dict[str, int],
-    projectId: int
+    spaceId: int
 ) -> None:
 
     logging.info(">> [MicrobiomeForensics] Saving assembled dataset to cache")
@@ -66,7 +66,7 @@ def cacheJson(
         for item in cachedItemsStr:
             archive.write(cachePath.joinpath(f"{item}.pkl"), f"{item}.pkl")
 
-    cacheDataset = CustomDataset.createDataset(cacheName, projectId)
+    cacheDataset = CustomDataset.createDataset(cacheName, spaceId)
     if cacheDataset is None:
         logging.warning(">> [MicrobiomeForensics] Failed to create cache for processed data")
         return

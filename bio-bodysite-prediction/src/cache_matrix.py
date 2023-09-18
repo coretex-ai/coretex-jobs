@@ -77,7 +77,7 @@ def cacheMatrix(
     uniqueBodySite: dict[str, int],
     uniqueTaxons: dict[str, int],
     percentileModel: SelectPercentile,
-    projectId: int
+    spaceId: int
 ) -> None:
 
     logging.info(">> [MicrobiomeForensics] Uploading processed data to cache")
@@ -103,7 +103,7 @@ def cacheMatrix(
         for item in cachedItemsStr:
             archive.write(cachePath.joinpath(f"{item}.pkl"), f"{item}.pkl")
 
-    cacheDataset = CustomDataset.createDataset(cacheName, projectId)
+    cacheDataset = CustomDataset.createDataset(cacheName, spaceId)
     if cacheDataset is None:
         logging.warning(">> [MicrobiomeForensics] Failed to create cache for processed data")
         return

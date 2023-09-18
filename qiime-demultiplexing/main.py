@@ -65,7 +65,7 @@ def main() -> None:
     outputDir = folder_manager.createTempFolder("demux_output")
     outputDataset = CustomDataset.createDataset(
         f"{taskRun.id} - Step 2: Demultiplexing",
-        taskRun.projectId
+        taskRun.spaceId
     )
 
     if outputDataset is None:

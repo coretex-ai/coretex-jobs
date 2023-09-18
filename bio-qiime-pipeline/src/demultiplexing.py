@@ -59,7 +59,7 @@ def demultiplexing(
     outputDir = folder_manager.createTempFolder("demux_output")
     outputDataset = CustomDataset.createDataset(
         getCacheNameTwo(taskRun),
-        taskRun.projectId
+        taskRun.spaceId
     )
 
     if outputDataset is None:

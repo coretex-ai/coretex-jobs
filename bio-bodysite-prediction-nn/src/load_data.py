@@ -338,7 +338,7 @@ def loadDataAtlas(
             cachePath,
             classDistribution,
             taxonDistribution,
-            taskRun.projectId
+            taskRun.spaceId
         )
 
     return  uniqueBodySite, uniqueTaxons, datasetLen

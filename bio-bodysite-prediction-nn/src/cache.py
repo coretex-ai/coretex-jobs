@@ -36,12 +36,12 @@ def cacheDataset(
     cachePath: Path,
     classDistribution: dict[str, int],
     taxonDistribution: dict[str, int],
-    projectId: int
+    spaceId: int
 ) -> None:
 
     logging.info(">> [MicrobiomeForensics] Saving assembled dataset to cache (this may take a while)")
 
-    cacheDataset = CustomDataset.createDataset(cacheName, projectId)
+    cacheDataset = CustomDataset.createDataset(cacheName, spaceId)
     if cacheDataset is None:
         raise RuntimeError(">> [MicrobiomeForensics] Failed to create coretex dataset for cache")
 

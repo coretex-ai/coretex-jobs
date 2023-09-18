@@ -331,7 +331,7 @@ def alphaBetaDiversityAnalysis(
     outputDir = folder_manager.createTempFolder("alpha_beta_output")
     outputDataset = CustomDataset.createDataset(
         getCacheNameSeven(taskRun),
-        taskRun.projectId
+        taskRun.spaceId
     )
 
     if outputDataset is None:

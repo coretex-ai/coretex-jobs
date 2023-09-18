@@ -101,7 +101,7 @@ def main() -> None:
     outputDir = folder_manager.createTempFolder("taxonomy_output")
     outputDataset = CustomDataset.createDataset(
         f"{taskRun.id} - Step 5: Taxonomic analysis",
-        taskRun.projectId
+        taskRun.spaceId
     )
 
     if outputDataset is None:

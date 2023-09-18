@@ -34,7 +34,7 @@ def clearDirectory(directory: Path) -> None:
 def uploadToCoretex(taskRun: TaskRun[CustomDataset], groups: list[Path]) -> None:
     zipOut = Path(folder_manager.createTempFolder("zipOut"))
 
-    dataset = CustomDataset.createDataset(f"{taskRun.id} - Separated Sequences", taskRun.projectId)
+    dataset = CustomDataset.createDataset(f"{taskRun.id} - Separated Sequences", taskRun.spaceId)
     if dataset is None:
         raise RuntimeError(">> [SequenceSeparation] Failed to create output dataset")
 
