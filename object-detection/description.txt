@@ -1,6 +1,6 @@
 --- Template description ---
 
-Object Detection project template is based on YoloV5 model (https://github.com/ultralytics/yolov5).
+Object Detection task template is based on YoloV5 model (https://github.com/ultralytics/yolov5).
 YoloV5 is a state of the art (SOTA) model for running object detection on images.
 
 Input of the model is an RGB image with pixel values normalized in range (0 - 1).

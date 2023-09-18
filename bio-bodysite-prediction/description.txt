@@ -1,6 +1,6 @@
 --- Template description ---
 
-Body site prediction project template is based on XGBoost (gradient
+Body site prediction task template is based on XGBoost (gradient
 boosting) algorithm.
 
 This template takes BioInformatics sequence taxonomic compositions

@@ -9,7 +9,7 @@ the sample data from sequences associated with every of the barcodes. This templ
 is used for doing that.
 
 The input is a dataset which contains miltiplexed sequences imported to Qiime2
-with the EMP Protocol. This can be done using the Import job form the Coretex
+with the EMP Protocol. This can be done using the Import task form the Coretex
 Qiime templates
 
 Output data is demultiplexed sequences which contains a separate "fastq" file

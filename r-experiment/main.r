@@ -41,5 +41,5 @@ main <- function(experiment) {
     }
 }
 
-# initializeProject must be called with a function to start the experiment execution
-ctx$initializeRProject(main, args)
+# initializeTask must be called with a function to start the experiment execution
+ctx$initializeRTask(main, args)

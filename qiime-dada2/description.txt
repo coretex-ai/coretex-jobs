@@ -1,10 +1,10 @@
 --- Template description ---
 
-This job uses DADA2 to perform donoising, error correction and other DADA2
+This task uses DADA2 to perform donoising, error correction and other DADA2
 functions.
 
 Input data are demultiplexed sequences in "fastq" format which should have been
-imported with the first job of the Coretex Qiime pipeline (Import) or demultiplexed
+imported with the first task of the Coretex Qiime pipeline (Import) or demultiplexed
 in the second (Demultiplexing sequences).
 
 The following will be performed by DADA2:

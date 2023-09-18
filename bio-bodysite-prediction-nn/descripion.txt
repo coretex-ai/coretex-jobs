@@ -1,6 +1,6 @@
 --- Template description ---
 
-Bodysite Classifier - LSPIN project template uses a neural network architecture
+Bodysite Classifier - LSPIN task template uses a neural network architecture
 based on the paper "Locally Sparse Neural Networks for Tabular Biomedical Data”,
 which is a multilayer perceptron with gating layers.
 

@@ -1,11 +1,11 @@
 --- Template description ---
 
-This job imports sequencing reads into a Qiime2 format so that, further downstream, they
-could be processed and analysed by using other jobs that are part of the Coretex Qiime pipeline.
+This task imports sequencing reads into a Qiime2 format so that, further downstream, they
+could be processed and analysed by using other tasks that are part of the Coretex Qiime pipeline.
 
 Both multiplexed and demultiplexed sequencing reads, as well as both single-end and paired-end
 sequencing reads are supported. Only sequences with quality, a.k.a. fastq, files can be
-imported with this job.
+imported with this task.
 
 In the case you want to import multiplexed data, you will need it in the "EMP protocol",
 about which you can learn more here: http://earthmicrobiome.org/protocols-and-standards/.
