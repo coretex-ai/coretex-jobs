@@ -172,7 +172,7 @@ def denoise(dataset: CustomDataset, taskRun: TaskRun, pairedEnd: Optional[bool])
     outputDir = folder_manager.createTempFolder("qiime_output")
     outputDataset = CustomDataset.createDataset(
         getCacheNameThree(taskRun),
-        taskRun.spaceId
+        taskRun.projectId
     )
 
     if outputDataset is None:

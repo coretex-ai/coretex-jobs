@@ -58,7 +58,7 @@ def saveJSModel(model: KerasModel, taskRun: TaskRun[ImageSegmentationDataset], c
     ]
 
     coretexModel.saveModelDescriptor(modelPath, {
-        "project_task": taskRun.spaceTask,
+        "project_task": taskRun.projectType,
         "labels": labels,
         "modelName": coretexModel.name,
         "description": taskRun.description,

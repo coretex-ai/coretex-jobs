@@ -69,7 +69,7 @@ def saveJSModel(loadModelPath: str, modelPath: Path, modelTfjsPath: str, taskRun
     )
 
     coretexModel.saveModelDescriptor(modelPath, {
-        "project_task": taskRun.spaceTask,
+        "project_task": taskRun.projectType,
         "labels": classes,
         "modelName": coretexModel.name,
         "description": taskRun.description,

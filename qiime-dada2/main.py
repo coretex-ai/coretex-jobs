@@ -205,7 +205,7 @@ def main() -> None:
     outputDir = folder_manager.createTempFolder("qiime_output")
     outputDataset = CustomDataset.createDataset(
         f"{taskRun.id} - Step 3: DADA2",
-        taskRun.spaceId
+        taskRun.projectId
     )
 
     if outputDataset is None:

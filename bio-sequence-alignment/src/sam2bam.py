@@ -30,7 +30,7 @@ def sam2bam(taskRun: TaskRun[CustomDataset], samDir: Path) -> None:
 
     bamDataset = CustomDataset.createDataset(
         f"{taskRun.id} - Sequence alignment: BAM",
-        taskRun.spaceId
+        taskRun.projectId
     )
 
     if bamDataset is None:

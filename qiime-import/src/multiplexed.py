@@ -61,7 +61,7 @@ def importMultiplexed(
 
     outputDataset = CustomDataset.createDataset(
         f"{taskRun.id} - Step 1: Import - Multiplexed",
-        taskRun.spaceId
+        taskRun.projectId
     )
 
     if outputDataset is None:

@@ -77,7 +77,7 @@ def main() -> None:
 
     outputDataset = SequenceDataset.createSequenceDataset(
         f"{taskRun.id} - Cutadapt Output",
-        taskRun.spaceId,
+        taskRun.projectId,
         dataset.metadata.zipPath
     )
 

@@ -85,7 +85,7 @@ def importDemultiplexed(
     outputDir = folder_manager.createTempFolder("import_output")
     outputDataset = CustomDataset.createDataset(
         getCacheNameOne(taskRun),
-        taskRun.spaceId
+        taskRun.projectId
     )
 
     if outputDataset is None:

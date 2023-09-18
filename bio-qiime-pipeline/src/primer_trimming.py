@@ -71,7 +71,7 @@ def primerTrimming(dataset: SequenceDataset, taskRun: TaskRun, pairedEnd: bool) 
 
     outputDataset = SequenceDataset.createSequenceDataset(
         f"{taskRun.id} - Cutadapt Output",
-        taskRun.spaceId,
+        taskRun.projectId,
         dataset.metadata.zipPath
     )
 
