@@ -17,10 +17,10 @@ from .filepaths import BWA
 GENOME_SUFFIXES = [".fasta", ".fna", ".fa"]
 
 
-def saveCache(cacheName: str, temp: Path, genomeIndexDir: Path, spaceId: int) -> None:
+def saveCache(cacheName: str, temp: Path, genomeIndexDir: Path, projectId: int) -> None:
     genomeDataset = CustomDataset.createDataset(
         cacheName,
-        spaceId
+        projectId
     )
 
     if genomeDataset is None:
@@ -132,6 +132,6 @@ def index(experiment: Experiment[CustomDataset]) -> Path:
     logging.info(">> [Sequence Alignment] Reference genome succesfully indexed")
 
     if cache is None or not isCacheValid(cache):
-        saveCache(cacheName, folder_manager.temp, genomeIndexDir, experiment.spaceId)
+        saveCache(cacheName, folder_manager.temp, genomeIndexDir, experiment.projectId)
 
     return genomePrefix

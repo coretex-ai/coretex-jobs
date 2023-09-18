@@ -438,7 +438,7 @@ def loadDataAtlas(
 
     if useCache and isJsonCacheValid(cacheNameJson):
         experiment.updateStatus(ExperimentStatus.inProgress, "Saving assembled dataset to cache")
-        cacheJson(cacheNameJson, sampleData, uniqueTaxons, uniqueBodySite, experiment.spaceId)
+        cacheJson(cacheNameJson, sampleData, uniqueTaxons, uniqueBodySite, experiment.projectId)
 
     if validate:
         sampleData = removeBadSamples(sampleData, uniqueTaxons, uniqueBodySite)
@@ -538,7 +538,7 @@ def prepareForTrainingAtlas(
             uniqueBodySite,
             uniqueTaxons,
             percentileModel,
-            experiment.spaceId
+            experiment.projectId
         )
 
     plots(mappedSampleObjList, experiment)

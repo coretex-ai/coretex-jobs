@@ -87,7 +87,7 @@ def main() -> None:
         ]
 
         Model.saveModelDescriptor(modelDirPath, {
-            "project_task": experiment.spaceTask,
+            "project_task": experiment.projectType,
             "labels": labels,
             "modelName": experiment.name,
             "description": experiment.description,

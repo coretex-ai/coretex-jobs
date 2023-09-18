@@ -58,7 +58,7 @@ def saveJSModel(model: KerasModel, experiment: Experiment[ImageSegmentationDatas
     ]
 
     coretexModel.saveModelDescriptor(modelPath, {
-        "project_task": experiment.spaceTask,
+        "project_task": experiment.projectType,
         "labels": labels,
         "modelName": coretexModel.name,
         "description": experiment.description,

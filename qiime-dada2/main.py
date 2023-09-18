@@ -205,7 +205,7 @@ def main() -> None:
     outputDir = folder_manager.createTempFolder("qiime_output")
     outputDataset = CustomDataset.createDataset(
         f"{experiment.id} - Step 3: DADA2",
-        experiment.spaceId
+        experiment.projectId
     )
 
     if outputDataset is None:

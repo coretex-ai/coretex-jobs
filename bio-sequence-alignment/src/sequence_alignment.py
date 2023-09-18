@@ -20,7 +20,7 @@ def sequeneAlignment(experiment: Experiment[CustomDataset], genomePrefix: Path) 
 
     samDataset = CustomDataset.createDataset(
         f"{experiment.id} - Sequence alignment: SAM",
-        experiment.spaceId
+        experiment.projectId
     )
 
     if samDataset is None:

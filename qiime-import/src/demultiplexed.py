@@ -85,7 +85,7 @@ def importDemultiplexed(
 
     outputDataset = CustomDataset.createDataset(
         f"{experiment.id} - Step 1: Import - Demultiplexed",
-        experiment.spaceId
+        experiment.projectId
     )
 
     if outputDataset is None:
