@@ -139,7 +139,7 @@ subset_samples_custom <- function(pseq, body_site) {
     return(pseq_subset)
 }
 
-genusAbundancePlot <- function(pseq_bac, body_site, output_path, experiment) {
+genusAbundancePlot <- function(pseq_bac, body_site, output_path, taskRun) {
     print(sprintf("Creatinng abundance plot for %s", body_site))
 
     genus_col_index <- which(rank_names(pseq_bac) == "genus")
@@ -155,7 +155,7 @@ genusAbundancePlot <- function(pseq_bac, body_site, output_path, experiment) {
 
     file_path <- file.path(output_path, sprintf("pseq_genera_all_%s.csv", body_site))
     write.csv(ordered_pseq_genera_melt, file_path)
-    experiment$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
+    taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
 
     colourCount = 30
     getPalette = colorRampPalette(brewer.pal(12, "Paired"))
@@ -185,11 +185,11 @@ genusAbundancePlot <- function(pseq_bac, body_site, output_path, experiment) {
         height = 500,
         units = "mm"
     )
-    experiment$createArtifact(abundance_plot_path, paste0("alpha_diversity/", basename(abundance_plot_path)))
+    taskRun$createArtifact(abundance_plot_path, paste0("alpha_diversity/", basename(abundance_plot_path)))
     print(sprintf("Uploaded %s", basename(abundance_plot_path)))
 }
 
-alphaDiversity <- function(experiment, pseq, pseq_bac, pseq_bac_normal, output_path) {
+alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path) {
     ########### 4. Plot read depths ##########
     print("4. Plot read depths")
 
@@ -201,7 +201,7 @@ alphaDiversity <- function(experiment, pseq, pseq_bac, pseq_bac_normal, output_p
 
     file_path <- file.path(output_path, "pseq_sums.csv")
     write.csv(pseq_df, file = file_path, row.names = FALSE)
-    experiment$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
+    taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
 
     pseq_samples <- subset_samples(pseq_bac, Body_site != "not_available")
     pseq_df_samples <- data.frame(
@@ -227,7 +227,7 @@ alphaDiversity <- function(experiment, pseq, pseq_bac, pseq_bac_normal, output_p
         height = 300,
         units = "mm"
     )
-    experiment$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
+    taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
     print(sprintf("Uploaded %s", basename(file_path)))
 
     ########### 5. Rarefaction ##########
@@ -238,7 +238,7 @@ alphaDiversity <- function(experiment, pseq, pseq_bac, pseq_bac_normal, output_p
 
     file_path <- file.path(output_path, "Rareraction_plot.pdf")
     ggsave(filename = file_path, plot = rarefied_plot)
-    experiment$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
+    taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
     print(sprintf("Uploaded %s", basename(file_path)))
 
     ########### 6. Plot richness (alpha diversity) ##########
@@ -246,7 +246,7 @@ alphaDiversity <- function(experiment, pseq, pseq_bac, pseq_bac_normal, output_p
 
     file_path <- file.path(output_path, "otu_tab.csv")
     write.csv(otu_tab, file_path)
-    experiment$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
+    taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
 
     Observed_richness <- plot_richness(
         pseq_bac, x = "Body_site",
@@ -263,7 +263,7 @@ alphaDiversity <- function(experiment, pseq, pseq_bac, pseq_bac_normal, output_p
         height = 300,
         units = "mm"
     )
-    experiment$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
+    taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
     print(sprintf("Uploaded %s", basename(file_path)))
 
     ########## 7. Taxonomic composition ##########
@@ -297,7 +297,7 @@ alphaDiversity <- function(experiment, pseq, pseq_bac, pseq_bac_normal, output_p
         height = 300,
         units = "mm"
     )
-    experiment$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
+    taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
     print(sprintf("Uploaded %s", basename(file_path)))
 
     ########## LW: 7.2 Plot phyla #########
@@ -329,7 +329,7 @@ alphaDiversity <- function(experiment, pseq, pseq_bac, pseq_bac_normal, output_p
         height = 300,
         units = "mm"
     )
-    experiment$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
+    taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
     print(sprintf("Uploaded %s", basename(file_path)))
 
     colourCount = 20
@@ -337,7 +337,7 @@ alphaDiversity <- function(experiment, pseq, pseq_bac, pseq_bac_normal, output_p
 
     file_path <- file.path(output_path, "pseq20families.csv")
     pseq20families <- write.csv(ordered_pseq_new20_melt, file = file_path)
-    experiment$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
+    taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
 
     ggplot_pseq_new20_col1 <- ggplot(
             ordered_pseq_new20_melt,
@@ -376,7 +376,7 @@ alphaDiversity <- function(experiment, pseq, pseq_bac, pseq_bac_normal, output_p
 
     file_path <- file.path(output_path, "pseq_genera_melt.csv")
     write.csv(ordered_pseq_genera_melt, file_path)
-    experiment$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
+    taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
 
     ggplot_pseq_genera <- ggplot(ordered_pseq_genera_melt, aes(x = reorder(Sample, Body_site), y = Abundance, fill = genus))+
         geom_bar(stat = "identity") +
@@ -412,12 +412,12 @@ alphaDiversity <- function(experiment, pseq, pseq_bac, pseq_bac_normal, output_p
         height = 700,
         units = "mm"
     )
-    experiment$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
+    taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
     print(sprintf("Uploaded %s", basename(file_path)))
 
     ############### TF: Abundance Plots per sample and bodysite  ##################
 
-    body_sites <- unlist(experiment$parameters["bodySites"])
+    body_sites <- unlist(taskRun$parameters["bodySites"])
 
     # Control
     seq_controls <- pseq_bac
@@ -427,7 +427,7 @@ alphaDiversity <- function(experiment, pseq, pseq_bac, pseq_bac_normal, output_p
 
     file_path <- file.path(output_path, "pseq_control.RData")
     save(seq_controls, file = file_path)
-    experiment$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
+    taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
     print(sprintf("Uploaded %s", basename(file_path)))
 
     genus_sum = tapply(taxa_sums(seq_controls), tax_table(seq_controls)[, "genus"], sum, na.rm=FALSE)
@@ -466,16 +466,16 @@ alphaDiversity <- function(experiment, pseq, pseq_bac, pseq_bac_normal, output_p
         height = 500,
         units = "mm"
     )
-    experiment$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
+    taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
     print(sprintf("Uploaded %s", basename(file_path)))
 
     # Body sites
     for (bodySite in body_sites) {
-        genusAbundancePlot(pseq_bac, bodySite, output_path, experiment)
+        genusAbundancePlot(pseq_bac, bodySite, output_path, taskRun)
     }
 }
 
-meltPseqObject <- function(experiment, pseq, suffix, output_path) {
+meltPseqObject <- function(taskRun, pseq, suffix, output_path) {
     print(paste0("Beta Diversity: Analyzing ", suffix))
     genus_col_index <- which(rank_names(pseq) == "genus")
 
@@ -490,7 +490,7 @@ meltPseqObject <- function(experiment, pseq, suffix, output_path) {
     file_name <- paste0("pseq_genera_melt_", suffix, "_allgenera.csv")
     file_path <- file.path(output_path, file_name)
     write.csv(ordered_pseq_genera_melt, file_path)
-    experiment$createArtifact(file_path, paste0("beta_diversity/", basename(file_path)))
+    taskRun$createArtifact(file_path, paste0("beta_diversity/", basename(file_path)))
 
     print(head(pseq_genera_melt_subset))
     print(count(pseq_genera_melt_subset))
@@ -500,10 +500,10 @@ meltPseqObject <- function(experiment, pseq, suffix, output_path) {
     file_name <- paste0("distinct_", suffix, ".csv")
     file_path <- file.path(output_path, file_name)
     write.csv(distinct_sample, file_path)
-    experiment$createArtifact(file_path, paste0("beta_diversity/", basename(file_path)))
+    taskRun$createArtifact(file_path, paste0("beta_diversity/", basename(file_path)))
 }
 
-betaDiversity <- function(experiment, pseq, pseq_bac, pseq_bac_normal, output_path) {
+betaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path) {
     #Calculate distances
     DistUF = phyloseq::distance(pseq_bac_normal, method = "unifrac")
     DistwUF = phyloseq::distance(pseq_bac_normal, method = "wunifrac")
@@ -516,23 +516,23 @@ betaDiversity <- function(experiment, pseq, pseq_bac, pseq_bac_normal, output_pa
 
     ordUF_values_path <- file.path(output_path, "ordUF_values_ctrl.csv")
     ordUF_values <- write.csv(ordUF$values, file = ordUF_values_path)
-    experiment$createArtifact(ordUF_values_path, paste0("beta_diversity/", basename(ordUF_values_path)))
+    taskRun$createArtifact(ordUF_values_path, paste0("beta_diversity/", basename(ordUF_values_path)))
 
     ordBr_values_path <- file.path(output_path, "ordBr_values_ctrl.csv")
     ordBr_values <- write.csv(ordBr$values, file = ordBr_values_path)
-    experiment$createArtifact(ordBr_values_path, paste0("beta_diversity/", basename(ordBr_values_path)))
+    taskRun$createArtifact(ordBr_values_path, paste0("beta_diversity/", basename(ordBr_values_path)))
 
     ordBr_vectors_path <- file.path(output_path, "ordBr_vectors_ctrl.csv")
     ordBr_vectors <- write.csv(ordBr$vectors, file = ordBr_vectors_path)
-    experiment$createArtifact(ordBr_vectors_path, paste0("beta_diversity/", basename(ordBr_vectors_path)))
+    taskRun$createArtifact(ordBr_vectors_path, paste0("beta_diversity/", basename(ordBr_vectors_path)))
 
     ordwUF_values_path <- file.path(output_path, "ordwUF_values_ctrl.csv")
     ordwUF_values <- write.csv(ordwUF$values, file = ordwUF_values_path)
-    experiment$createArtifact(ordwUF_values_path, paste0("beta_diversity/", basename(ordwUF_values_path)))
+    taskRun$createArtifact(ordwUF_values_path, paste0("beta_diversity/", basename(ordwUF_values_path)))
 
     ordwUF_vectors_path <- file.path(output_path, "ordwUF_vectors_ctrl.csv")
     ordwUF_vectors <- write.csv(ordwUF$vectors, file = ordwUF_vectors_path)
-    experiment$createArtifact(ordwUF_vectors_path, paste0("beta_diversity/", basename(ordwUF_vectors_path)))
+    taskRun$createArtifact(ordwUF_vectors_path, paste0("beta_diversity/", basename(ordwUF_vectors_path)))
 
     #Check the axes
     plot_scree(ordUF, "Scree Plot: unweighted UniFrac")
@@ -546,13 +546,13 @@ betaDiversity <- function(experiment, pseq, pseq_bac, pseq_bac_normal, output_pa
     PoC_Uni <- plot_ordination(pseq_bac_normal, ordUF, color = "Body_site", shape = "Extraction_protocol") + ggtitle("Unweighted UniFrac") + geom_text(aes(label = body_sites), nudge_y = -0.01, size = 3) + geom_point(size=2)
     PoC_Uni_path = file.path(output_path, "unweighted_Unifrac_plot.pdf")
     ggsave(filename = PoC_Uni_path, plot = PoC_Uni, width = 297, height = 210, units = "mm")
-    experiment$createArtifact(PoC_Uni_path, paste0("beta_diversity/", basename(PoC_Uni_path)))
+    taskRun$createArtifact(PoC_Uni_path, paste0("beta_diversity/", basename(PoC_Uni_path)))
 
     #Plot for Bray Curtis
     PoC_Br_PCA <- plot_ordination(pseq_bac_normal, ordBr, color = "Body_site", shape = "Extraction_protocol", axes = c(1,2)) + geom_point(size = 2) + geom_text(aes(label = body_sites), nudge_y = -0.01, size = 3)
     PoC_Br_PCA_path <- file.path(output_path, "Bray_curtis_plot.pdf")
     ggsave(filename = PoC_Br_PCA_path, plot = PoC_Br_PCA, width = 297, height = 210, units ="mm")
-    experiment$createArtifact(PoC_Br_PCA_path, paste0("beta_diversity/", basename(PoC_Br_PCA_path)))
+    taskRun$createArtifact(PoC_Br_PCA_path, paste0("beta_diversity/", basename(PoC_Br_PCA_path)))
 
     PoC_Br_PCA_1 <- PoC_Br_PCA + theme_bw() +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
@@ -560,7 +560,7 @@ betaDiversity <- function(experiment, pseq, pseq_bac, pseq_bac_normal, output_pa
 
     PoC_Br_PCA_1_path <- file.path(output_path, "PoC_Br_PCA1.pdf")
     ggsave(filename = PoC_Br_PCA_1_path, plot = PoC_Br_PCA_1, width = 297, height = 210, units = "mm")
-    experiment$createArtifact(PoC_Br_PCA_1_path, paste0("beta_diversity/", basename(PoC_Br_PCA_1_path)))
+    taskRun$createArtifact(PoC_Br_PCA_1_path, paste0("beta_diversity/", basename(PoC_Br_PCA_1_path)))
 
     #Plot for weighted Unifrac
     PoC_wUF <- plot_ordination(pseq_bac_normal, ordwUF, color="Body_site", shape = "sex", label = "sample_ID", axes = c(3,4)) + geom_point(size = 2)
@@ -575,7 +575,7 @@ betaDiversity <- function(experiment, pseq, pseq_bac, pseq_bac_normal, output_pa
         height = 210,
         units = "mm"
     )
-    experiment$createArtifact(PoC_wUF_1_path, paste0("beta_diversity/", basename(PoC_wUF_1_path)))
+    taskRun$createArtifact(PoC_wUF_1_path, paste0("beta_diversity/", basename(PoC_wUF_1_path)))
 
     # Significance test: test significance with permanova analyses
     #First we generate a dataframe with the metadata
@@ -593,29 +593,29 @@ betaDiversity <- function(experiment, pseq, pseq_bac, pseq_bac_normal, output_pa
 
     ##### No of genera, family etc. #####
     # All data
-    meltPseqObject(experiment, pseq_bac_normal, "all", output_path)
+    meltPseqObject(taskRun, pseq_bac_normal, "all", output_path)
 
     # Use all remaining samples as control
     pseq_control <- pseq_bac_normal
     metadata <- data.frame(sample_data(pseq_bac_normal))
-    sample_data(pseq_control) <- subset(metadata, !metadata$Body_site %in% experiment$parameters[["bodySites"]])
+    sample_data(pseq_control) <- subset(metadata, !metadata$Body_site %in% taskRun$parameters[["bodySites"]])
 
-    meltPseqObject(experiment, pseq_control, "control", output_path)
+    meltPseqObject(taskRun, pseq_control, "control", output_path)
 
-    for (body_site in experiment$parameters[["bodySites"]]) {
+    for (body_site in taskRun$parameters[["bodySites"]]) {
         body_site_pseq = subset_samples_custom(pseq_bac_normal, body_site)
-        meltPseqObject(experiment, body_site_pseq, body_site, output_path)
+        meltPseqObject(taskRun, body_site_pseq, body_site, output_path)
     }
 }
 
-main <- function(experiment) {
+main <- function(taskRun) {
     output_path <- builtins$str(ctx_folder_manager$temp)
-    experiment$dataset$download()
+    taskRun$dataset$download()
 
     # Load the phyloseq object
-    pseq <- loadData(experiment$dataset)
+    pseq <- loadData(taskRun$dataset)
 
-    bodySiteColumnName <- experiment$parameters[["bodySiteColumnName"]]
+    bodySiteColumnName <- taskRun$parameters[["bodySiteColumnName"]]
     pseq <- perpareSampleData(pseq, bodySiteColumnName)
 
     pseq_bac <- subset_taxa(pseq, domain == "Bacteria")
@@ -631,7 +631,7 @@ main <- function(experiment) {
 
     file_path <- file.path(output_path, "pseq.RData")
     save(pseq_bac, file = file_path)
-    experiment$createArtifact(file_path, basename(file_path))
+    taskRun$createArtifact(file_path, basename(file_path))
     print(sprintf("Uploaded %s", basename(file_path)))
 
     # Normalise the read counts
@@ -639,14 +639,14 @@ main <- function(experiment) {
 
     file_path <- file.path(output_path, "pseq_normal.RData")
     save(pseq_bac_normal, file = file_path)
-    experiment$createArtifact(file_path, basename(file_path))
+    taskRun$createArtifact(file_path, basename(file_path))
     print(sprintf("Uploaded %s", basename(file_path)))
 
     print("Running: Alpha diversity")
-    alphaDiversity(experiment, pseq, pseq_bac, pseq_bac_normal, ctx_folder_manager$createTempFolder("alpha_diversity"))
+    alphaDiversity(taskRun, pseq, pseq_bac, pseq_bac_normal, ctx_folder_manager$createTempFolder("alpha_diversity"))
 
     print("Running: Beta diversity")
-    betaDiversity(experiment, pseq, pseq_bac, pseq_bac_normal, ctx_folder_manager$createTempFolder("beta_diversity"))
+    betaDiversity(taskRun, pseq, pseq_bac, pseq_bac_normal, ctx_folder_manager$createTempFolder("beta_diversity"))
 }
 
 ctx$initializeRTask(main, args)

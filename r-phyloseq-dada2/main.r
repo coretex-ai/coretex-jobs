@@ -176,14 +176,14 @@ trackPctColumns <- function(names, track_matrix) {
     return(track_matrix)
 }
 
-main <- function(experiment) {
+main <- function(taskRun) {
     output_path <- builtins$str(ctx_folder_manager$temp)
-    experiment$parameters[["dataset"]]$download()
+    taskRun$parameters[["dataset"]]$download()
 
     forward_read_paths <- c()
     reverse_read_paths <- c()
 
-    for (sample in experiment$parameters[["dataset"]]$samples) {
+    for (sample in taskRun$parameters[["dataset"]]$samples) {
         sample$unzip()
 
         if (startsWith(sample$name, "_metadata") || startsWith(sample$name, "Undetermined")) {
@@ -198,7 +198,7 @@ main <- function(experiment) {
     }
 
     # Load metadata file
-    metadata <- loadMetadata(experiment$dataset$getSample("_metadata"))
+    metadata <- loadMetadata(taskRun$dataset$getSample("_metadata"))
 
     # Step 3.2.2: Extract sample names
     sample_names <- metadata$sampleId
@@ -217,7 +217,7 @@ main <- function(experiment) {
         "quality_profile_plot.pdf"
     )
     ggsave(quality_profile_plot_path)
-    experiment$createArtifact(
+    taskRun$createArtifact(
         quality_profile_plot_path,
         basename(quality_profile_plot_path)
     )
@@ -243,16 +243,16 @@ main <- function(experiment) {
 
     # 3.4.2 Set filtering parameters after checking read quality
 
-    trim_left_forward <- experiment$parameters[["trimLeftForward"]]
-    trim_left_reverse <- experiment$parameters[["trimLeftReverse"]]
-    trim_right_forward <- experiment$parameters[["trimRightForward"]]
-    trim_right_reverse <- experiment$parameters[["trimRightReverse"]]
-    max_n <- experiment$parameters[["maxN"]]
-    max_ee_forward <- experiment$parameters[["maxEEForward"]]
-    max_ee_reverse <- experiment$parameters[["maxEEReverse"]]
-    trunc_q <- experiment$parameters[["truncQ"]]
-    trunc_len_forward <- experiment$parameters[["truncLenForward"]]
-    trunc_len_reverse <- experiment$parameters[["truncLenReverse"]]
+    trim_left_forward <- taskRun$parameters[["trimLeftForward"]]
+    trim_left_reverse <- taskRun$parameters[["trimLeftReverse"]]
+    trim_right_forward <- taskRun$parameters[["trimRightForward"]]
+    trim_right_reverse <- taskRun$parameters[["trimRightReverse"]]
+    max_n <- taskRun$parameters[["maxN"]]
+    max_ee_forward <- taskRun$parameters[["maxEEForward"]]
+    max_ee_reverse <- taskRun$parameters[["maxEEReverse"]]
+    trunc_q <- taskRun$parameters[["truncQ"]]
+    trunc_len_forward <- taskRun$parameters[["truncLenForward"]]
+    trunc_len_reverse <- taskRun$parameters[["truncLenReverse"]]
 
     filtering_results <- filterAndTrim(
         forward_read_paths,
@@ -270,14 +270,14 @@ main <- function(experiment) {
     )
 
     for (path in filtered_forward_read_paths) {
-        experiment$createArtifact(
+        taskRun$createArtifact(
             path,
             file.path("filtered_reads", basename(path))
         )
     }
 
     for (path in filtered_reverse_read_paths) {
-        experiment$createArtifact(
+        taskRun$createArtifact(
             path,
             file.path("filtered_reads", basename(path))
         )
@@ -289,7 +289,7 @@ main <- function(experiment) {
         file = filtering_results_path,
         row.names = TRUE
     )
-    experiment$createArtifact(
+    taskRun$createArtifact(
         filtering_results_path,
         basename(filtering_results_path)
     )
@@ -317,7 +317,7 @@ main <- function(experiment) {
         "errors_plot.pdf"
     )
     ggsave(errors_plot_path)
-    experiment$createArtifact(
+    taskRun$createArtifact(
         errors_plot_path,
         basename(errors_plot_path)
     )
@@ -371,7 +371,7 @@ main <- function(experiment) {
 
     seqtab_path <- file.path(output_path, "ASV_abundance.txt")
     write.table(seqtab, file = seqtab_path)
-    experiment$createArtifact(seqtab_path, "ASV_abundance.txt")
+    taskRun$createArtifact(seqtab_path, "ASV_abundance.txt")
 
     # Step 3.6.1: Remove chimeras
     print("Step 3.6.1: Remove chimeras")
@@ -401,7 +401,7 @@ main <- function(experiment) {
     # Check if two transpositions are needed.
     seqtab_nochim_path <- file.path(output_path, "ASV_abundance_nochim.Rdata")
     save(seqtab_nochim, file = seqtab_nochim_path)
-    experiment$createArtifact(
+    taskRun$createArtifact(
         seqtab_nochim_path,
         basename(seqtab_nochim_path)
     )
@@ -413,7 +413,7 @@ main <- function(experiment) {
         col.names = NA,
         row.names = TRUE
     )
-    experiment$createArtifact(
+    taskRun$createArtifact(
         seqtab_nochim_path_txt,
         basename(seqtab_nochim_path_txt)
     )
@@ -460,7 +460,7 @@ main <- function(experiment) {
         row.names = TRUE
     )
 
-    experiment$createArtifact(
+    taskRun$createArtifact(
         track_matrix_path,
         basename(track_matrix_path)
     )
@@ -528,7 +528,7 @@ main <- function(experiment) {
         col.names = TRUE,
         row.names = TRUE
     )
-    experiment$createArtifact(
+    taskRun$createArtifact(
         taxid_silva_path,
         basename(taxid_silva_path)
     )
@@ -548,7 +548,7 @@ main <- function(experiment) {
         col.names = NA,
         row.names = TRUE
     )
-    experiment$createArtifact(
+    taskRun$createArtifact(
         asv_shortname_path,
         basename(asv_shortname_path)
     )
@@ -570,7 +570,7 @@ main <- function(experiment) {
         sequences_dna_stringset,
         file = sequences_dna_stringset_path
     )
-    experiment$createArtifact(
+    taskRun$createArtifact(
         sequences_dna_stringset_path,
         basename(sequences_dna_stringset_path)
     )
@@ -581,7 +581,7 @@ main <- function(experiment) {
 
     seqtab_ps_path <- file.path(output_path, "seqtab_ps.RData")
     save(seqtab_ps, file = seqtab_ps_path)
-    experiment$createArtifact(
+    taskRun$createArtifact(
         seqtab_ps_path,
         basename(seqtab_ps_path)
     )
@@ -603,7 +603,7 @@ main <- function(experiment) {
         sequences_dna_stringset_path,
         mafft_output_path
     )
-    experiment$createArtifact(mafft_output_path, basename(mafft_output_path))
+    taskRun$createArtifact(mafft_output_path, basename(mafft_output_path))
 
     ########### 5: Phylogenetic tree using FASTTREE ##########
 
@@ -620,12 +620,12 @@ main <- function(experiment) {
 
     tree_file <- file.path(output_path, "phylo_tree_newick_MAFFT1.tree")
     fasttree(mafft_output_path, tree_file)
-    experiment$createArtifact(tree_file, basename(tree_file))
+    taskRun$createArtifact(tree_file, basename(tree_file))
 
     phylo_tree <- ape::read.tree(tree_file)
     phylo_tree_path <- file.path(output_path, "fasttree_MAFFT1.RData")
     save(phylo_tree, file = phylo_tree_path)
-    experiment$createArtifact(phylo_tree_path, basename(phylo_tree_path))
+    taskRun$createArtifact(phylo_tree_path, basename(phylo_tree_path))
 
     ########## 6. Create the phyloseq object ##########
     # To buid the phyloseq object we need the metadata, the seqtab.nochim file, the assigned taxonomy file and the phylogenetic tree.
@@ -661,7 +661,7 @@ main <- function(experiment) {
 
     taxid_silva_matrix_path <- file.path(output_path, "Taxtable_rownames.csv")
     write.csv(taxid_silva_matrix, file = taxid_silva_matrix_path)
-    experiment$createArtifact(
+    taskRun$createArtifact(
         taxid_silva_matrix_path,
         basename(taxid_silva_matrix_path)
     )
@@ -702,7 +702,7 @@ main <- function(experiment) {
     # Save the phyloseq object
     pseq_path <- file.path(output_path, "phyloseq_object.RData")
     save(pseq, file = pseq_path)
-    experiment$createArtifact(pseq_path, basename(pseq_path))
+    taskRun$createArtifact(pseq_path, basename(pseq_path))
 
     print("pseq otu_table head")
     print(head(otu_table(pseq)))
@@ -715,8 +715,8 @@ main <- function(experiment) {
 
     # Store the phyloseq object into an output dataset
     output_dataset <- ctx$CustomDataset$createDataset(
-        paste0(experiment$id, " - R Step 1: DADA2 and Phyloseq object"),
-        experiment$projectId
+        paste0(taskRun$id, " - R Step 1: DADA2 and Phyloseq object"),
+        taskRun$projectId
     )
 
     pseq_archive_path <- file.path(output_path, "pseq_archive.zip")

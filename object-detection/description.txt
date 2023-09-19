@@ -18,16 +18,16 @@ Output of the model is an array of 4 different values:
     - Index 2: Class of the detection
     - Index 3: Number of (valid) detections after performing NMS (Non-maximum suppression)
 
-Expected experiment runtime on CPU is ~36m 17s.
+Expected TaskRun runtime on CPU is ~36m 17s.
     - CPU: 2.3GHz 8-core 9th-generation Intel Core i9
     - RAM: 16 GB 2667 MHz DDR4
 
-Expected experiment runtime on GPU is ~7m 49s. System specifications:
+Expected TaskRun runtime on GPU is ~7m 49s. System specifications:
     - CPU: AMD Ryzen 7 1800X Eight-Core Processor
     - GPU: Nvidia GeForce GTX 1080 Ti 12 GB VRAM
     - RAM: 32 GB 2666 MHz DDR4
 
-Experiment parameters:
+TaskRun parameters:
     - Image count: 91
     - Epochs: 10
     - Batch size: 16

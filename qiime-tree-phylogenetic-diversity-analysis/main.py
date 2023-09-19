@@ -3,7 +3,7 @@ from zipfile import ZipFile
 
 import logging
 
-from coretex import CustomDataset, CustomSample, Experiment, folder_manager, currentExperiment
+from coretex import CustomDataset, CustomSample, TaskRun, folder_manager, currentTaskRun
 from coretex.bioinformatics import ctx_qiime2
 
 
@@ -36,7 +36,7 @@ def phylogenyAlignToTreeMafftFasttreeSample(sample: CustomSample, outputDir: Pat
 def processSample(
     index: int,
     sample: CustomSample,
-    experiment: Experiment,
+    taskRun: TaskRun,
     outputDataset: CustomDataset,
     outputDir: Path
 ) -> None:
@@ -49,22 +49,22 @@ def processSample(
     # Phylogenetic diversity analysis
     logging.info(">> [Qiime: Phylogenetic Diversity] Generating phylogenetic tree")
     treePath = phylogenyAlignToTreeMafftFasttreeSample(sample, sampleOutputDir)
-    ctx_qiime2.createSample(f"{index}-phylogenetic-tree", outputDataset.id, treePath, experiment, "Step 6: Phylogenetic tree")
+    ctx_qiime2.createSample(f"{index}-phylogenetic-tree", outputDataset.id, treePath, taskRun, "Step 6: Phylogenetic tree")
 
 
 def main() -> None:
-    experiment: Experiment[CustomDataset] = currentExperiment()
+    taskRun: TaskRun[CustomDataset] = currentTaskRun()
 
-    experiment.dataset.download()
+    taskRun.dataset.download()
 
-    denoisedSamples = ctx_qiime2.getDenoisedSamples(experiment.dataset)
+    denoisedSamples = ctx_qiime2.getDenoisedSamples(taskRun.dataset)
     if len(denoisedSamples) == 0:
         raise ValueError(">> [Qiime: Phylogenetic Diversity] Dataset has 0 denoised samples")
 
     outputDir = folder_manager.createTempFolder("tree_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 6: Phylogenetic tree",
-        experiment.projectId
+        f"{taskRun.id} - Step 6: Phylogenetic tree",
+        taskRun.projectId
     )
 
     if outputDataset is None:
@@ -72,7 +72,7 @@ def main() -> None:
 
     for sample in denoisedSamples:
         index = ctx_qiime2.sampleNumber(sample)
-        processSample(index, sample, experiment, outputDataset, outputDir)
+        processSample(index, sample, taskRun, outputDataset, outputDir)
 
 
 if __name__ == "__main__":

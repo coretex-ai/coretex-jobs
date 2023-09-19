@@ -21,7 +21,7 @@ from utils.general import (DATASETS_DIR, LOGGER, NUM_THREADS, check_requirements
                              cv2, segments2boxes, xyn2xy, xywh2xyxy, xywhn2xyxy, xyxy2xywhn)
 from utils.torch_utils import torch_distributed_zero_first
 
-from coretex import ComputerVisionDataset, CoretexImageAnnotation, Experiment
+from coretex import ComputerVisionDataset, CoretexImageAnnotation, TaskRun
 
 
 HELP_URL = 'https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data'
@@ -91,7 +91,7 @@ class InfiniteDataLoader(dataloader.DataLoader):
         for i in range(len(self)):
             yield next(self.iterator)
 
-def create_dataloader(experiment: Experiment[ComputerVisionDataset],
+def create_dataloader(taskRun: TaskRun[ComputerVisionDataset],
                       coretexDataset: ComputerVisionDataset,
                       imgsz,
                       batch_size,
@@ -113,7 +113,7 @@ def create_dataloader(experiment: Experiment[ComputerVisionDataset],
         shuffle = False
     with torch_distributed_zero_first(rank):  # init dataset *.cache only once if DDP
         dataset = LoadDataset(
-            experiment,
+            taskRun,
             coretexDataset,
             imgsz,
             batch_size,
@@ -259,8 +259,8 @@ def exif_size(img):
 
 def verify_image_label(args):
     # Verify one image-label pair
-    experiment: Experiment[ComputerVisionDataset]
-    im_file, lb_file, prefix, experiment = args
+    taskRun: TaskRun[ComputerVisionDataset]
+    im_file, lb_file, prefix, taskRun = args
 
     nm, nf, ne, nc, msg, segments = 0, 0, 0, 0, '', []  # number (missing, found, empty, corrupt), message, segments
     try:
@@ -285,7 +285,7 @@ def verify_image_label(args):
 
                 lb = []
                 for instance in coretexAnnotation.instances:
-                    labelId = experiment.dataset.classes.labelIdForClassId(instance.classId)
+                    labelId = taskRun.dataset.classes.labelIdForClassId(instance.classId)
                     if labelId is None:
                         # It's ok to have orphan annotation
                         continue
@@ -329,7 +329,7 @@ class LoadDataset(Dataset):
     cache_version = 0.6
 
     def __init__(self,
-                 experiment: Experiment[ComputerVisionDataset],
+                 taskRun: TaskRun[ComputerVisionDataset],
                  coretexDataset: ComputerVisionDataset,
                  img_size=640,
                  batch_size=16,
@@ -350,7 +350,7 @@ class LoadDataset(Dataset):
         self.mosaic = self.augment and not self.rect  # load 4 images at a time into a mosaic (only during training)
         self.mosaic_border = [-img_size // 2, -img_size // 2]
         self.stride = stride
-        self.experiment = experiment
+        self.taskRun = taskRun
         self.coretexDataset = coretexDataset
         self.albumentations = Albumentations() if augment else None
 
@@ -463,7 +463,7 @@ class LoadDataset(Dataset):
         nm, nf, ne, nc, msgs = 0, 0, 0, 0, []  # number missing, found, empty, corrupt, messages
         desc = f"{prefix}Scanning '{path.parent / path.stem}' images and labels..."
         with Pool(NUM_THREADS) as pool:
-            pbar = pool.imap(verify_image_label, zip(self.im_files, self.label_files, repeat(prefix), repeat(self.experiment)))
+            pbar = pool.imap(verify_image_label, zip(self.im_files, self.label_files, repeat(prefix), repeat(self.taskRun)))
             for im_file, lb, shape, segments, nm_f, nf_f, ne_f, nc_f, msg in pbar:
                 nm += nm_f
                 nf += nf_f

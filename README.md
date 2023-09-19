@@ -16,4 +16,4 @@ We welcome contributions to this repository. If you have a task template that yo
 
 ## License
 
-This project is licensed under the terms of the AGPL 3.0 license.
+This task is licensed under the terms of the AGPL 3.0 license.

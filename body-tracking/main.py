@@ -8,7 +8,7 @@ import tensorflowjs as tfjs
 import tensorflow as tf
 import coremltools
 
-from coretex import Model, cache, Experiment, folder_manager, currentExperiment
+from coretex import Model, cache, TaskRun, folder_manager, currentTaskRun
 
 
 classes = [
@@ -62,17 +62,17 @@ def saveCoremlModel(savedModelPath: str) -> None:
     model.save(f"{modelPath}/model.mlmodel")
 
 
-def saveJSModel(loadModelPath: str, modelPath: Path, modelTfjsPath: str, experiment: Experiment, coretexModel: Model) -> None:
+def saveJSModel(loadModelPath: str, modelPath: Path, modelTfjsPath: str, taskRun: TaskRun, coretexModel: Model) -> None:
     tfjs.converters.convert_tf_saved_model(
         loadModelPath,
         modelTfjsPath
     )
 
     coretexModel.saveModelDescriptor(modelPath, {
-        "project_task": experiment.projectType,
+        "project_task": taskRun.projectType,
         "labels": classes,
         "modelName": coretexModel.name,
-        "description": experiment.description,
+        "description": taskRun.description,
 
         "input_description": """
             The height/width must be multiple of 32.
@@ -115,25 +115,25 @@ def saveJSModel(loadModelPath: str, modelPath: Path, modelTfjsPath: str, experim
 
 
 def main() -> None:
-    experiment: Experiment = currentExperiment()
+    taskRun: TaskRun = currentTaskRun()
 
     modelPath = folder_manager.createTempFolder("model")
 
-    tfjsModelUrl = experiment.parameters["tfjsModelUrl"]
+    tfjsModelUrl = taskRun.parameters["tfjsModelUrl"]
     tfjsFilename = "multipose_tfjs.zip"
     tfjsModelPath = os.path.join(modelPath, "tensorflowjs-model")
 
-    savedModelUrl = experiment.parameters["savedModelUrl"]
+    savedModelUrl = taskRun.parameters["savedModelUrl"]
     savedModelFilename = "multipose_savedModel.zip"
 
-    coretexModel = Model.createModel(experiment.name, experiment.id, 0.9139, {})
+    coretexModel = Model.createModel(taskRun.name, taskRun.id, 0.9139, {})
     logging.info(f">> [Task] Model accuracy is: {coretexModel.accuracy}")
 
     savedModelPath = fetchModelFile(savedModelUrl, savedModelFilename)
 
     saveCoremlModel(savedModelPath)
     saveTfLiteModel(savedModelPath)
-    saveJSModel(fetchModelFile(tfjsModelUrl, tfjsFilename), modelPath, tfjsModelPath, experiment, coretexModel)
+    saveJSModel(fetchModelFile(tfjsModelUrl, tfjsFilename), modelPath, tfjsModelPath, taskRun, coretexModel)
 
     coretexModel.upload(modelPath)
 

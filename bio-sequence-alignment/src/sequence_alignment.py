@@ -3,24 +3,24 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 import logging
 
-from coretex import Experiment, CustomDataset, CustomSample, folder_manager
+from coretex import TaskRun, CustomDataset, CustomSample, folder_manager
 from coretex.bioinformatics import sequence_alignment as sa
 
 from .filepaths import BWA
 
 
-def sequeneAlignment(experiment: Experiment[CustomDataset], genomePrefix: Path) -> Path:
+def sequeneAlignment(taskRun: TaskRun[CustomDataset], genomePrefix: Path) -> Path:
     samDir = folder_manager.createTempFolder("SAM")
 
     logging.info(">> [Sequence Alignment] Starting dataset download...")
-    experiment.dataset.download()
+    taskRun.dataset.download()
 
     logging.info(">> [Sequence Alignment] Dataset downloaded")
-    sequencePaths = sa.loadFa(experiment.dataset)
+    sequencePaths = sa.loadFa(taskRun.dataset)
 
     samDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Sequence alignment: SAM",
-        experiment.projectId
+        f"{taskRun.id} - Sequence alignment: SAM",
+        taskRun.projectId
     )
 
     if samDataset is None:

@@ -6,7 +6,7 @@ import logging
 
 import numpy as np
 
-from coretex import ComputerVisionDataset, Experiment, Model, augmentDataset, Metric, MetricType, folder_manager, currentExperiment
+from coretex import ComputerVisionDataset, TaskRun, Model, augmentDataset, Metric, MetricType, folder_manager, currentTaskRun
 
 import src.train as train
 import src.detect as detect
@@ -29,12 +29,12 @@ def hasAnnotations(dataset: ComputerVisionDataset, excludedClasses: list[str]) -
 
 
 def main() -> None:
-    experiment: Experiment[ComputerVisionDataset] = currentExperiment()
+    taskRun: TaskRun[ComputerVisionDataset] = currentTaskRun()
 
-    if not experiment.parameters["validation"]:
-        epochs = experiment.parameters["epochs"]
+    if not taskRun.parameters["validation"]:
+        epochs = taskRun.parameters["epochs"]
 
-        experiment.createMetrics([
+        taskRun.createMetrics([
             Metric.create("loss", "epoch", MetricType.int, "value", MetricType.float, [0, epochs]),
             Metric.create("mAP@0.5", "epoch", MetricType.int, "value", MetricType.float, [0, epochs], [0, 1]),
             Metric.create("mAP@0.5:0.95", "epoch", MetricType.int, "value", MetricType.float, [0, epochs], [0, 1])
@@ -42,31 +42,31 @@ def main() -> None:
 
         modelDirPath = folder_manager.createTempFolder("model")
 
-        excludedClasses: list[str] = experiment.parameters["excludedClasses"]
+        excludedClasses: list[str] = taskRun.parameters["excludedClasses"]
         logging.info(f">> [Task] Excluding classes: {excludedClasses}")
-        experiment.dataset.classes.exclude(excludedClasses)
+        taskRun.dataset.classes.exclude(excludedClasses)
 
-        experiment.dataset.download(ignoreCache=True)
+        taskRun.dataset.download(ignoreCache=True)
 
-        if not hasAnnotations(experiment.dataset, excludedClasses):
+        if not hasAnnotations(taskRun.dataset, excludedClasses):
             raise RuntimeError(">> [Object Detection] No annotations found in the provided dataset. Please add at least 1 annotation before training an object detector.")
 
-        augmentationDataset = experiment.parameters.get("augmentationDataset", None)
+        augmentationDataset = taskRun.parameters.get("augmentationDataset", None)
         if augmentationDataset is not None:
             logging.info(">> [Object Detection] Augmenting the dataset")
 
-            rotationAngle = experiment.parameters.get("rotationAngle", 0)
-            scaleFactor = experiment.parameters.get("scaleFactor", 1.0)
+            rotationAngle = taskRun.parameters.get("rotationAngle", 0)
+            scaleFactor = taskRun.parameters.get("scaleFactor", 1.0)
 
             augmentationDataset.download()
 
-            augmentDataset(experiment.dataset, augmentationDataset, rotationAngle, scaleFactor)
+            augmentDataset(taskRun.dataset, augmentationDataset, rotationAngle, scaleFactor)
 
         # start the training
-        f1 = train.main(experiment)
+        f1 = train.main(taskRun)
 
-        imageSize = experiment.parameters["imageSize"]
-        detect.run(experiment, imgsz = (imageSize, imageSize))
+        imageSize = taskRun.parameters["imageSize"]
+        detect.run(taskRun, imgsz = (imageSize, imageSize))
 
         accuracy = f1.mean() if isinstance(f1, np.ndarray) else f1
 
@@ -83,14 +83,14 @@ def main() -> None:
                 "label": clazz.label,
                 "color": clazz.color
             }
-            for clazz in experiment.dataset.classes
+            for clazz in taskRun.dataset.classes
         ]
 
         Model.saveModelDescriptor(modelDirPath, {
-            "project_task": experiment.projectType,
+            "project_task": taskRun.projectType,
             "labels": labels,
-            "modelName": experiment.name,
-            "description": experiment.description,
+            "modelName": taskRun.name,
+            "description": taskRun.description,
 
             "input_description": """
                 Normalized (values of pixels in range: 0 - 1) RGB image
@@ -118,12 +118,12 @@ def main() -> None:
             ]
         })
 
-        coretexModel = Model.createModel(experiment.name, experiment.id, accuracy, {})
+        coretexModel = Model.createModel(taskRun.name, taskRun.id, accuracy, {})
         coretexModel.upload(modelDirPath)
 
     else:
-        imageSize = experiment.parameters["imageSize"]
-        modelId = experiment.parameters["modelId"]
+        imageSize = taskRun.parameters["imageSize"]
+        modelId = taskRun.parameters["modelId"]
         model = Model.fetchById(modelId)
 
         if model is None:
@@ -132,7 +132,7 @@ def main() -> None:
         model.download()
         weightsPath = Path(folder_manager.modelsFolder) / f"{modelId}/model.pt"
 
-        detect.run(experiment, imgsz = (imageSize, imageSize), weights = weightsPath)
+        detect.run(taskRun, imgsz = (imageSize, imageSize), weights = weightsPath)
 
 
 if __name__ == "__main__":

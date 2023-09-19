@@ -5,26 +5,26 @@ import logging
 
 import numpy as np
 
-from coretex import Experiment, CustomDataset, ExperimentStatus, folder_manager
+from coretex import TaskRun, CustomDataset, TaskRunStatus, folder_manager
 
 from .utils import savePlotFig
 
 
-def loadDataStd(dataset: CustomDataset, experiment: Experiment[CustomDataset]) -> tuple[int, int, dict[str, int], dict[str, int], list[int]]:
+def loadDataStd(dataset: CustomDataset, taskRun: TaskRun[CustomDataset]) -> tuple[int, int, dict[str, int], dict[str, int], list[int]]:
     logging.info(">> [MicrobiomeForensics] Downloading dataset...")
-    experiment.updateStatus(ExperimentStatus.inProgress, "Downloading dataset...")
+    taskRun.updateStatus(TaskRunStatus.inProgress, "Downloading dataset...")
     dataset.download()
 
-    experiment.updateStatus(ExperimentStatus.inProgress, "Loading data")
+    taskRun.updateStatus(TaskRunStatus.inProgress, "Loading data")
 
     taxonDistributionSavePath = folder_manager.temp / "taxon_histogram.png"
     classDistributionSavePath = folder_manager.temp / "body_site_histogram.png"
 
-    datasetLen = len(experiment.dataset.samples)
+    datasetLen = len(taskRun.dataset.samples)
     if datasetLen < 10:
         raise RuntimeError(f">> [MicrobiomeForensics] You have insufficient number of samples in your dataset ({datasetLen})")
 
-    level: int = experiment.parameters["taxonomicLevel"]
+    level: int = taskRun.parameters["taxonomicLevel"]
 
     uniqueTaxons: dict[str, int] = {}
     uniqueBodySites: dict[str, int] = {}
@@ -59,7 +59,7 @@ def loadDataStd(dataset: CustomDataset, experiment: Experiment[CustomDataset]) -
     taxonDistribution = {k:v for k, v in taxonDistribution.items() if v > (max(taxonDistributionValues)/10)}
 
     savePlotFig(
-        experiment,
+        taskRun,
         classDistribution,
         classDistributionSavePath,
         "body_site_histogram.png",
@@ -70,7 +70,7 @@ def loadDataStd(dataset: CustomDataset, experiment: Experiment[CustomDataset]) -
     )
 
     savePlotFig(
-        experiment,
+        taskRun,
         taxonDistribution,
         taxonDistributionSavePath,
         "taxon_histogram.png",
@@ -83,7 +83,7 @@ def loadDataStd(dataset: CustomDataset, experiment: Experiment[CustomDataset]) -
     return level, datasetLen, uniqueTaxons, uniqueBodySites
 
 
-def prepareForTrainingStd(level: int, datasetLen: int, uniqueTaxons: dict, uniqueBodySites: dict, experiment: Experiment[CustomDataset]) -> tuple[np.ndarray, np.ndarray]:
+def prepareForTrainingStd(level: int, datasetLen: int, uniqueTaxons: dict, uniqueBodySites: dict, taskRun: TaskRun[CustomDataset]) -> tuple[np.ndarray, np.ndarray]:
     inputMatrix = np.zeros((datasetLen, len(uniqueTaxons)))
     outputMatrix = np.zeros((datasetLen, 1))
 
@@ -92,7 +92,7 @@ def prepareForTrainingStd(level: int, datasetLen: int, uniqueTaxons: dict, uniqu
 
     sampleIdList = []
 
-    for i, sample in enumerate(experiment.dataset.samples):
+    for i, sample in enumerate(taskRun.dataset.samples):
         sample.unzip()
         samplePath = glob.glob(os.path.join(sample.path, f"*.json"))[0]
 

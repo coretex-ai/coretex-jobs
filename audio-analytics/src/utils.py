@@ -6,14 +6,14 @@ import os
 import json
 import logging
 
-from coretex import CustomSample, cache, Experiment, folder_manager
+from coretex import CustomSample, cache, TaskRun, folder_manager
 from coretex.nlp import Token
 
 from .occurence import NamedEntityRecognitionResult
 
 
 def createTranscriptionArtfacts(
-    experiment: Experiment,
+    taskRun: TaskRun,
     sample: CustomSample,
     transcribedText: str,
     tokens: list[Token],
@@ -30,14 +30,14 @@ def createTranscriptionArtfacts(
     with open(textPath, "w") as transcriptionFile:
         transcriptionFile.write(transcribedText)
 
-    if not experiment.createArtifact(textPath, f"{sample.id}/transcription.txt"):
+    if not taskRun.createArtifact(textPath, f"{sample.id}/transcription.txt"):
         logging.error(f">> Artifact upload failed for file {textPath}!")
 
     # Transcription words/json
     with open(transcriptionPath, "w") as transcriptionFile:
         json.dump([word.encode() for word in tokens], transcriptionFile, indent = 4)
 
-    if not experiment.createArtifact(transcriptionPath, f"{sample.id}/transcription.json"):
+    if not taskRun.createArtifact(transcriptionPath, f"{sample.id}/transcription.json"):
         logging.error(f">> Artifacts upload failed for file {transcriptionPath}!")
 
     # Text search result
@@ -45,7 +45,7 @@ def createTranscriptionArtfacts(
         with open(searchTranscriptionPath, "w") as searchResultFile:
             json.dump(coretexAudioResult.encode(), searchResultFile, indent = 4)
 
-        if not experiment.createArtifact(searchTranscriptionPath, f"{sample.id}/transcription.ner"):
+        if not taskRun.createArtifact(searchTranscriptionPath, f"{sample.id}/transcription.ner"):
             logging.error(f">> Artifacts upload failed for file {searchTranscriptionPath}!")
 
 

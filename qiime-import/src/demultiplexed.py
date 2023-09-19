@@ -5,7 +5,7 @@ from zipfile import ZipFile
 import csv
 import logging
 
-from coretex import SequenceDataset, CustomDataset, CustomSample, Experiment, SequenceSample
+from coretex import SequenceDataset, CustomDataset, CustomSample, TaskRun, SequenceSample
 from coretex.bioinformatics import ctx_qiime2
 
 from .utils import convertMetadata
@@ -79,13 +79,13 @@ def createManifestPaired(samples: List[SequenceSample], manifestPath: Path) -> P
 
 def importDemultiplexed(
     dataset: SequenceDataset,
-    experiment: Experiment,
+    taskRun: TaskRun,
     outputDir: Path
 ) -> None:
 
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 1: Import - Demultiplexed",
-        experiment.projectId
+        f"{taskRun.id} - Step 1: Import - Demultiplexed",
+        taskRun.projectId
     )
 
     if outputDataset is None:
@@ -107,14 +107,14 @@ def importDemultiplexed(
     importZipPath = importSample(inputPath, sequenceType, inputFormat, outputDir)
 
     logging.info(">> [Qiime: Import] Uploading sample")
-    demuxSample = ctx_qiime2.createSample("0-demux", outputDataset.id, importZipPath, experiment, "Step 1: Import")
+    demuxSample = ctx_qiime2.createSample("0-demux", outputDataset.id, importZipPath, taskRun, "Step 1: Import")
 
-    metadataZipPath = importMetadata(dataset.metadata, outputDir, experiment.parameters["metadataFileName"])
-    ctx_qiime2.createSample("0-metadata", outputDataset.id, metadataZipPath, experiment, "Step 1: Import")
+    metadataZipPath = importMetadata(dataset.metadata, outputDir, taskRun.parameters["metadataFileName"])
+    ctx_qiime2.createSample("0-metadata", outputDataset.id, metadataZipPath, taskRun, "Step 1: Import")
 
     demuxSample.download()
     demuxSample.unzip()
 
     logging.info(">> [Qiime: Import] Creating summarization...")
     visualizationPath = demuxSummarize(demuxSample, outputDir)
-    ctx_qiime2.createSample("0-summary", outputDataset.id, visualizationPath, experiment, "Step 1: Import")
+    ctx_qiime2.createSample("0-summary", outputDataset.id, visualizationPath, taskRun, "Step 1: Import")

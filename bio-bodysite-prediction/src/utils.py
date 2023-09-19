@@ -10,7 +10,7 @@ from scipy.sparse import csr_matrix
 import numpy as np
 import matplotlib.pyplot as plt
 
-from coretex import CustomDataset, Experiment, Model, folder_manager
+from coretex import CustomDataset, TaskRun, Model, folder_manager
 
 from .objects import Sample
 
@@ -20,17 +20,17 @@ def jsonPretty(data, savePath) -> None:
         json.dump(data, write_file, indent=4)
 
 
-def saveModel(accuracy: float, uniqueBodySites: dict[str, int], lenOfData: int, numOfUniqueTaxons: int, experiment: Experiment[CustomDataset]) -> None:
+def saveModel(accuracy: float, uniqueBodySites: dict[str, int], lenOfData: int, numOfUniqueTaxons: int, taskRun: TaskRun[CustomDataset]) -> None:
     modelPath = folder_manager.temp / "modelFolder"
 
     labels = list(uniqueBodySites.keys())
 
-    model = Model.createModel(experiment.name, experiment.id, accuracy, {})
+    model = Model.createModel(taskRun.name, taskRun.id, accuracy, {})
     model.saveModelDescriptor(modelPath, {
-        "project_task": experiment.projectType,
+        "project_task": taskRun.projectType,
         "labels": labels,
         "modelName": model.name,
-        "description": experiment.description,
+        "description": taskRun.description,
 
         "input_description": """
             Input shape is [len(dataOfSamples), len(listOfUniqueTaxons)]
@@ -69,13 +69,13 @@ def getBodySite(lineId: str, dataDict: dict[str, str]) -> Optional[tuple[str, st
     return valueSplit[0], valueSplit[1]
 
 
-def saveFeatureTable(featureTablePath: str, tableInput: np.ndarray, experiment: Experiment[CustomDataset]) -> None:
+def saveFeatureTable(featureTablePath: str, tableInput: np.ndarray, taskRun: TaskRun[CustomDataset]) -> None:
     np.savetxt(featureTablePath, tableInput, delimiter=",", fmt = "%i")
-    experiment.createArtifact(featureTablePath, "feature_table.csv")
+    taskRun.createArtifact(featureTablePath, "feature_table.csv")
 
 
 def savePlotFig(
-    experiment: Experiment[CustomDataset],
+    taskRun: TaskRun[CustomDataset],
     distributionDict: dict,
     savePath: str,
     fileName: str,
@@ -102,11 +102,11 @@ def savePlotFig(
         plt.xticks(rotation = 45, ha = "right")
 
     plt.savefig(savePath, bbox_inches = "tight")
-    experiment.createArtifact(savePath, fileName)
+    taskRun.createArtifact(savePath, fileName)
 
 
 def savePredictionFile(
-    experiment: Experiment[CustomDataset],
+    taskRun: TaskRun[CustomDataset],
     savePath: str,
     xTrain: csr_matrix,
     xTest: csr_matrix,
@@ -136,7 +136,7 @@ def savePredictionFile(
                 ])
                 z += 1
 
-    experiment.createArtifact(savePath, "body_site_predictions.csv")
+    taskRun.createArtifact(savePath, "body_site_predictions.csv")
 
 
 def validateDataset(dataset: CustomDataset) -> None:
@@ -173,10 +173,10 @@ def calculateDistributions(sampleData: list[Sample]) -> tuple[dict[str, int], di
     return classDistribution, taxonDistribution
 
 
-def plots(sampleData: list[Sample], experiment: Experiment[CustomDataset]) -> None:
+def plots(sampleData: list[Sample], taskRun: TaskRun[CustomDataset]) -> None:
 
     """
-        Creates taxon_histogram.png and body_site_histogram.png in experiment artifacts.
+        Creates taxon_histogram.png and body_site_histogram.png in taskRun artifacts.
 
         Parameters
         ----------
@@ -196,7 +196,7 @@ def plots(sampleData: list[Sample], experiment: Experiment[CustomDataset]) -> No
         raise RuntimeError(f">> [MicrobiomeForensics] You have insufficient number of samples in your dataset ({len(sampleData)})")
 
     savePlotFig(
-        experiment,
+        taskRun,
         classDistribution,
         classDistributionSavePath,
         "body_site_histogram.png",
@@ -207,7 +207,7 @@ def plots(sampleData: list[Sample], experiment: Experiment[CustomDataset]) -> No
     )
 
     savePlotFig(
-        experiment,
+        taskRun,
         taxonDistribution,
         taxonDistributionSavePath,
         "taxon_histogram.png",

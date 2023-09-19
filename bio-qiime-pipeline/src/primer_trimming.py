@@ -4,7 +4,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 import logging
 
-from coretex import Experiment, SequenceDataset, CustomSample, SequenceSample, folder_manager
+from coretex import TaskRun, SequenceDataset, CustomSample, SequenceSample, folder_manager
 from coretex.bioinformatics import cutadaptTrim
 
 
@@ -53,9 +53,9 @@ def trimPairedEnd(
     uploadTrimmedReads(forwardFile.name.split("_")[0], outputDataset, forwardFile, reverseFile)
 
 
-def primerTrimming(dataset: SequenceDataset, experiment: Experiment, pairedEnd: bool) -> SequenceDataset:
-    forwardAdapter = experiment.parameters["forwardAdapter"]
-    reverseAdapter = experiment.parameters["reverseAdapter"]
+def primerTrimming(dataset: SequenceDataset, taskRun: TaskRun, pairedEnd: bool) -> SequenceDataset:
+    forwardAdapter = taskRun.parameters["forwardAdapter"]
+    reverseAdapter = taskRun.parameters["reverseAdapter"]
 
     # In case no adapter in entered, "X" will act as placeholder as no
     # sequence should start with the letter X
@@ -70,8 +70,8 @@ def primerTrimming(dataset: SequenceDataset, experiment: Experiment, pairedEnd: 
         reverseReadsFolder = folder_manager.createTempFolder("revereseReads")
 
     outputDataset = SequenceDataset.createSequenceDataset(
-        f"{experiment.id} - Cutadapt Output",
-        experiment.projectId,
+        f"{taskRun.id} - Cutadapt Output",
+        taskRun.projectId,
         dataset.metadata.zipPath
     )
 

@@ -3,12 +3,12 @@ from zipfile import ZipFile
 
 import logging
 
-from coretex import CustomSample, CustomDataset, Experiment, folder_manager, currentExperiment
+from coretex import CustomSample, CustomDataset, TaskRun, folder_manager, currentTaskRun
 from coretex.bioinformatics import ctx_qiime2
 
 
-def forwardMetadata(sample: CustomSample, index: int,  outputDatasetId: int, experiment: Experiment) -> Path:
-    ctx_qiime2.createSample(f"{index}-metadata", outputDatasetId, sample.zipPath, experiment, "Step 2: Demultiplexing")
+def forwardMetadata(sample: CustomSample, index: int,  outputDatasetId: int, taskRun: TaskRun) -> Path:
+    ctx_qiime2.createSample(f"{index}-metadata", outputDatasetId, sample.zipPath, taskRun, "Step 2: Demultiplexing")
     return ctx_qiime2.getMetadata(sample)
 
 
@@ -53,9 +53,9 @@ def demuxEmpSample(sample: CustomSample, barcodesPath: Path, barcodeColumn: str,
 
 
 def main() -> None:
-    experiment: Experiment[CustomDataset] = currentExperiment()
+    taskRun: TaskRun[CustomDataset] = currentTaskRun()
 
-    dataset = experiment.dataset
+    dataset = taskRun.dataset
     dataset.download()
 
     importedSamples = ctx_qiime2.getImportedSamples(dataset)
@@ -64,8 +64,8 @@ def main() -> None:
 
     outputDir = folder_manager.createTempFolder("demux_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 2: Demultiplexing",
-        experiment.projectId
+        f"{taskRun.id} - Step 2: Demultiplexing",
+        taskRun.projectId
     )
 
     if outputDataset is None:
@@ -80,23 +80,23 @@ def main() -> None:
         if metadataSample is None:
             raise ValueError(f">> [Qiime: Demux] Metadata sample not found")
 
-        metadataPath = forwardMetadata(metadataSample, index, outputDataset.id, experiment)
+        metadataPath = forwardMetadata(metadataSample, index, outputDataset.id, taskRun)
         demuxPath = demuxEmpSample(
             sample,
             metadataPath,
-            experiment.parameters["barcodeColumn"],
+            taskRun.parameters["barcodeColumn"],
             outputDir,
             ctx_qiime2.isPairedEnd(sample)
         )
 
-        demuxSample = ctx_qiime2.createSample(f"{index}-demux", outputDataset.id, demuxPath, experiment, "Step 2: Demultiplexing")
+        demuxSample = ctx_qiime2.createSample(f"{index}-demux", outputDataset.id, demuxPath, taskRun, "Step 2: Demultiplexing")
 
         demuxSample.download()
         demuxSample.unzip()
 
         logging.info(">> [Qiime: Demux] Creating summarization")
         visualizationPath = demuxSummarize(demuxSample, outputDir)
-        ctx_qiime2.createSample(f"{index}-summary", outputDataset.id, visualizationPath, experiment, "Step 2: Demultiplexing")
+        ctx_qiime2.createSample(f"{index}-summary", outputDataset.id, visualizationPath, taskRun, "Step 2: Demultiplexing")
 
 
 if __name__ == "__main__":

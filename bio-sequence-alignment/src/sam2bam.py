@@ -3,7 +3,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 import logging
 
-from coretex import Experiment, CustomDataset, CustomSample, folder_manager
+from coretex import TaskRun, CustomDataset, CustomSample, folder_manager
 from coretex.bioinformatics import sequence_alignment as sa
 
 from .filepaths import SAMTOOLS
@@ -25,12 +25,12 @@ def loadData(dataset: CustomDataset) -> list[Path]:
     return samPaths
 
 
-def sam2bam(experiment: Experiment[CustomDataset], samDir: Path) -> None:
+def sam2bam(taskRun: TaskRun[CustomDataset], samDir: Path) -> None:
     bamDir = folder_manager.createTempFolder("BAM")
 
     bamDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Sequence alignment: BAM",
-        experiment.projectId
+        f"{taskRun.id} - Sequence alignment: BAM",
+        taskRun.projectId
     )
 
     if bamDataset is None:

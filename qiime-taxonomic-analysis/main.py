@@ -1,7 +1,7 @@
 from pathlib import Path
 from zipfile import ZipFile
 
-from coretex import CustomDataset, CustomSample, Experiment, cache, folder_manager, currentExperiment
+from coretex import CustomDataset, CustomSample, TaskRun, cache, folder_manager, currentTaskRun
 from coretex.bioinformatics import ctx_qiime2
 
 
@@ -30,7 +30,7 @@ def processSample(
     index: int,
     sample: CustomSample,
     metadataSample: CustomSample,
-    experiment: Experiment,
+    taskRun: TaskRun,
     outputDataset: CustomDataset,
     outputDir: Path
 ):
@@ -45,10 +45,10 @@ def processSample(
     # Assign taxonomy to the sequences in our FeatureData[Sequence] QIIME 2 artifact
 
     # TODO: Do not zip cached samples
-    if not cache.exists(experiment.parameters["classifier"]):
-        cache.storeUrl(experiment.parameters["classifier"], "classifier.zip")
+    if not cache.exists(taskRun.parameters["classifier"]):
+        cache.storeUrl(taskRun.parameters["classifier"], "classifier.zip")
 
-    classifierPath = cache.getPath(experiment.parameters["classifier"])
+    classifierPath = cache.getPath(taskRun.parameters["classifier"])
     classifierPath = classifierPath.rename(classifierPath.parent / f"{classifierPath.stem}.qza")
 
     taxonomyPath = featureClassifierClassifySklearnSample(
@@ -57,7 +57,7 @@ def processSample(
         sampleOutputDir
     )
 
-    taxonomySample = ctx_qiime2.createSample(f"{index}-taxonomy", outputDataset.id, taxonomyPath, experiment, "Step 5: Taxonomic Analysis")
+    taxonomySample = ctx_qiime2.createSample(f"{index}-taxonomy", outputDataset.id, taxonomyPath, taskRun, "Step 5: Taxonomic Analysis")
 
     # Second step:
     # Visualize the results
@@ -70,7 +70,7 @@ def processSample(
         str(visualizationPath)
     )
 
-    ctx_qiime2.createSample(f"{index}-taxonomy-visualization", outputDataset.id, visualizationPath, experiment, "Step 5: Taxonomic Analysis")
+    ctx_qiime2.createSample(f"{index}-taxonomy-visualization", outputDataset.id, visualizationPath, taskRun, "Step 5: Taxonomic Analysis")
 
     # Third step:
     # View the taxonomic composition of our samples with interactive bar plots
@@ -83,25 +83,25 @@ def processSample(
         str(taxaBarBlotsPath)
     )
 
-    ctx_qiime2.createSample(f"{index}-taxonomy-bar-plots", outputDataset.id, taxaBarBlotsPath, experiment, "Step 5: Taxonomic Analysis")
+    ctx_qiime2.createSample(f"{index}-taxonomy-bar-plots", outputDataset.id, taxaBarBlotsPath, taskRun, "Step 5: Taxonomic Analysis")
 
 
 def main() -> None:
-    experiment: Experiment[CustomDataset] = currentExperiment()
+    taskRun: TaskRun[CustomDataset] = currentTaskRun()
 
-    experiment.dataset.download()
+    taskRun.dataset.download()
 
-    denoisedSamples = ctx_qiime2.getDenoisedSamples(experiment.dataset)
+    denoisedSamples = ctx_qiime2.getDenoisedSamples(taskRun.dataset)
     if len(denoisedSamples) == 0:
         raise ValueError(">> [Qiime: Taxonomic Analysis] Dataset has 0 denoised samples")
 
-    importedDataset: CustomDataset = experiment.parameters["importedDataset"]
+    importedDataset: CustomDataset = taskRun.parameters["importedDataset"]
     importedDataset.download()
 
     outputDir = folder_manager.createTempFolder("taxonomy_output")
     outputDataset = CustomDataset.createDataset(
-        f"{experiment.id} - Step 5: Taxonomic analysis",
-        experiment.projectId
+        f"{taskRun.id} - Step 5: Taxonomic analysis",
+        taskRun.projectId
     )
 
     if outputDataset is None:
@@ -118,7 +118,7 @@ def main() -> None:
             index,
             sample,
             metadataSample,
-            experiment,
+            taskRun,
             outputDataset,
             outputDir
         )

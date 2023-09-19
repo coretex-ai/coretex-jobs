@@ -5,7 +5,7 @@ from keras.layers import RandomFlip
 import numpy as np
 import tensorflow as tf
 
-from coretex import Experiment, ExperimentStatus, ImageSegmentationDataset
+from coretex import TaskRun, TaskRunStatus, ImageSegmentationDataset
 
 
 class Augment(tf.keras.layers.Layer):
@@ -30,8 +30,8 @@ class Augment(tf.keras.layers.Layer):
         return inputs, labels
 
 
-def loadDataset(coretexDataset: ImageSegmentationDataset, coretexExperiment: Experiment) -> tuple[int, tf.data.Dataset]:
-    coretexExperiment.updateStatus(ExperimentStatus.inProgress, "Created the TF dataset.")
+def loadDataset(coretexDataset: ImageSegmentationDataset, coretexTaskRun: TaskRun) -> tuple[int, tf.data.Dataset]:
+    coretexTaskRun.updateStatus(TaskRunStatus.inProgress, "Created the TF dataset.")
 
     def datasetElementProvider() -> Generator:
         for sample in coretexDataset.samples:

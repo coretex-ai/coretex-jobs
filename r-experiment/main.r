@@ -6,15 +6,15 @@ os <- import("os")
 ctx <- import("coretex")
 ctxFolderManager <- import("coretex.folder_manager")
 
-main <- function(experiment) {
+main <- function(taskRun) {
     # FolderManager.temp is used for temporary file storage
-    # temp directory is cleared when the experiment execution is finished
+    # temp directory is cleared when the TaskRun execution is finished
     plotPath <- os$path$join(ctxFolderManager$temp, "plot.png")
 
-    # Experiment.parameters contain parameters entered when the experiment
+    # TaskRun.parameters contain parameters entered when the TaskRun
     # was created on Coretex.ai
-    mean <- experiment$parameters[["mean"]]
-    sd <- experiment$parameters[["sd"]]
+    mean <- taskRun$parameters[["mean"]]
+    sd <- taskRun$parameters[["sd"]]
 
     print(">> [R Example] Plotting normal distribution...")
     print(sprintf(">> [R Example] Mean value: %.2f, Standard deviation value: %.2f", mean, sd))
@@ -32,14 +32,14 @@ main <- function(experiment) {
     plot(x, y, type = "l", lwd = 2, axes = FALSE, xlab = "", ylab = "")
     dev.off()
 
-    # Experiment.createArtifact is used to store any kind of file to
-    # Coretex.ai Experiment artifacts
-    if (is.null(experiment$createArtifact(plotPath, "plot.png"))) {
+    # TaskRun.createArtifact is used to store any kind of file to
+    # Coretex.ai TaskRun artifacts
+    if (is.null(taskRun$createArtifact(plotPath, "plot.png"))) {
         print(">> [R Example] Failed to create Artifact with name \"plot.png\"")
     } else {
         print(">> [R Example] Artifact with name \"plot.png\" created")
     }
 }
 
-# initializeTask must be called with a function to start the experiment execution
+# initializeTask must be called with a function to start the TaskRun execution
 ctx$initializeRTask(main, args)

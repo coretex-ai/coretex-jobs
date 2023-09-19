@@ -48,12 +48,12 @@ from utils.general import (LOGGER, check_img_size, check_requirements, colorstr,
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, time_sync
 
-from coretex import ComputerVisionDataset, Experiment, folder_manager
+from coretex import ComputerVisionDataset, TaskRun, folder_manager
 
 
 @torch.no_grad()
 def run(
-    experiment: Experiment[ComputerVisionDataset],
+    taskRun: TaskRun[ComputerVisionDataset],
     weights: Optional[Path] = None,
     imgsz=(640, 640),  # inference size (height, width)
     conf_thres=0.25,  # confidence threshold
@@ -98,14 +98,14 @@ def run(
     stride, names, pt = model.stride, model.names, model.pt
     imgsz = check_img_size(imgsz, s=stride)  # check image size
 
-    coretexDataset = experiment.dataset
+    coretexDataset = taskRun.dataset
     coretexDataset.download()
 
-    validationSplit = experiment.parameters["validationSplit"]
+    validationSplit = taskRun.parameters["validationSplit"]
     if validationSplit <= 0 or validationSplit >= 1:
         raise ValueError(">> [Object Detection] The validationSplit parameter value must be between 0 and 1")
 
-    validationCount = int(experiment.parameters["validationSplit"] * coretexDataset.count)
+    validationCount = int(taskRun.parameters["validationSplit"] * coretexDataset.count)
     if validationCount == 0:
         raise ValueError(">> [Object Detection] The validationSplit parameter is too low given the number of samples in the dataset")
 
@@ -191,7 +191,7 @@ def run(
                 cv2.imwrite(pred_path, im0)
                 artifactPath = f"{uuid.uuid1()}.jpeg"
 
-                artifact = experiment.createArtifact(pred_path, artifactPath)
+                artifact = taskRun.createArtifact(pred_path, artifactPath)
                 if artifact is None:
                     logging.info(f">> [Object Detection] Failed to create artifact: {artifactPath}")
 
