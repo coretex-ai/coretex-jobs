@@ -5,7 +5,8 @@ import os
 import logging
 
 from coretex import CustomDataset, CustomSample, TaskRun, folder_manager
-from coretex.bioinformatics import CommandException, ctx_qiime2
+from coretex.bioinformatics import ctx_qiime2
+from coretex.bioinformatics.utils import CommandException
 
 from .utils import columnNamePresent
 from .caching import getCacheNameSeven
@@ -188,7 +189,7 @@ def processSample(
             "Step 7: Alpha & Beta diversity analysis"
         )
     except CommandException:
-        logging.error(">> [Qiime: Alpha & Beta Diversity] Failed to execute \"qiime diversity core-metrics-phylogenetic\"")
+        raise ValueError(">> [Qiime: Alpha & Beta Diversity] Failed to execute \"qiime diversity core-metrics-phylogenetic\"")
 
     # Second step:
     # Explore the microbial composition of the samples in the context of the sample metadata
