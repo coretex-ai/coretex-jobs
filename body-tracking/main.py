@@ -69,7 +69,7 @@ def saveJSModel(loadModelPath: str, modelPath: Path, modelTfjsPath: str, taskRun
     )
 
     coretexModel.saveModelDescriptor(modelPath, {
-        "project_task": taskRun.spaceTask,
+        "project_task": taskRun.projectType,
         "labels": classes,
         "modelName": coretexModel.name,
         "description": taskRun.description,
@@ -127,7 +127,7 @@ def main() -> None:
     savedModelFilename = "multipose_savedModel.zip"
 
     coretexModel = Model.createModel(taskRun.name, taskRun.id, 0.9139, {})
-    logging.info(f">> [Workspace] Model accuracy is: {coretexModel.accuracy}")
+    logging.info(f">> [Task] Model accuracy is: {coretexModel.accuracy}")
 
     savedModelPath = fetchModelFile(savedModelUrl, savedModelFilename)
 

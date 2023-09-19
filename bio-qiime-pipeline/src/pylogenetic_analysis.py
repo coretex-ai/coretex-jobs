@@ -66,7 +66,7 @@ def phyogeneticDiversityAnalysis(
     outputDir = folder_manager.createTempFolder("tree_output")
     outputDataset = CustomDataset.createDataset(
         getCacheNameSix(taskRun),
-        taskRun.spaceId
+        taskRun.projectId
     )
 
     if outputDataset is None:

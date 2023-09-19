@@ -58,7 +58,7 @@ def saveJSModel(model: KerasModel, taskRun: TaskRun[ImageSegmentationDataset], c
     ]
 
     coretexModel.saveModelDescriptor(modelPath, {
-        "project_task": taskRun.spaceTask,
+        "project_task": taskRun.projectType,
         "labels": labels,
         "modelName": coretexModel.name,
         "description": taskRun.description,
@@ -86,7 +86,7 @@ def main() -> None:
     taskRun.dataset.download()
 
     excludedClasses: list[str] = taskRun.parameters["excludedClasses"]
-    logging.info(f">> [Workspace] Excluding classes: {excludedClasses}")
+    logging.info(f">> [Task] Excluding classes: {excludedClasses}")
     taskRun.dataset.classes.exclude(excludedClasses)
 
     count, dataset = loadDataset(taskRun.dataset, taskRun)
@@ -132,7 +132,7 @@ def main() -> None:
         {}
     )
 
-    logging.info(f">> [Workspace] Model accuracy is: {coretexModel.accuracy}")
+    logging.info(f">> [Task] Model accuracy is: {coretexModel.accuracy}")
 
     saveLiteModel(model)
     saveCoremlModel(model)

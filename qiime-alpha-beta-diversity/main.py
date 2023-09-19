@@ -341,7 +341,7 @@ def main() -> None:
     outputDir = folder_manager.createTempFolder("alpha_beta_output")
     outputDataset = CustomDataset.createDataset(
         f"{taskRun.id} - Step 7: Alpha & Beta diversity",
-        taskRun.spaceId
+        taskRun.projectId
     )
 
     if outputDataset is None:

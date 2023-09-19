@@ -101,7 +101,7 @@ def taxonomicAnalysis(
     outputDir = folder_manager.createTempFolder("taxonomy_output")
     outputDataset = CustomDataset.createDataset(
         getCacheNameFive(taskRun),
-        taskRun.spaceId
+        taskRun.projectId
     )
 
     if outputDataset is None:

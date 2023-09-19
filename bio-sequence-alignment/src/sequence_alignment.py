@@ -20,7 +20,7 @@ def sequeneAlignment(taskRun: TaskRun[CustomDataset], genomePrefix: Path) -> Pat
 
     samDataset = CustomDataset.createDataset(
         f"{taskRun.id} - Sequence alignment: SAM",
-        taskRun.spaceId
+        taskRun.projectId
     )
 
     if samDataset is None:

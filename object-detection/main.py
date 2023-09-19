@@ -43,7 +43,7 @@ def main() -> None:
         modelDirPath = folder_manager.createTempFolder("model")
 
         excludedClasses: list[str] = taskRun.parameters["excludedClasses"]
-        logging.info(f">> [Workspace] Excluding classes: {excludedClasses}")
+        logging.info(f">> [Task] Excluding classes: {excludedClasses}")
         taskRun.dataset.classes.exclude(excludedClasses)
 
         taskRun.dataset.download(ignoreCache=True)
@@ -87,7 +87,7 @@ def main() -> None:
         ]
 
         Model.saveModelDescriptor(modelDirPath, {
-            "project_task": taskRun.spaceTask,
+            "project_task": taskRun.projectType,
             "labels": labels,
             "modelName": taskRun.name,
             "description": taskRun.description,

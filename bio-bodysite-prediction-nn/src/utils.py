@@ -25,7 +25,7 @@ def saveModel(taskRun: TaskRun[CustomDataset], accuracy: float, uniqueBodySites:
 
     model = Model.createModel(taskRun.name, taskRun.id, accuracy, {})
     model.saveModelDescriptor(modelPath, {
-        "project_task": taskRun.spaceTask,
+        "project_task": taskRun.projectId,
         "labels": labels,
         "modelName": model.name,
         "description": taskRun.description,

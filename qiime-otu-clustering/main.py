@@ -62,7 +62,7 @@ def importReferenceDataset(dataset: CustomDataset, outputDir: Path, taskRun: Tas
         qzaPath = outputDir / f"{fastaPath.stem}.qza"
         ctx_qiime2.toolsImport("FeatureData[Sequence]", str(fastaPath), str(qzaPath))
 
-        referenceCache = CustomDataset.createDataset(referenceCacheName, taskRun.spaceId)
+        referenceCache = CustomDataset.createDataset(referenceCacheName, taskRun.projectId)
         if referenceCache is None:
             logging.error(">> [Qiime: Clustering] Failed to create imported reference sequences cache")
             return qzaPath
@@ -225,7 +225,7 @@ def main() -> None:
     outputDir = folder_manager.createTempFolder("otu_output")
     outputDataset = CustomDataset.createDataset(
         f"{taskRun.id} - Step 4: OTU clustering - {clusteringMethod}",
-        taskRun.spaceId
+        taskRun.projectId
     )
 
     if outputDataset is None:
