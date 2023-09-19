@@ -25,7 +25,7 @@ def saveModel(experiment: Experiment[CustomDataset], accuracy: float, uniqueBody
 
     model = Model.createModel(experiment.name, experiment.id, accuracy, {})
     model.saveModelDescriptor(modelPath, {
-        "project_task": experiment.spaceTask,
+        "project_task": experiment.projectType,
         "labels": labels,
         "modelName": model.name,
         "description": experiment.description,

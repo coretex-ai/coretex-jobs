@@ -717,7 +717,7 @@ dada2_phyloseq <- function(experiment, output_path) {
     # Store the phyloseq object into an output dataset
     output_dataset <- ctx$CustomDataset$createDataset(
         paste0(experiment$id, " - R Step 1: DADA2 and Phyloseq object"),
-        experiment$spaceId
+        experiment$projectId
     )
 
     pseq_archive_path <- file.path(output_path, "pseq_archive.zip")

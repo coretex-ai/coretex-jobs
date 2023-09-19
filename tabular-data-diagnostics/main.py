@@ -14,7 +14,7 @@ def saveModel(experiment: Experiment[CustomDataset], accuracy: float, trainColum
     modelPath = folder_manager.temp / "model"
 
     model.saveModelDescriptor(modelPath, {
-        "project_task": experiment.spaceTask,
+        "project_task": experiment.projectType,
         "labels": labels,
         "modelName": model.name,
         "description": experiment.description,

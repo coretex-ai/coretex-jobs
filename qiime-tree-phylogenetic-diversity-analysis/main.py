@@ -64,7 +64,7 @@ def main() -> None:
     outputDir = folder_manager.createTempFolder("tree_output")
     outputDataset = CustomDataset.createDataset(
         f"{experiment.id} - Step 6: Phylogenetic tree",
-        experiment.spaceId
+        experiment.projectId
     )
 
     if outputDataset is None:

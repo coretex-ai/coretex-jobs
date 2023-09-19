@@ -64,7 +64,7 @@ def importMultiplexed(
     outputDir = folder_manager.createTempFolder("import_output")
     outputDataset = CustomDataset.createDataset(
         getCacheNameOne(experiment),
-        experiment.spaceId
+        experiment.projectId
     )
 
     if outputDataset is None:
