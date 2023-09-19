@@ -127,7 +127,7 @@ def main() -> None:
     savedModelFilename = "multipose_savedModel.zip"
 
     coretexModel = Model.createModel(experiment.name, experiment.id, 0.9139, {})
-    logging.info(f">> [Workspace] Model accuracy is: {coretexModel.accuracy}")
+    logging.info(f">> [Task] Model accuracy is: {coretexModel.accuracy}")
 
     savedModelPath = fetchModelFile(savedModelUrl, savedModelFilename)
 

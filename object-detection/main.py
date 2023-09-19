@@ -43,7 +43,7 @@ def main() -> None:
         modelDirPath = folder_manager.createTempFolder("model")
 
         excludedClasses: list[str] = experiment.parameters["excludedClasses"]
-        logging.info(f">> [Workspace] Excluding classes: {excludedClasses}")
+        logging.info(f">> [Task] Excluding classes: {excludedClasses}")
         experiment.dataset.classes.exclude(excludedClasses)
 
         experiment.dataset.download(ignoreCache=True)

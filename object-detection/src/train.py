@@ -430,7 +430,7 @@ def train(experiment: Experiment[ComputerVisionDataset], hyp, callbacks):  # hyp
                 "mAP@0.5": (epoch, float(results[2])),
                 "mAP@0.5:0.95": (epoch, float(results[3]))
             }):
-                logging.warning(">> [Workspace] Failed to submit metrics!")
+                logging.warning(">> [Task] Failed to submit metrics!")
 
             # Update best mAP
 
