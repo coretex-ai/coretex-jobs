@@ -2,10 +2,11 @@ from typing import Generator
 from pathlib import Path
 
 import pickle
-import random
 
 import tensorflow as tf
 import numpy as np
+
+from coretex import folder_manager
 
 from .objects import Sample
 from .utils import oneHotEncoding
@@ -75,6 +76,7 @@ def createBatches(
 
     trainBatches = (
         trainData
+        .cache(str(folder_manager.temp / "tf_cache_file"))
         .shuffle(bufferSize)
         .batch(batchSize)
         .repeat()
