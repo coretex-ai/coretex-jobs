@@ -25,7 +25,7 @@ def loadDataset(datasetPath: Path, uniqueBodySites: dict[str, int], uniqueTaxons
             Dictionary mapping between bodysite names and their encodings
         uniqueTaxons : dict[str, int]
             Dictionary mapping between taxon ids and their encodings
-        
+
         Returns
         -------
         tf.data.Dataset -> A TensorFlow dataset objcet representing the dataset
@@ -66,7 +66,7 @@ def createBatches(
     bufferSize: int,
     batchSize: int
 ) -> tuple[tf.data.Dataset, int, tf.data.Dataset, int]:
-    
+
     trainCount = int((1 - validationSplit) * count)
     testCount = count - trainCount
 
@@ -75,7 +75,6 @@ def createBatches(
 
     trainBatches = (
         trainData
-        .cache()
         .shuffle(bufferSize)
         .batch(batchSize)
         .repeat()
