@@ -50,7 +50,7 @@ def trimPairedEnd(
     forwardOutput = forwardReadsFolder / forwardFile.name
     reverseOutput = reverseReadsFolder / reverseFile.name
     cutadaptTrim(str(forwardFile), str(forwardOutput), forwardAdapter, str(reverseFile), str(reverseOutput), reverseAdapter)
-    uploadTrimmedReads(forwardFile.name.split("_")[0], outputDataset, forwardFile, reverseFile)
+    uploadTrimmedReads(forwardFile.name.split("_")[0], outputDataset, forwardOutput, reverseOutput)
 
 
 def main() -> None:
