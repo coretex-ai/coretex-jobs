@@ -1,4 +1,4 @@
 tensorflowjs>=3.9.0
 tensorflow==2.8
-coremltools
+coremltools==6.3.0
 coretex

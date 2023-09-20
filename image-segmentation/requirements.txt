@@ -3,6 +3,6 @@ numpy
 matplotlib
 protobuf~=3.19.0
 opencv-python
-coremltools
+coremltools==6.3.0
 coretex
 tensorflowjs
