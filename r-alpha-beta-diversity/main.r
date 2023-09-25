@@ -139,6 +139,16 @@ subset_samples_custom <- function(pseq, body_site) {
     return(pseq_subset)
 }
 
+all_body_sites_listed <- function(sampleDataFrame, bodySites) {
+    for (unique_body_site in unique(sampleDataFrame$Body_site)) {
+        if (!unique_body_site %in% bodySites){
+            return (FALSE)
+        }
+    }
+
+    return (TRUE)
+}
+
 genusAbundancePlot <- function(pseq_bac, body_site, output_path, taskRun) {
     print(sprintf("Creatinng abundance plot for %s", body_site))
 
@@ -422,52 +432,55 @@ alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path
     # Control
     seq_controls <- pseq_bac
     sample_data_frame <- data.frame(sample_data(pseq_bac))
-    seq_controls_samples <- subset(sample_data_frame, !sample_data_frame$Body_site %in% body_sites)
-    sample_data(seq_controls) <- sample_data(seq_controls_samples)
 
-    file_path <- file.path(output_path, "pseq_control.RData")
-    save(seq_controls, file = file_path)
-    taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
-    print(sprintf("Uploaded %s", basename(file_path)))
+    if (!all_body_sites_listed(sample_data_frame, body_sites)){
+        seq_controls_samples <- subset(sample_data_frame, !sample_data_frame$Body_site %in% body_sites)
+        sample_data(seq_controls) <- sample_data(seq_controls_samples)
 
-    genus_sum = tapply(taxa_sums(seq_controls), tax_table(seq_controls)[, "genus"], sum, na.rm=FALSE)
-    topgenera = names(sort(genus_sum, TRUE))[1:30]
-    pseq_top_genera = prune_taxa((tax_table(seq_controls)[, "genus"] %in% topgenera), seq_controls)
-    pseq_genera_glom <- tax_glom(pseq_top_genera, taxrank = rank_names(pseq_top_genera)[genus_col_index])
-    pseq_genera_melt <- psmelt(pseq_genera_glom)
-    ordered_pseq_genera_melt <- setorder(pseq_genera_melt, sampleId, -Abundance)
-    rank_names(seq_controls)
+        file_path <- file.path(output_path, "pseq_control.RData")
+        save(seq_controls, file = file_path)
+        taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
+        print(sprintf("Uploaded %s", basename(file_path)))
 
-    display.brewer.all()
-    colourCount = 30
-    getPalette = colorRampPalette(brewer.pal(12, "Paired"))
-    ggplot_pseq_genera_col1 <- ggplot(
-            ordered_pseq_genera_melt,
-            aes(x = reorder(sampleId, Body_site), y = Abundance, fill = genus)
-        ) +
-        geom_bar(stat = "identity") +
-        facet_wrap(c("Body_site", "sampleId"), ncol = 5, scales = "free") +
-        scale_fill_manual(values = colorRampPalette(brewer.pal(11, "Paired"))(colourCount)) +
-        theme_bw() +
-        theme(
-            axis.text.x = element_text(angle = 90),
-            panel.border = element_rect(colour = "black", fill = NA, size = 1),
-            panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank()
-        ) +
-        xlab("Figure ID") + ylab("Relative Abundance")
-    ggplot_pseq_genera_col1
+        genus_sum = tapply(taxa_sums(seq_controls), tax_table(seq_controls)[, "genus"], sum, na.rm=FALSE)
+        topgenera = names(sort(genus_sum, TRUE))[1:30]
+        pseq_top_genera = prune_taxa((tax_table(seq_controls)[, "genus"] %in% topgenera), seq_controls)
+        pseq_genera_glom <- tax_glom(pseq_top_genera, taxrank = rank_names(pseq_top_genera)[genus_col_index])
+        pseq_genera_melt <- psmelt(pseq_genera_glom)
+        ordered_pseq_genera_melt <- setorder(pseq_genera_melt, sampleId, -Abundance)
+        rank_names(seq_controls)
 
-    file_path <- file.path(output_path, "Plot_Abundance_30_Controls.pdf")
-    ggsave(
-        filename = file_path,
-        plot = ggplot_pseq_genera_col1,
-        width = 350,
-        height = 500,
-        units = "mm"
-    )
-    taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
-    print(sprintf("Uploaded %s", basename(file_path)))
+        display.brewer.all()
+        colourCount = 30
+        getPalette = colorRampPalette(brewer.pal(12, "Paired"))
+        ggplot_pseq_genera_col1 <- ggplot(
+                ordered_pseq_genera_melt,
+                aes(x = reorder(sampleId, Body_site), y = Abundance, fill = genus)
+            ) +
+            geom_bar(stat = "identity") +
+            facet_wrap(c("Body_site", "sampleId"), ncol = 5, scales = "free") +
+            scale_fill_manual(values = colorRampPalette(brewer.pal(11, "Paired"))(colourCount)) +
+            theme_bw() +
+            theme(
+                axis.text.x = element_text(angle = 90),
+                panel.border = element_rect(colour = "black", fill = NA, size = 1),
+                panel.grid.major = element_blank(),
+                panel.grid.minor = element_blank()
+            ) +
+            xlab("Figure ID") + ylab("Relative Abundance")
+        ggplot_pseq_genera_col1
+
+        file_path <- file.path(output_path, "Plot_Abundance_30_Controls.pdf")
+        ggsave(
+            filename = file_path,
+            plot = ggplot_pseq_genera_col1,
+            width = 350,
+            height = 500,
+            units = "mm"
+        )
+        taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
+        print(sprintf("Uploaded %s", basename(file_path)))
+    }
 
     # Body sites
     for (bodySite in body_sites) {
@@ -596,13 +609,17 @@ betaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path)
     meltPseqObject(taskRun, pseq_bac_normal, "all", output_path)
 
     # Use all remaining samples as control
+    body_sites <- taskRun$parameters[["bodySites"]]
+
     pseq_control <- pseq_bac_normal
     metadata <- data.frame(sample_data(pseq_bac_normal))
-    sample_data(pseq_control) <- subset(metadata, !metadata$Body_site %in% taskRun$parameters[["bodySites"]])
 
-    meltPseqObject(taskRun, pseq_control, "control", output_path)
+    if (!all_body_sites_listed(metadata, body_sites)){
+        sample_data(pseq_control) <- subset(metadata, !metadata$Body_site %in% body_sites)
+        meltPseqObject(taskRun, pseq_control, "control", output_path)
+    }
 
-    for (body_site in taskRun$parameters[["bodySites"]]) {
+    for (body_site in body_sites) {
         body_site_pseq = subset_samples_custom(pseq_bac_normal, body_site)
         meltPseqObject(taskRun, body_site_pseq, body_site, output_path)
     }
