@@ -76,7 +76,7 @@ def createBatches(
 
     trainBatches = (
         trainData
-        .cache(str(folder_manager.temp / "tf_cache_file"))
+        .cache(str(folder_manager.createTempFolder("tf_cache_file")))
         .shuffle(bufferSize)
         .batch(batchSize)
         .repeat()
