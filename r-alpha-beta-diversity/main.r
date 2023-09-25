@@ -434,6 +434,10 @@ alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path
     sample_data_frame <- data.frame(sample_data(pseq_bac))
 
     if (!all_body_sites_listed(sample_data_frame, body_sites)){
+        # This part is skipped in case all body sites from the metadata file have
+        # been entered in the bodySites parameter, because this part performes
+        # analysis on all the other body sites that were not entered
+
         seq_controls_samples <- subset(sample_data_frame, !sample_data_frame$Body_site %in% body_sites)
         sample_data(seq_controls) <- sample_data(seq_controls_samples)
 
@@ -615,6 +619,10 @@ betaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path)
     metadata <- data.frame(sample_data(pseq_bac_normal))
 
     if (!all_body_sites_listed(metadata, body_sites)){
+        # This part is skipped in case all body sites from the metadata file have
+        # been entered in the bodySites parameter, because this part performes
+        # analysis on all the other body sites that were not entered
+
         sample_data(pseq_control) <- subset(metadata, !metadata$Body_site %in% body_sites)
         meltPseqObject(taskRun, pseq_control, "control", output_path)
     }
