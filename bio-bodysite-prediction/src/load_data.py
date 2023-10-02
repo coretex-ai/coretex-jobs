@@ -12,7 +12,7 @@ from sklearn.feature_selection import SelectPercentile, f_classif
 
 import numpy as np
 
-from coretex import TaskRun, CustomDataset, TaskRunStatus, folder_manager
+from coretex import TaskRun, CustomDataset, TaskRunStatus, folder_manager, Model
 
 from .cache_json import loadJsonCache, jsonCacheExists, cacheJson, isJsonCacheValid, getJsonName
 from .cache_matrix import loadMatrixCache, matrixCacheExists, cacheMatrix, isMatrixCacheValid, getMatrixName
@@ -231,7 +231,7 @@ def selectPercentile(
     outputMatrix: np.ndarray,
     percentile: int,
     validate: bool,
-    trainedModelId: Optional[int]
+    trainedModelPath: Path
 ) -> tuple[sparse.csr_matrix, Optional[SelectPercentile]]:
 
     """
@@ -267,10 +267,10 @@ def selectPercentile(
     percentileFileName = "selectPercentile.pkl"
 
     if validate:
-        trainedModelPath = folder_manager.modelsFolder / str(trainedModelId) / percentileFileName
+        percentileFilePath = trainedModelPath / percentileFileName
 
-        if trainedModelPath.exists():
-            with open(trainedModelPath , "rb") as file:
+        if percentileFilePath.exists():
+            with open(percentileFilePath , "rb") as file:
                 selectPercentile: SelectPercentile = pickle.load(file)
 
             return selectPercentile.transform(inputMatrix), None
@@ -375,7 +375,8 @@ def loadDataAtlas(
 
     if validate:
         # In the case of validation the same dictionaries will be used as during training
-        modelPath = folder_manager.modelsFolder / str(taskRun.parameters["trainedModel"])
+        model: Model = taskRun.parameters["trainedModel"]
+        modelPath = model.path
 
         with open(modelPath / "uniqueTaxons.pkl", "rb") as f:
             uniqueTaxons = pickle.load(f)
@@ -522,7 +523,7 @@ def prepareForTrainingAtlas(
         outputMatrix,
         taskRun.parameters["percentile"],
         taskRun.parameters["validation"],
-        taskRun.parameters["trainedModel"]
+        taskRun.parameters["trainedModel"].path
     )
 
     logging.info(">> [MicrobiomeForensics] Matrices generated")

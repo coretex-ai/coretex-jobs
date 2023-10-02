@@ -13,24 +13,18 @@ from src.load_data_std import loadDataStd
 def validation(taskRun: TaskRun[CustomDataset]) -> None:
     logging.info(">> [MicrobiomeForensics] Fetching dataset for validation")
 
-    trainedModelId = taskRun.parameters["trainedModel"]
-
-    if trainedModelId is None:
+    trainedModel: Model = taskRun.parameters["trainedModel"]
+    if trainedModel is None:
         raise RuntimeError(">> [MicrobiomeForensics] In order to start the validation process You have to type in \"trainedModel\" in TaskRun parameters")
 
-    logging.info(f">> [MicrobiomeForensics] Fetching pretrained model from Coretex. Model id: {taskRun.parameters['trainedModel']}")
-
     datasetPath = folder_manager.createTempFolder("processedDataset")
-    trainedModel = Model.fetchById(trainedModelId)
     trainedModel.download()
 
     # The same dictionaries will be used as during training
-    modelPath = folder_manager.modelsFolder / str(taskRun.parameters["trainedModel"])
-
-    with modelPath.joinpath("uniqueBodySites.pkl").open("rb") as f:
+    with trainedModel.path.joinpath("uniqueBodySites.pkl").open("rb") as f:
         validBodysites = pickle.load(f)
 
-    with modelPath.joinpath("uniqueTaxons.pkl").open("rb") as f:
+    with trainedModel.path.joinpath("uniqueTaxons.pkl").open("rb") as f:
         validTaxons = pickle.load(f)
 
     if taskRun.parameters["datasetType"] == 1:
@@ -59,7 +53,7 @@ def validation(taskRun: TaskRun[CustomDataset]) -> None:
             validTaxons
         )
 
-    validate(taskRun, datasetPath, uniqueBodySites, uniqueTaxons, trainedModelId)
+    validate(taskRun, datasetPath, uniqueBodySites, uniqueTaxons, trainedModel.path)
 
 
 def training(taskRun: TaskRun[CustomDataset]) -> None:
