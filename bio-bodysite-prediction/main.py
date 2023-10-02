@@ -10,19 +10,15 @@ from src.load_data_std import loadDataStd, prepareForTrainingStd
 
 
 def validation(taskRun: TaskRun[CustomDataset]) -> None:
-    trainedModelId = taskRun.parameters["trainedModel"]
-
-    if trainedModelId is None:
+    trainedModel: Model = taskRun.parameters.get("trainedModel")
+    if trainedModel is None:
         raise RuntimeError(">> [MicrobiomeForensics] In order to start the validation process You have to type in \"trainedModel\" in TaskRun parameters")
 
-    logging.info(f">> [MicrobiomeForensics] Fetching pretrained model from Coretex. Model id: {taskRun.parameters['trainedModel']}")
-
-    trainedModel = Model.fetchById(trainedModelId)
     trainedModel.download()
 
     inputMatrix, outputMatrix, sampleIdList, uniqueBodySites, _ = loadDataAtlas(taskRun.dataset, taskRun)
 
-    validate(taskRun, inputMatrix, outputMatrix, uniqueBodySites, sampleIdList, trainedModelId)
+    validate(taskRun, inputMatrix, outputMatrix, uniqueBodySites, sampleIdList, trainedModel.path)
 
 
 def training(taskRun: TaskRun[CustomDataset]) -> None:

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import csv
 import logging
 
@@ -40,10 +42,8 @@ def validate(
     output: np.ndarray,
     uniqueBodySites: dict[str, int],
     sampleIdList: list,
-    trainedModelId: int
+    trainedModelPath: Path
 ) -> None:
-
-    trainedModelPath = folder_manager.modelsFolder / str(trainedModelId)
 
     taskRun.updateStatus(TaskRunStatus.inProgress, "Running validation with pretrained XGBoost model")
     logging.info(">> [MicrobiomeForensics] Starting validation with pretrained XGBClassifier model")
