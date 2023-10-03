@@ -105,7 +105,9 @@ def main():
         alphaBetaDataset = getCache(cacheNameSeven, taskRun)
     else:
         logging.info(">> [Microbiome analysis] Step 7: Alpha and Beta Diversity Analysis")
-        alphaBetaDiversityAnalysis(demultiplexedDataset, denoisedDataset, phylogeneticDataset, taskRun)
+        diversityAnalysisDataset = alphaBetaDiversityAnalysis(demultiplexedDataset, denoisedDataset, phylogeneticDataset, taskRun)
+
+    taskRun.submitOutput("outputDataset", diversityAnalysisDataset)
 
 
 if __name__ == "__main__":

@@ -104,6 +104,8 @@ def main() -> None:
                 outputDataset
             )
 
+    taskRun.submitOutput("outputDataset", outputDataset)
+
 
 if __name__ == "__main__":
     main()

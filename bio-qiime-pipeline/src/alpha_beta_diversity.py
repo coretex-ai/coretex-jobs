@@ -307,7 +307,7 @@ def alphaBetaDiversityAnalysis(
     denoisedDataset: CustomDataset,
     phylogeneticDataset: CustomDataset,
     taskRun: TaskRun
-) -> None:
+) -> CustomDataset:
 
     # If GPU is detected but not configured properly we have
     # to disable its usage for unifrac otherwise TaskRun
@@ -358,3 +358,6 @@ def alphaBetaDiversityAnalysis(
             outputDataset,
             outputDir
         )
+
+    outputDataset.refresh()
+    return outputDataset

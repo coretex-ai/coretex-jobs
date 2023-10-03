@@ -725,6 +725,8 @@ main <- function(taskRun) {
     pseq_archive$close()
 
     pseq_sample <- ctx$CustomSample$createCustomSample("phyloseq-object", output_dataset$id, pseq_archive_path)
+
+    taskRun$submitOutput("outputDataset", output_dataset)
 }
 
 ctx$initializeRTask(main, args)

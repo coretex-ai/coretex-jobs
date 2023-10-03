@@ -123,6 +123,8 @@ def main() -> None:
             outputDir
         )
 
+    taskRun.submitOutput("outputDataset", outputDataset)
+
 
 if __name__ == "__main__":
     main()

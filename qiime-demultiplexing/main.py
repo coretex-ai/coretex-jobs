@@ -98,6 +98,8 @@ def main() -> None:
         visualizationPath = demuxSummarize(demuxSample, outputDir)
         ctx_qiime2.createSample(f"{index}-summary", outputDataset.id, visualizationPath, taskRun, "Step 2: Demultiplexing")
 
+        taskRun.submitOutput("outputDataset", outputDataset)
+
 
 if __name__ == "__main__":
     main()

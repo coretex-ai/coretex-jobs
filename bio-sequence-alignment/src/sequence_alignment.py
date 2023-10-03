@@ -45,4 +45,6 @@ def sequeneAlignment(taskRun: TaskRun[CustomDataset], genomePrefix: Path) -> Pat
 
     logging.info(">> [Sequence Alignment] Sequence alignment finished")
 
+    taskRun.submitOutput("samDataset", samDataset)
+
     return samDir

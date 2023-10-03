@@ -235,6 +235,8 @@ def main() -> None:
         index = ctx_qiime2.sampleNumber(sample)
         processSample(index, sample, taskRun, outputDataset, outputDir, clusteringMethod)
 
+    taskRun.submitOutput("outputDataset", outputDataset)
+
 
 if __name__ == "__main__":
     main()

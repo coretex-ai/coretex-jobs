@@ -53,4 +53,6 @@ def sam2bam(taskRun: TaskRun[CustomDataset], samDir: Path) -> None:
 
         logging.info(f">> [Sequence Alignment] {outputPath.name} succesfully created")
 
+    taskRun.submitOutput("bamDataset", bamDataset)
+
     logging.info(">> [Sequence Alignment] All files successfuly converted")
