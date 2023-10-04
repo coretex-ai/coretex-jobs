@@ -122,15 +122,11 @@ def main() -> None:
         coretexModel.upload(modelDirPath)
 
     else:
-        imageSize = taskRun.parameters["imageSize"]
-        modelId = taskRun.parameters["modelId"]
-        model = Model.fetchById(modelId)
-
-        if model is None:
-            raise RuntimeError(f">> [ObjectDetection] Failed to fetch model with provided id: {modelId}")
-
+        model: Model = taskRun.parameters["model"]
         model.download()
-        weightsPath = Path(folder_manager.modelsFolder) / f"{modelId}/model.pt"
+
+        imageSize = taskRun.parameters["imageSize"]
+        weightsPath = model.path / "model.pt"
 
         detect.run(taskRun, imgsz = (imageSize, imageSize), weights = weightsPath)
 

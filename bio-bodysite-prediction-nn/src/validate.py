@@ -26,9 +26,7 @@ def savePredictionFile(taskRun: TaskRun[CustomDataset], predictions: np.ndarray,
     taskRun.createArtifact(predictionFilePath, "body_site_predictions.csv")
 
 
-def validate(taskRun: TaskRun[CustomDataset], datasetPath: Path, uniqueBodySites: dict[str, int], uniqueTaxons: dict[str, int], trainedModelId: int) -> None:
-    trainedModelPath = folder_manager.modelsFolder / str(trainedModelId)
-
+def validate(taskRun: TaskRun[CustomDataset], datasetPath: Path, uniqueBodySites: dict[str, int], uniqueTaxons: dict[str, int], trainedModelPath: Path) -> None:
     taskRun.updateStatus(TaskRunStatus.inProgress, "Running validation with pretrained LSPIN model")
 
     batchSize = taskRun.parameters["batchSize"]
