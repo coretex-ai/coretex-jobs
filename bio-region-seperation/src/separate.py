@@ -12,7 +12,7 @@ def argmax(array: list) -> int:
     return max(range(len(array)), key = lambda x : array[x])
 
 
-def splitToFiles(inputFile: Path, readClasses: list[int], groups: list[Path], indicator: str) -> None:
+def splitToFiles(inputFile: Path, readClasses: list[int], groups: list[Path]) -> None:
     outFiles: list[BufferedWriter] = []
     for group in groups:
         outFiles.append(open(group / inputFile.name, "a"))
@@ -21,16 +21,16 @@ def splitToFiles(inputFile: Path, readClasses: list[int], groups: list[Path], in
     readClass = 0
 
     with inputFile.open("rb") as inFile:
-        for line in inFile:
+        for lineIndex, line in enumerate(inFile):
             decodedLine = line.decode("utf-8")
-            if decodedLine.startswith(indicator):
+            if lineIndex % 4 == 0:
                 readIndex += 1
                 readClass = readClasses[readIndex]
 
             outFiles[readClass].write(decodedLine)
 
 
-def separate(bamDir: Path, inputFile: Path, groups: list[Path], thresholds: list[int], indicator: str) -> None:
+def separate(bamDir: Path, inputFile: Path, groups: list[Path], thresholds: list[int]) -> None:
     scores: list[list[int]] = []
     positions: list[list[int]] = []
 
@@ -65,4 +65,4 @@ def separate(bamDir: Path, inputFile: Path, groups: list[Path], thresholds: list
         readClasses.append(argmax(regionScores))
 
     logging.info(">> [Region Separation] Splitting file into separate folder")
-    splitToFiles(inputFile, readClasses, groups, indicator)
+    splitToFiles(inputFile, readClasses, groups)

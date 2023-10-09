@@ -25,9 +25,6 @@ def main() -> None:
     sa.chmodX(Path(BWA))
     sa.chmodX(Path(SAMTOOLS))
 
-    if taskRun.parameters["useBacteriaLib"]:
-        raise NotImplementedError(">> [Region Separation] useBacteriaLib has not been implemented yet, use dataset 7153 with referenceDatasetIndexed as True insted")
-
     logging.info(">> [Region Separation] Downloading dataset")
     taskRun.dataset.download()
     inputFiles = sa.loadFa(taskRun.dataset)
@@ -50,7 +47,7 @@ def main() -> None:
         sam2bam(samDir, bamDir)
 
         logging.info(f">> [Region Separation] Starting read separation into groups for {inputFile.name}")
-        separate(bamDir, inputFile, groups, thresholds, taskRun.parameters["newReadIndicator"])
+        separate(bamDir, inputFile, groups, thresholds)
 
         clearDirectory(samDir)
         clearDirectory(bamDir)
