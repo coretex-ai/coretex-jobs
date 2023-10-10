@@ -1252,7 +1252,7 @@ betaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path)
     body_sites = sample_data(pseq_bac_normal)[["Body_site"]]
 
     #Plot for unweighted Unifrac
-    PoC_Uni <- plot_ordination(pseq_bac_normal, ordUF, color = "Body_site", shape = "Extraction_protocol") + ggtitle("Unweighted UniFrac") + geom_text(aes(label = body_sites), nudge_y = -0.01, size = 3) + geom_point(size=2)
+    PoC_Uni <- plot_ordination(pseq_bac_normal, ordUF, color = "Body_site", shape = "Extraction_protocol") + ggtitle("Unweighted UniFrac") + geom_text(aes(label = body_sites), nudge_y = -0.01, size = 3) + geom_point(size = 2)
     PoC_Uni_path = file.path(output_path, "unweighted_Unifrac_plot.pdf")
     ggsave(filename = PoC_Uni_path, plot = PoC_Uni, width = 297, height = 210, units = "mm")
     taskRun$createArtifact(PoC_Uni_path, paste0("beta_diversity/", basename(PoC_Uni_path)))
@@ -1265,17 +1265,17 @@ betaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path)
 
     PoC_Br_PCA_1 <- PoC_Br_PCA + theme_bw() +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-    labs(title="PCoA Bray Curtis",x ="PCo2 (19.3%)", y = "PCo3 (11.2%)")
+    labs(title = "PCoA Bray Curtis", x = "PCo2 (19.3%)", y = "PCo3 (11.2%)")
 
     PoC_Br_PCA_1_path <- file.path(output_path, "PoC_Br_PCA1.pdf")
     ggsave(filename = PoC_Br_PCA_1_path, plot = PoC_Br_PCA_1, width = 297, height = 210, units = "mm")
     taskRun$createArtifact(PoC_Br_PCA_1_path, paste0("beta_diversity/", basename(PoC_Br_PCA_1_path)))
 
     #Plot for weighted Unifrac
-    PoC_wUF <- plot_ordination(pseq_bac_normal, ordwUF, color="Body_site", shape = "sex", label = "sample_ID", axes = c(3,4)) + geom_point(size = 2)
+    PoC_wUF <- plot_ordination(pseq_bac_normal, ordwUF, color = "Body_site", shape = "sex", label = "sample_ID", axes = c(1,2)) + geom_point(size = 2)
     PoC_wUF_1 <- PoC_wUF + theme_bw() +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-    labs(title="PCoA weighted Unifrac",x ="PCo3 (8.3%)", y = "PCo4 (4.7%)")
+    labs(title="PCoA weighted Unifrac" ,x = "PCo3 (8.3%)", y = "PCo4 (4.7%)")
     PoC_wUF_1_path = file.path(output_path, "Plot_PCoA_wUnifrac.pdf")
     ggsave(
         filename = PoC_wUF_1_path,
@@ -1291,14 +1291,17 @@ betaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path)
     sampledf <- data.frame(sample_data(pseq_bac_normal))
     print(sampledf)
 
-    #Next we calculate significance for unweighted Unifrac
-    pseq_bac1_p_UF <- adonis2(DistBr ~Body_site, data = sampledf)
-    print(pseq_bac1_p_UF)
+    # The following code is for datasets with two or more unique body sites
+    if (length(unique(sampledf$Body_site)) >= 2) {
+        #Next we calculate significance for unweighted Unifrac
+        pseq_bac1_p_UF <- adonis2(DistBr ~Body_site, data = sampledf)
+        print(pseq_bac1_p_UF)
 
-    #We can also test for differences in dispersion
-    #for unweighted unifrac
-    betaUF <- betadisper(DistBr, sampledf$Body_site)
-    print(permutest(betaUF))
+        #We can also test for differences in dispersion
+        #for unweighted unifrac
+        betaUF <- betadisper(DistBr, sampledf$Body_site)
+        print(permutest(betaUF))
+    }
 
     ##### No of genera, family etc. #####
     # All data
