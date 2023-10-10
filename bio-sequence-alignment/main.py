@@ -14,6 +14,9 @@ from src.filepaths import BWA, SAMTOOLS
 def main() -> None:
     taskRun: TaskRun[CustomDataset] = currentTaskRun()
 
+    if not taskRun.parameters["genomeUrl"] and not taskRun.parameters["referenceDataset"]:
+        raise ValueError(">> [Sequence Alignment] It is required to enter either the genomeUrl or the referenceDataset parameter. Both cannot be null")
+
     sa.chmodX(Path(BWA))
     sa.chmodX(Path(SAMTOOLS))
 
