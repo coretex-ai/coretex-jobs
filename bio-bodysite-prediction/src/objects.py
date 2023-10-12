@@ -34,7 +34,7 @@ class MatrixTuple(NamedTuple):
 
 
 class JsonTuple(NamedTuple):
-    
+
     sampleData: list[Sample]
     uniqueTaxons: dict[str, int]
     uniqueBodySite: dict[str, int]

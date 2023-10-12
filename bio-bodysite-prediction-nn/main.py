@@ -95,7 +95,14 @@ def training(taskRun: TaskRun[CustomDataset]) -> None:
 
         accuracy = train(taskRun, datasetPath, uniqueBodySites, uniqueTaxons)
 
-    saveModel(taskRun, accuracy, uniqueBodySites, datasetLen, len(uniqueTaxons))
+    saveModel(
+        taskRun,
+        accuracy,
+        uniqueBodySites,
+        datasetLen,
+        len(uniqueTaxons),
+        taskRun.parameters["taxonomicLevel"]
+    )
 
 
 def main() -> None:
