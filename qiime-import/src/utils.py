@@ -59,6 +59,9 @@ def convertMetadata(metadataPath: Path) -> Path:
         if len(sampleIdSplit) > 1:
             metadata["sampleId"].replace(sampleId, sampleIdSplit[0], inplace = True)
 
+    metadata = metadata.rename(str.strip, axis = "columns")
+    metadata = metadata.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+
     metadata.to_csv(newMetadataPath, "\t", index = False)
 
     return newMetadataPath
