@@ -46,7 +46,7 @@ def diversityAlphaGroupSignificance(
     outputDatasetId: int,
     outputPath: Path,
     taskRun: TaskRun
-):
+) -> None:
 
     ctx_qiime2.diversityAlphaGroupSignificance(
         str(alphaDiversityPath),
@@ -71,7 +71,7 @@ def diversityBetaGroupSignificance(
     outputDatasetId: int,
     outputPath: Path,
     taskRun: TaskRun
-):
+) -> None:
 
     ctx_qiime2.diversityBetaGroupSignificance(
         str(distanceMatrixPath),
@@ -97,7 +97,7 @@ def emperorPlot(
     outputDatasetId: int,
     outputPath: Path,
     taskRun: TaskRun
-):
+) -> None:
 
     ctx_qiime2.emperorPlot(
         str(pcoaPath),
@@ -124,7 +124,8 @@ def diversityAlphaRarefaction(
     outputDatasetId: int,
     outputPath: Path,
     taskRun: TaskRun
-):
+) -> None:
+
     ctx_qiime2.diversityAlphaRarefaction(
         str(tablePath),
         str(phylogenyPath),
@@ -150,7 +151,7 @@ def processSample(
     taskRun: TaskRun,
     outputDataset: CustomDataset,
     outputDir: Path
-):
+) -> None:
 
     sample.unzip()
     metadataSample.unzip()

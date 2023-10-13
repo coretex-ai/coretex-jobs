@@ -59,7 +59,11 @@ def isCacheValid(cache: CustomDataset) -> bool:
 
 
 def getCache(cacheName: str) -> Optional[CustomDataset]:
-    cacheDatasetList = CustomDataset.fetchAll(queryParameters = [f"name={cacheName}", "include_sessions=1"])
+    cacheDatasetList = CustomDataset.fetchAll(
+        name = cacheName,
+        include_sessions = 1
+    )
+
     if len(cacheDatasetList) > 1:
         logging.warning(">> [Sequence Alignment] Found more then one cache of indexed genome")
 
@@ -96,6 +100,8 @@ def loadGenome(dataset: CustomDataset) -> Path:
     for path in sample.path.iterdir():
         if any([path.suffix == genomeSuffix for genomeSuffix in GENOME_SUFFIXES]):
             return path
+
+    raise ValueError
 
 
 def index(taskRun: TaskRun[CustomDataset]) -> Path:

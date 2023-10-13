@@ -163,7 +163,10 @@ def getCache(cacheName: str, taskRun: TaskRun) -> CustomDataset:
     logging.info(f">> [Microbiome analysis] Searching for cache {cacheName}")
 
     cacheHash = cacheName.split("_")[1]
-    caches = CustomDataset.fetchAll(queryParameters = [f"name={cacheHash}", "include_sessions=1"])
+    caches = CustomDataset.fetchAll(
+        name = cacheHash,
+        include_sessions = 1
+    )
 
     for cache in caches:
         if cache.count != 0:
@@ -185,7 +188,10 @@ def uploadCacheAsArtifact(cache: CustomDataset, taskRun: TaskRun) -> None:
 
 def cacheExists(cacheName: str) -> bool:
     cacheHash = cacheName.split("_")[1]
-    caches = CustomDataset.fetchAll(queryParameters = [f"name={cacheHash}", "include_sessions=1"])
+    caches = CustomDataset.fetchAll(
+        name = cacheHash,
+        include_sessions = 1
+    )
 
     for cache in caches:
         if cache.count != 0:

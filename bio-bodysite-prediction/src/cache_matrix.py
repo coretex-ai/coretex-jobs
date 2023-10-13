@@ -120,12 +120,15 @@ def matrixCacheExists(cacheName: str) -> bool:
 
 def getMatrixCache(cacheName: str) -> Optional[CustomDataset]:
     """
-    Returns the cache CustomDataset object
+        Returns the cache CustomDataset object
     """
 
-    cache = CustomDataset.fetchAll(queryParameters = [f"name={cacheName }", "include_sessions=1"])
+    cache = CustomDataset.fetchAll(
+        name = cacheName,
+        include_sessions = 1
+    )
 
-    return CustomDataset.fetchById(cache[0].id) if len(cache) != 0 else None
+    return cache[0] if len(cache) != 0 else None
 
 
 def isMatrixCacheValid(cacheName: str) -> bool:

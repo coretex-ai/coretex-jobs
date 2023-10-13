@@ -22,8 +22,12 @@ def getCacheName(datasetName: str, sampleOrigin: list[str], sequencingTechnique:
 
 
 def getCache(cacheName: str) -> Optional[CustomDataset]:
-    cache = CustomDataset.fetchAll(queryParameters = [f"name={cacheName}", "include_sessions=1"])
-    return CustomDataset.fetchById(cache[0].id) if len(cache) != 0 else None
+    cache = CustomDataset.fetchAll(
+        name = cacheName,
+        include_sessions = 1
+    )
+
+    return cache[0] if len(cache) != 0 else None
 
 
 def cacheExists(cacheName: str) -> bool:
