@@ -18,7 +18,7 @@ def isValidArtifact(filePath: Path) -> bool:
     except ValueError:
         return False
 
-    return Artifact._is_valid_type(archiver.type)
+    return Artifact._is_valid_type(archiver.type)  # type: ignore
 
 
 def getQzaPath(sample: CustomSample) -> Optional[Path]:
@@ -39,7 +39,11 @@ def getQzaPath(sample: CustomSample) -> Optional[Path]:
 
 def importReferenceDataset(dataset: CustomDataset, outputDir: Path, taskRun: TaskRun) -> Path:
     referenceCacheName = f"OTU Reference Dataset Imported to Qiime - {dataset.id}"
-    caches = CustomDataset.fetchAll(queryParameters = [f"name={referenceCacheName}", "include_sessions=1"])
+    caches = CustomDataset.fetchAll(
+        name = referenceCacheName,
+        include_sessions = 1
+    )
+
     for cache in caches:
         if cache.count > 0:
             dataset = cache

@@ -14,7 +14,7 @@ from src.alpha_beta_diversity import alphaBetaDiversityAnalysis
 from src.caching import getCache, cacheExists, getCacheNameOne, getCacheNameTwo, getCacheNameThree, getCacheNameFour, getCacheNameFive, getCacheNameSix, getCacheNameSeven
 
 
-def main():
+def main() -> None:
     taskRun: TaskRun[CustomDataset] = currentTaskRun()
 
     useCache = taskRun.parameters["useCache"]

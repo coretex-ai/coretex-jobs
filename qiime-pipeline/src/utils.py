@@ -71,7 +71,7 @@ def detectFileEncoding(path: Path) -> Optional[str]:
     if encoding is None:
         logging.warning(">> [Qiime: Import] Could not determine metadata encoding")
 
-    return encoding
+    return encoding  # type: ignore
 
 
 def convertMetadata(metadataPath: Path) -> Path:

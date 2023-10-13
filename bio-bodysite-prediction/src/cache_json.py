@@ -83,12 +83,15 @@ def jsonCacheExists(cacheName: str) -> bool:
 
 def getJsonCache(cacheName: str) -> Optional[CustomDataset]:
     """
-    Returns the cache CustomDataset object
+        Returns the cache CustomDataset object
     """
 
-    cache = CustomDataset.fetchAll(queryParameters = [f"name={cacheName}", "include_sessions=1"])
+    cache = CustomDataset.fetchAll(
+        name = cacheName,
+        include_sessions = 1
+    )
 
-    return CustomDataset.fetchById(cache[0].id) if len(cache) != 0 else None
+    return cache[0] if len(cache) != 0 else None
 
 
 def isJsonCacheValid(cacheName: str) -> bool:
