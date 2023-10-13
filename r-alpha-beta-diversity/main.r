@@ -97,7 +97,7 @@ getSampleIdColumnName <- function(metadata) {
     ))
 }
 
-perpareSampleData <- function(phyloseqObject, bodySiteColumnName) {
+perpareSampleData <- function(phyloseqObject, targetColumn) {
     metadata <- data.frame(sample_data(phyloseqObject))
     columnNames <- colnames(metadata)
 
@@ -109,14 +109,14 @@ perpareSampleData <- function(phyloseqObject, bodySiteColumnName) {
     names(metadata)[names(metadata) == sampleIdColumn] <- "sampleId"
 
     print("Checking body site column name")
-    if (!bodySiteColumnName %in% columnNames) {
+    if (!targetColumn %in% columnNames) {
         stop(paste(
             "Entered column name is not present in the phyloseq object. Column names:",
             paste(c(columnNames), collapse = ", ")
         ))
     }
 
-    colnames(metadata)[which(columnNames == bodySiteColumnName)] <- "Body_site"
+    colnames(metadata)[which(columnNames == targetColumn)] <- "target"
     sample_data(phyloseqObject) <- sample_data(metadata)
 
     print("Sample Data / Metadata")
@@ -126,22 +126,22 @@ perpareSampleData <- function(phyloseqObject, bodySiteColumnName) {
     return(phyloseqObject)
 }
 
-subset_samples_custom <- function(pseq, body_site) {
+subset_samples_custom <- function(pseq, targetColumnValue) {
     metadata <- data.frame(sample_data(pseq))
-    if (!body_site %in% unique(metadata$Body_site)) {
-        print(paste("Could not find", body_site, "among the samples"))
+    if (!targetColumnValue %in% unique(metadata$target)) {
+        print(paste("Could not find", targetColumnValue, "among the samples"))
         return(NULL)
     }
 
     pseq_subset <- pseq
-    sample_data(pseq_subset) <- subset(metadata, metadata$Body_site == body_site)
+    sample_data(pseq_subset) <- subset(metadata, metadata$target == targetColumnValue)
 
     return(pseq_subset)
 }
 
-all_body_sites_listed <- function(sampleDataFrame, bodySites) {
-    for (unique_body_site in unique(sampleDataFrame$Body_site)) {
-        if (!unique_body_site %in% bodySites){
+all_target_column_values_listed <- function(sampleDataFrame, targetColumnValues) {
+    for (uniqueTargetColumnValues in unique(sampleDataFrame$target)) {
+        if (!uniqueTargetColumnValues %in% targetColumnValues){
             return (FALSE)
         }
     }
@@ -149,11 +149,11 @@ all_body_sites_listed <- function(sampleDataFrame, bodySites) {
     return (TRUE)
 }
 
-genusAbundancePlot <- function(pseq_bac, body_site, output_path, taskRun) {
-    print(sprintf("Creatinng abundance plot for %s", body_site))
+genusAbundancePlot <- function(pseq_bac, target_column_value, output_path, taskRun) {
+    print(sprintf("Creating abundance plot for %s", target_column_value))
 
     genus_col_index <- which(rank_names(pseq_bac) == "genus")
-    sa <- subset_samples_custom(pseq_bac, body_site)
+    sa <- subset_samples_custom(pseq_bac, target_column_value)
 
     genus_sum = tapply(taxa_sums(sa), tax_table(sa)[, "genus"], sum, na.rm = FALSE)
     topgenera = names(sort(genus_sum, TRUE))[1:30]
@@ -163,7 +163,7 @@ genusAbundancePlot <- function(pseq_bac, body_site, output_path, taskRun) {
     pseq_genera_melt <- psmelt(pseq_genera_glom)
     ordered_pseq_genera_melt <- setorder(pseq_genera_melt, sampleId, -Abundance)
 
-    file_path <- file.path(output_path, sprintf("pseq_genera_all_%s.csv", body_site))
+    file_path <- file.path(output_path, sprintf("pseq_genera_all_%s.csv", target_column_value))
     write.csv(ordered_pseq_genera_melt, file_path)
     taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
 
@@ -171,10 +171,10 @@ genusAbundancePlot <- function(pseq_bac, body_site, output_path, taskRun) {
     getPalette = colorRampPalette(brewer.pal(12, "Paired"))
     ggplot_pseq_genera_col1 <- ggplot(
             ordered_pseq_genera_melt,
-            aes(x = reorder(sampleId, Body_site), y = Abundance, fill = genus)
+            aes(x = reorder(sampleId, target), y = Abundance, fill = genus)
         ) +
         geom_bar(stat = "identity") +
-        facet_wrap(c("Body_site", "sampleId"), ncol = 6, scales = "free") +
+        facet_wrap(c("target", "sampleId"), ncol = 6, scales = "free") +
         scale_fill_manual(values = colorRampPalette(brewer.pal(9, "Set1"))(colourCount)) +
         theme_bw() +
         theme(
@@ -187,7 +187,7 @@ genusAbundancePlot <- function(pseq_bac, body_site, output_path, taskRun) {
         xlab("Figure ID") +
         ylab("Relative Abundance")
 
-    abundance_plot_path <- file.path(output_path, sprintf("Abundance_plot_%s.pdf", body_site))
+    abundance_plot_path <- file.path(output_path, sprintf("Abundance_plot_%s.pdf", target_column_value))
     ggsave(
         filename = abundance_plot_path,
         plot = ggplot_pseq_genera_col1,
@@ -213,7 +213,7 @@ alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path
     write.csv(pseq_df, file = file_path, row.names = FALSE)
     taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
 
-    pseq_samples <- subset_samples(pseq_bac, Body_site != "not_available")
+    pseq_samples <- subset_samples(pseq_bac, target != "not_available")
     pseq_df_samples <- data.frame(
         read_depth = sample_sums(pseq_samples),
         sample_data(pseq_samples)
@@ -221,10 +221,10 @@ alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path
 
     # Produce a plot to visualise the otu read counts per sample
     read_depth_sum <- ggplot(
-        pseq_df, aes(x = sampleId, y = read_depth, fill = Body_site)) +
+        pseq_df, aes(x = sampleId, y = read_depth, fill = target)) +
         geom_bar(stat = "identity") +
         ggtitle("Total Number of Reads") +
-        facet_wrap(c("Body_site"), ncol = 8, scales = "free_x") +
+        facet_wrap(c("target"), ncol = 8, scales = "free_x") +
         theme(axis.text.x = element_text(angle = 90)) +
         labs(x = "Samples by Body site") +
         labs(y = "Number of Reads")
@@ -243,7 +243,7 @@ alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path
     ########### 5. Rarefaction ##########
     print("5. Rarefaction")
 
-    rarefied_curves <- ggrare(pseq_bac, step = 1000, color = "Body_site", se = TRUE)
+    rarefied_curves <- ggrare(pseq_bac, step = 1000, color = "target", se = TRUE)
     rarefied_plot <- rarefied_curves + geom_hline(yintercept = min(sample_sums(pseq_bac)))
 
     file_path <- file.path(output_path, "Rareraction_plot.pdf")
@@ -259,8 +259,8 @@ alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path
     taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
 
     Observed_richness <- plot_richness(
-        pseq_bac, x = "Body_site",
-        color = "Body_site",
+        pseq_bac, x = "target",
+        color = "target",
         measures = c("Observed", "Shannon")
     )
     Observed_richness_plot <- plot(Observed_richness + geom_boxplot())
@@ -291,16 +291,16 @@ alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path
     pseq_new20_melt <- psmelt(pseq_new20_glom)
 
     ordered_pseq_new20_melt <- setorder(pseq_new20_melt, sampleId, -Abundance)
-    ordered_pseq_new20_melt <- setorder(pseq_new20_melt, sampleId, Body_site)
+    ordered_pseq_new20_melt <- setorder(pseq_new20_melt, sampleId, target)
 
-    ggplot_pseq_new20 <- ggplot(ordered_pseq_new20_melt, aes(x = reorder(sampleId, Body_site), y = Abundance, fill = family))+
+    ggplot_pseq_new20 <- ggplot(ordered_pseq_new20_melt, aes(x = reorder(sampleId, target), y = Abundance, fill = family))+
         geom_bar(stat = "identity") +
-        facet_wrap(. ~Body_site, ncol = 6, scales = "free") +
+        facet_wrap(. ~target, ncol = 6, scales = "free") +
         theme_bw() +
         theme(axis.text.x = element_text(angle = 90, size = 5))
     ggplot_pseq_new20
 
-    file_path <- file.path(output_path, "top20_families_allbodysites.pdf")
+    file_path <- file.path(output_path, "top20_families_all_target_column_values.pdf")
     ggsave(
         filename = file_path,
         width = 500,
@@ -324,11 +324,11 @@ alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path
     pseq_phyla_melt <- psmelt(pseq_phyla_glom)
 
     ordered_pseq_phyla_melt <- setorder(pseq_phyla_melt, sampleId, -Abundance)
-    ordered_pseq_phyla_melt <- setorder(pseq_phyla_melt, sampleId, Body_site)
+    ordered_pseq_phyla_melt <- setorder(pseq_phyla_melt, sampleId, target)
 
-    ggplot_pseq_phyla <- ggplot(ordered_pseq_phyla_melt, aes(x = reorder(sampleId, Body_site), y = Abundance, fill = phylum)) +
+    ggplot_pseq_phyla <- ggplot(ordered_pseq_phyla_melt, aes(x = reorder(sampleId, target), y = Abundance, fill = phylum)) +
         geom_bar(stat = "identity") +
-        facet_wrap(c("Body_site", "sampleId"), ncol = 9, scales = "free") +
+        facet_wrap(c("target", "sampleId"), ncol = 9, scales = "free") +
         theme_bw() +
         theme(axis.text.x = element_text(angle = 90))
 
@@ -351,13 +351,13 @@ alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path
 
     ggplot_pseq_new20_col1 <- ggplot(
             ordered_pseq_new20_melt,
-            aes(x = reorder(sampleId, Body_site),
+            aes(x = reorder(sampleId, target),
             y = Abundance,
             fill = family),
             fill = fct_reorder(family, Abundance)
         ) +
         geom_bar(stat = "identity") +
-        facet_wrap(. ~Body_site, ncol = 5, scales = "free") +
+        facet_wrap(. ~target, ncol = 5, scales = "free") +
         scale_fill_manual(values = colorRampPalette(brewer.pal(12, "Paired"))(colourCount)) +
         theme_bw()
     ggplot_pseq_new20_col1
@@ -367,7 +367,7 @@ alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path
         panel.border = element_rect(colour = "black", fill = NA, size = 1),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()
-    ) + xlab("Body_site") + ylab("Relative Abundance")
+    ) + xlab("target") + ylab("Relative Abundance")
 
     ############# LW: 7.3 Plot genera ###########
     print("8.3 Plot genera")
@@ -388,9 +388,9 @@ alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path
     write.csv(ordered_pseq_genera_melt, file_path)
     taskRun$createArtifact(file_path, paste0("alpha_diversity/", basename(file_path)))
 
-    ggplot_pseq_genera <- ggplot(ordered_pseq_genera_melt, aes(x = reorder(Sample, Body_site), y = Abundance, fill = genus))+
+    ggplot_pseq_genera <- ggplot(ordered_pseq_genera_melt, aes(x = reorder(Sample, target), y = Abundance, fill = genus))+
         geom_bar(stat = "identity") +
-        facet_wrap(c("Body_site", "Sample"), ncol = 4, scales = "free") +
+        facet_wrap(c("target", "Sample"), ncol = 4, scales = "free") +
         theme_bw() +
         theme(axis.text.x = element_text(angle = 90, size = 10))
     ggplot_pseq_genera
@@ -400,11 +400,11 @@ alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path
 
     ggplot_pseq_genera_col1 <- ggplot(
             ordered_pseq_genera_melt,
-            aes(x = reorder(Sample, Body_site),
+            aes(x = reorder(Sample, target),
             y = Abundance, fill = genus)
         ) +
         geom_bar(stat = "identity") +
-        facet_wrap(c("Body_site", "Sample"), ncol = 5, scales = "free") +
+        facet_wrap(c("target", "Sample"), ncol = 5, scales = "free") +
         scale_fill_manual(values = colorRampPalette(brewer.pal(12, "Paired"))(colourCount)) +
         theme_bw() +
         theme(
@@ -427,18 +427,18 @@ alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path
 
     ############### TF: Abundance Plots per sample and bodysite  ##################
 
-    body_sites <- unlist(taskRun$parameters["bodySites"])
+    target_column_values <- unlist(taskRun$parameters["targetColumnValues"])
 
     # Control
     seq_controls <- pseq_bac
     sample_data_frame <- data.frame(sample_data(pseq_bac))
 
-    if (!all_body_sites_listed(sample_data_frame, body_sites)){
+    if (!all_target_column_values_listed(sample_data_frame, target_column_values)){
         # This part is skipped in case all body sites from the metadata file have
-        # been entered in the bodySites parameter, because this part performes
+        # been entered in the targetColumnValues parameter, because this part performes
         # analysis on all the other body sites that were not entered
 
-        seq_controls_samples <- subset(sample_data_frame, !sample_data_frame$Body_site %in% body_sites)
+        seq_controls_samples <- subset(sample_data_frame, !sample_data_frame$target %in% target_column_values)
         sample_data(seq_controls) <- sample_data(seq_controls_samples)
 
         file_path <- file.path(output_path, "pseq_control.RData")
@@ -459,10 +459,10 @@ alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path
         getPalette = colorRampPalette(brewer.pal(12, "Paired"))
         ggplot_pseq_genera_col1 <- ggplot(
                 ordered_pseq_genera_melt,
-                aes(x = reorder(sampleId, Body_site), y = Abundance, fill = genus)
+                aes(x = reorder(sampleId, target), y = Abundance, fill = genus)
             ) +
             geom_bar(stat = "identity") +
-            facet_wrap(c("Body_site", "sampleId"), ncol = 5, scales = "free") +
+            facet_wrap(c("target", "sampleId"), ncol = 5, scales = "free") +
             scale_fill_manual(values = colorRampPalette(brewer.pal(11, "Paired"))(colourCount)) +
             theme_bw() +
             theme(
@@ -487,8 +487,8 @@ alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path
     }
 
     # Body sites
-    for (bodySite in body_sites) {
-        genusAbundancePlot(pseq_bac, bodySite, output_path, taskRun)
+    for (target_column_value in target_column_values) {
+        genusAbundancePlot(pseq_bac, target_column_value, output_path, taskRun)
     }
 }
 
@@ -557,16 +557,16 @@ betaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path)
     plot_scree(ordBr, "Scree Plot: Bray Curtis ctrl")
     plot_scree(ordwUF, "Scree Plot: Weighted Unifrac ctrl")
 
-    body_sites = sample_data(pseq_bac_normal)[["Body_site"]]
+    taget_column_values = sample_data(pseq_bac_normal)[["target"]]
 
     #Plot for unweighted Unifrac
-    PoC_Uni <- plot_ordination(pseq_bac_normal, ordUF, color = "Body_site", shape = "Extraction_protocol") + ggtitle("Unweighted UniFrac") + geom_text(aes(label = body_sites), nudge_y = -0.01, size = 3) + geom_point(size = 2)
+    PoC_Uni <- plot_ordination(pseq_bac_normal, ordUF, color = "target", shape = "Extraction_protocol") + ggtitle("Unweighted UniFrac") + geom_text(aes(label = taget_column_values), nudge_y = -0.01, size = 3) + geom_point(size = 2)
     PoC_Uni_path = file.path(output_path, "unweighted_Unifrac_plot.pdf")
     ggsave(filename = PoC_Uni_path, plot = PoC_Uni, width = 297, height = 210, units = "mm")
     taskRun$createArtifact(PoC_Uni_path, paste0("beta_diversity/", basename(PoC_Uni_path)))
 
     #Plot for Bray Curtis
-    PoC_Br_PCA <- plot_ordination(pseq_bac_normal, ordBr, color = "Body_site", shape = "Extraction_protocol", axes = c(1,2)) + geom_point(size = 2) + geom_text(aes(label = body_sites), nudge_y = -0.01, size = 3)
+    PoC_Br_PCA <- plot_ordination(pseq_bac_normal, ordBr, color = "target", shape = "Extraction_protocol", axes = c(1,2)) + geom_point(size = 2) + geom_text(aes(label = taget_column_values), nudge_y = -0.01, size = 3)
     PoC_Br_PCA_path <- file.path(output_path, "Bray_curtis_plot.pdf")
     ggsave(filename = PoC_Br_PCA_path, plot = PoC_Br_PCA, width = 297, height = 210, units ="mm")
     taskRun$createArtifact(PoC_Br_PCA_path, paste0("beta_diversity/", basename(PoC_Br_PCA_path)))
@@ -580,7 +580,7 @@ betaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path)
     taskRun$createArtifact(PoC_Br_PCA_1_path, paste0("beta_diversity/", basename(PoC_Br_PCA_1_path)))
 
     #Plot for weighted Unifrac
-    PoC_wUF <- plot_ordination(pseq_bac_normal, ordwUF, color = "Body_site", shape = "sex", label = "sample_ID", axes = c(1,2)) + geom_point(size = 2)
+    PoC_wUF <- plot_ordination(pseq_bac_normal, ordwUF, color = "target", shape = "sex", label = "sample_ID", axes = c(1,2)) + geom_point(size = 2)
     PoC_wUF_1 <- PoC_wUF + theme_bw() +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
     labs(title="PCoA weighted Unifrac" ,x = "PCo3 (8.3%)", y = "PCo4 (4.7%)")
@@ -600,14 +600,14 @@ betaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path)
     print(sampledf)
 
     # The following code is for datasets with two or more unique body sites
-    if (length(unique(sampledf$Body_site)) >= 2) {
+    if (length(unique(sampledf$target)) >= 2) {
         #Next we calculate significance for unweighted Unifrac
-        pseq_bac1_p_UF <- adonis2(DistBr ~Body_site, data = sampledf)
+        pseq_bac1_p_UF <- adonis2(DistBr ~target, data = sampledf)
         print(pseq_bac1_p_UF)
 
         #We can also test for differences in dispersion
         #for unweighted unifrac
-        betaUF <- betadisper(DistBr, sampledf$Body_site)
+        betaUF <- betadisper(DistBr, sampledf$target)
         print(permutest(betaUF))
     }
 
@@ -616,23 +616,23 @@ betaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path)
     meltPseqObject(taskRun, pseq_bac_normal, "all", output_path)
 
     # Use all remaining samples as control
-    body_sites <- taskRun$parameters[["bodySites"]]
+    taget_column_values <- taskRun$parameters[["targetColumnValues"]]
 
     pseq_control <- pseq_bac_normal
     metadata <- data.frame(sample_data(pseq_bac_normal))
 
-    if (!all_body_sites_listed(metadata, body_sites)){
+    if (!all_target_column_values_listed(metadata, taget_column_values)){
         # This part is skipped in case all body sites from the metadata file have
-        # been entered in the bodySites parameter, because this part performes
+        # been entered in the targetColumnValues parameter, because this part performes
         # analysis on all the other body sites that were not entered
 
-        sample_data(pseq_control) <- subset(metadata, !metadata$Body_site %in% body_sites)
+        sample_data(pseq_control) <- subset(metadata, !metadata$target %in% taget_column_values)
         meltPseqObject(taskRun, pseq_control, "control", output_path)
     }
 
-    for (body_site in body_sites) {
-        body_site_pseq = subset_samples_custom(pseq_bac_normal, body_site)
-        meltPseqObject(taskRun, body_site_pseq, body_site, output_path)
+    for (target_column_value in taget_column_values) {
+        target_column_value_pseq = subset_samples_custom(pseq_bac_normal, target_column_value)
+        meltPseqObject(taskRun, target_column_value_pseq, target_column_value, output_path)
     }
 }
 
@@ -643,8 +643,8 @@ main <- function(taskRun) {
     # Load the phyloseq object
     pseq <- loadData(taskRun$dataset)
 
-    bodySiteColumnName <- taskRun$parameters[["bodySiteColumnName"]]
-    pseq <- perpareSampleData(pseq, bodySiteColumnName)
+    targetColumn <- taskRun$parameters[["targetColumn"]]
+    pseq <- perpareSampleData(pseq, targetColumn)
 
     pseq_bac <- subset_taxa(pseq, domain == "Bacteria")
 
