@@ -31,13 +31,3 @@ def loadDataset(datasetPath: Path, uniqueTaxons: dict[str, int]) -> tf.data.Data
             "features": tf.TensorSpec(shape = (len(uniqueTaxons), ), dtype = tf.float32)
         }
     )
-
-
-def createBatches(
-    dataset: tf.data.Dataset,
-    count: int,
-    batchSize: int
-) -> tuple[tf.data.Dataset, int]:
-    batches = dataset.batch(batchSize)
-
-    return batches, count

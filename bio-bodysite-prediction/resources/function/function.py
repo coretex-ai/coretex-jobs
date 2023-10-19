@@ -31,16 +31,18 @@ def success(data: Optional[Any] = None) -> dict[str, Any]:
     }
 
 
-def prepareInputData(inputPath: Path) -> Path:
+def unzip(inputPath: Path, dataFormat: int) -> Path:
     if is_zipfile(inputPath):
-        with ZipFile(inputPath, 'r') as zip_ref:
-            unzipDir = folder_manager.temp / "function"
+        with ZipFile(inputPath, 'r') as zipFile:
+            unzipDir = folder_manager.createTempFolder("function")
 
-            zip_ref.extractall(unzipDir)
-            if len(list(unzipDir.iterdir())) == 1:
-                return list(unzipDir.iterdir())[0]
+            zipFile.extractall(unzipDir)
+            if dataFormat != 0:
+                return unzipDir
 
-            return unzipDir
+            for element in unzipDir.iterdir():
+                if element.name != "__MACOSX":
+                    return element
 
     return inputPath
 
@@ -59,7 +61,7 @@ def response(requestData: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(inputPath, Path):
         return badRequest("Invalid input data")
 
-    inputPath = prepareInputData(inputPath)
+    inputPath = unzip(inputPath)
 
     if dataFormat == 0 and inputPath.is_file():
         percentile = modelDescriptor.get("percentile")

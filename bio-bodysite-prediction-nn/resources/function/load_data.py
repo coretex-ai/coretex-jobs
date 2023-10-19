@@ -7,8 +7,6 @@ import logging
 import time
 import pickle
 
-from scipy import sparse
-
 from objects import Sample, Taxon
 
 from coretex import folder_manager
@@ -72,7 +70,7 @@ def processByteBatch(
 def loadDataAtlas(
     inputPath: Path,
     modelDir: Path
-) -> tuple[Path, dict[str, int], list[str]]:
+) -> tuple[Path, dict[str, int], dict[str, int], list[str]]:
 
     workerCount = os.cpu_count()  # This value should not exceed the total number of CPU cores
     logging.info(f">> [MicrobiomeForensics] Using {workerCount} CPU cores to read the file")
@@ -83,8 +81,6 @@ def loadDataAtlas(
 
     step = fileSize // workerCount
     remainder = fileSize % workerCount
-
-    sampleData: list[Sample] = []
 
     with open(modelDir / "uniqueTaxons.pkl", "rb") as f:
         uniqueTaxons = pickle.load(f)
@@ -134,4 +130,4 @@ def loadDataAtlas(
     for path in datasetPath.iterdir():
         sampleIdList.append(path.name)
 
-    return datasetPath, uniqueBodySites, sampleIdList
+    return datasetPath, uniqueTaxons, uniqueBodySites, sampleIdList

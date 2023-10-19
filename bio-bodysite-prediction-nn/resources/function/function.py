@@ -10,7 +10,7 @@ from load_data import loadDataAtlas
 from load_data_std import loadDataStd
 
 from model import Model
-from dataset import loadDataset, createBatches
+from dataset import loadDataset
 
 
 def badRequest(error: str) -> dict[str, Any]:
@@ -32,28 +32,30 @@ def success(data: Optional[Any] = None) -> dict[str, Any]:
     }
 
 
-def prepareInputData(inputPath: Path) -> Path:
+def unzip(inputPath: Path, dataFormat: int) -> Path:
     if is_zipfile(inputPath):
-        with ZipFile(inputPath, 'r') as zip_ref:
-            unzipDir = folder_manager.temp / "function"
+        with ZipFile(inputPath, 'r') as zipFile:
+            unzipDir = folder_manager.createTempFolder("function")
 
-            zip_ref.extractall(unzipDir)
-            if len(list(unzipDir.iterdir())) == 1:
-                return list(unzipDir.iterdir())[0]
+            zipFile.extractall(unzipDir)
+            if dataFormat != 0:
+                return unzipDir
 
-            return unzipDir
+            for element in unzipDir.iterdir():
+                if element.name != "__MACOSX":
+                    return element
 
     return inputPath
 
 
-def inference(modelInput: Path, model: Model) -> list[str]:
+def inference(modelInput: Path, model: Model, uniqueTaxons: dict[str, int]) -> list[str]:
     BATCHE_SIZE = 562
     sampleCount = len(list(modelInput.iterdir()))
 
-    dataset = loadDataset(modelInput)
-    _, _, data, batches = createBatches(dataset, sampleCount, 1, 1, BATCHE_SIZE)
+    dataset = loadDataset(modelInput, uniqueTaxons)
+    data = dataset.batch(BATCHE_SIZE)
 
-    return model.predict(data, batches)
+    return model.predict(data, sampleCount)
 
 
 def response(requestData: dict[str, Any]) -> dict[str, Any]:
@@ -68,20 +70,20 @@ def response(requestData: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(inputPath, Path):
         return badRequest("Invalid input data")
 
-    inputPath = prepareInputData(inputPath)
+    inputPath = unzip(inputPath, dataFormat)
 
     if dataFormat == 0 and inputPath.is_file():
-        modelInput, uniqueBodySites, sampleIdList = loadDataAtlas(inputPath, modelDir)
+        modelInput, uniqueTaxons, uniqueBodySites, sampleIdList = loadDataAtlas(inputPath, modelDir)
     elif dataFormat == 1 and inputPath.is_dir():
         level = modelDescriptor.get("taxonomicLevel")
 
-        modelInput, uniqueBodySites, sampleIdList = loadDataStd(inputPath, modelDir, level)
+        modelInput, uniqueTaxons, uniqueBodySites, sampleIdList = loadDataStd(inputPath, modelDir, level)
     else:
         return badRequest("Invalid data format")
 
     model = Model.load(modelDir / "model")
 
-    predicted = inference(modelInput, model)
+    predicted = inference(modelInput, model, uniqueTaxons)
 
     predBodySites: list[str] = []
     reversedUniqueBodySites = {v: k for k, v in uniqueBodySites.items()}

@@ -2,8 +2,11 @@ from pathlib import Path
 
 import json
 import pickle
+import logging
 
-import numpy as np
+from coretex import folder_manager
+
+from objects import Sample, Taxon
 
 
 def loadDataStd(inputPath: Path, modelDir: Path, level: int) -> tuple[int, int, dict[str, int], list[int]]:
@@ -13,27 +16,41 @@ def loadDataStd(inputPath: Path, modelDir: Path, level: int) -> tuple[int, int, 
     with open(modelDir / "uniqueBodySites.pkl", "rb") as f:
         uniqueBodySites = pickle.load(f)
 
-    inputMatrix = np.zeros((len(list(inputPath.iterdir())), len(uniqueTaxons)))
-    sampleIdList = []
+    datasetPath = folder_manager.createTempFolder("dataset")
 
-    for i, samplePath in enumerate(inputPath.iterdir()):
+    for samplePath in inputPath.iterdir():
         if samplePath.suffix != ".json":
             continue
 
         with open(samplePath, "r") as f:
             sample = json.load(f)
 
-        sampleIdList.append(sample["_id"]["$oid"])
-        for bacteria in sample["97"]:
-            taxons = bacteria["taxon"].split(";")
-            taxon = taxons[level]
+        sampleObj = Sample(sample["_id"]["$oid"])
 
-            if taxon not in uniqueTaxons:
-                continue
+        taxons = loadTaxons(sample, level)
+        for taxonId, taxonCount in taxons.items():
+            if taxonId in uniqueTaxons:
+                sampleObj.addTaxon(Taxon(taxonId, taxonCount))
 
-            encodedTaxon = uniqueTaxons[taxon]
+        with datasetPath.joinpath(sampleObj.sampleId).open("wb") as file:
+            pickle.dump(sampleObj, file)
 
-            c = bacteria["count"]
-            inputMatrix[i, encodedTaxon] += c
+    sampleIdList: list[str] = []
+    for path in datasetPath.iterdir():
+        sampleIdList.append(path.name)
 
-    return inputMatrix, uniqueBodySites, sampleIdList
+    return datasetPath, uniqueTaxons, uniqueBodySites, sampleIdList
+
+
+def loadTaxons(sample: dict, level: int) -> dict[str, int]:
+    taxons: dict[str, int] = {}
+    for bacteria in sample["97"]:
+        taxon = bacteria["taxon"].split(";")
+
+        if len(taxon) <= level:
+            logging.warning(f">> [MicrobiomeForensics] Sample: {sample['_id']['$oid']} does not have taxonomic level {level} and will be skipped")
+            continue
+
+        taxons[taxon[level]] = bacteria["count"]
+
+    return taxons
