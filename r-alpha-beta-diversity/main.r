@@ -427,7 +427,7 @@ alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path
 
     ############### TF: Abundance Plots per sample and bodysite  ##################
 
-    body_sites <- unlist(taskRun$parameters["bodySites"])
+    body_sites <- lapply(taskRun$parameters[["bodySites"]], trimws)
 
     # Control
     seq_controls <- pseq_bac
@@ -616,7 +616,7 @@ betaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path)
     meltPseqObject(taskRun, pseq_bac_normal, "all", output_path)
 
     # Use all remaining samples as control
-    body_sites <- taskRun$parameters[["bodySites"]]
+    body_sites <- lapply(taskRun$parameters[["bodySites"]], trimws)
 
     pseq_control <- pseq_bac_normal
     metadata <- data.frame(sample_data(pseq_bac_normal))
@@ -643,7 +643,7 @@ main <- function(taskRun) {
     # Load the phyloseq object
     pseq <- loadData(taskRun$dataset)
 
-    bodySiteColumnName <- taskRun$parameters[["bodySiteColumnName"]]
+    bodySiteColumnName <- trimws(taskRun$parameters[["bodySiteColumnName"]])
     pseq <- perpareSampleData(pseq, bodySiteColumnName)
 
     pseq_bac <- subset_taxa(pseq, domain == "Bacteria")
