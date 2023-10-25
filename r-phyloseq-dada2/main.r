@@ -141,6 +141,12 @@ loadMetadata <- function(metadataSample) {
         metadata <- metadata[-1,]
     }
 
+    # Remove leading and trailing whitespace
+    colnames(metadata) <- lapply(colnames(metadata), trimws)
+
+    stringColumns <- names(metadata)[vapply(metadata, is.character, logical(1))]
+    metadata[, stringColumns] <- lapply(metadata[, stringColumns], trimws)
+
     sampleIdColumn <- getSampleIdColumnName(metadata)
     print(paste("Matched metadata sample ID/name column to", sampleIdColumn))
 

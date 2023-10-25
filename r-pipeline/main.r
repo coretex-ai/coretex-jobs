@@ -145,6 +145,12 @@ loadMetadata <- function(metadataSample) {
         metadata <- metadata[-1,]
     }
 
+    # Remove leading and trailing whitespace
+    colnames(metadata) <- lapply(colnames(metadata), trimws)
+
+    stringColumns <- names(metadata)[vapply(metadata, is.character, logical(1))]
+    metadata[, stringColumns] <- lapply(metadata[, stringColumns], trimws)
+
     sampleIdColumn <- getSampleIdColumnName(metadata)
     print(paste("Matched metadata sample ID/name column to", sampleIdColumn))
 
@@ -1119,7 +1125,7 @@ alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path
 
     ############### TF: Abundance Plots per sample and bodysite  ##################
 
-    target_column_values <- unlist(taskRun$parameters["targetColumnValues"])
+    target_column_values <- lapply(taskRun$parameters[["targetColumnValues"]], trimws)
 
     # Control
     seq_controls <- pseq_bac
@@ -1308,7 +1314,7 @@ betaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path)
     meltPseqObject(taskRun, pseq_bac_normal, "all", output_path)
 
     # Use all remaining samples as control
-    target_column_values <- taskRun$parameters[["targetColumnValues"]]
+    target_column_values <- lapply(taskRun$parameters[["targetColumnValues"]], trimws)
 
     pseq_control <- pseq_bac_normal
     metadata <- data.frame(sample_data(pseq_bac_normal))
@@ -1339,7 +1345,7 @@ main <- function(taskRun) {
     # Load the phyloseq object
     pseq <- loadData(phyloseq_dataset)
 
-    targetColumn <- taskRun$parameters[["targetColumn"]]
+    targetColumn <- trimws(taskRun$parameters[["targetColumn"]])
     pseq <- perpareSampleData(pseq, targetColumn)
 
     pseq_bac <- subset_taxa(pseq, domain == "Bacteria")

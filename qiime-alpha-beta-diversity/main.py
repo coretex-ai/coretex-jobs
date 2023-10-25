@@ -166,7 +166,7 @@ def processSample(
     sampleOutputDir.mkdir()
 
     metadataPath = ctx_qiime2.getMetadata(metadataSample)
-    targetTypeColumn = taskRun.parameters["targetTypeColumn"]
+    targetTypeColumn = taskRun.parameters["targetTypeColumn"].strip()
 
     if not columnNamePresent(metadataPath, targetTypeColumn):
         logging.error(f">> [Qiime: Alpha & Beta Diversity] targetTypeColumn")
