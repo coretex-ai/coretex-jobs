@@ -2,27 +2,9 @@ from typing import Any, Optional
 from pathlib import Path
 
 from coretex import folder_manager
+from coretex.networking import success, badRequest
 
 import detect
-
-
-def badRequest(error: str) -> dict[str, Any]:
-    return {
-        "code": 400,
-        "body": {
-            "error": error
-        }
-    }
-
-
-def success(data: Optional[Any] = None) -> dict[str, Any]:
-    if data is None:
-        data = {}
-
-    return {
-        "code": 200,
-        "body": data
-    }
 
 
 def prepareInputData(inputPath: Path) -> Optional[Path]:

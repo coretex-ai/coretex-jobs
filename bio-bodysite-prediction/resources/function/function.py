@@ -7,28 +7,10 @@ import json
 from xgboost import XGBClassifier
 
 from coretex import folder_manager
+from coretex.networking import success, badRequest
 
 from load_data import loadDataAtlas
 from load_data_std import loadDataStd
-
-
-def badRequest(error: str) -> dict[str, Any]:
-    return {
-        "code": 400,
-        "body": {
-            "error": error
-        }
-    }
-
-
-def success(data: Optional[Any] = None) -> dict[str, Any]:
-    if data is None:
-        data = {}
-
-    return {
-        "code": 200,
-        "body": data
-    }
 
 
 def unzip(inputPath: Path, dataFormat: int) -> Path:
