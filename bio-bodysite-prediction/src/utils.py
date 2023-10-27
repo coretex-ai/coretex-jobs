@@ -50,6 +50,7 @@ def saveModel(accuracy: float, uniqueBodySites: dict[str, int], lenOfData: int, 
     })
 
     model.upload(modelPath)
+    taskRun.submitOutput("outputModel", model)
 
 
 def getKey(dictionary: dict[str, int], val: int) -> Optional[str] :

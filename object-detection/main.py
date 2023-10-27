@@ -121,6 +121,8 @@ def main() -> None:
         coretexModel = Model.createModel(taskRun.name, taskRun.id, accuracy, {})
         coretexModel.upload(modelDirPath)
 
+        taskRun.submitOutput("outputModel", coretexModel)
+
     else:
         model: Model = taskRun.parameters["model"]
         model.download()
