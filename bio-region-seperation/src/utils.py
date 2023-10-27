@@ -47,6 +47,8 @@ def uploadToCoretex(taskRun: TaskRun[CustomDataset], groups: list[Path]) -> None
         if CustomSample.createCustomSample(groupZip.name, dataset.id, groupZip) is None:
             raise RuntimeError(">> [SequenceSeparation] Failed to upload sample")
 
+    taskRun.submitOutput("separatedDataset", dataset)
+
     logging.info(f">> [Region Separation] Output files have been uploaded to dataset {dataset.id}: \"{dataset.name}\"")
 
 

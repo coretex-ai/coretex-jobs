@@ -48,6 +48,7 @@ def saveModel(taskRun: TaskRun[CustomDataset], accuracy: float, uniqueBodySites:
     })
 
     model.upload(modelPath)
+    taskRun.submitOutput("outputModel", model)
 
 
 def getKey(dictionary: dict[str, int], val: int) -> Optional[str] :

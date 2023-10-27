@@ -93,3 +93,5 @@ def importMultiplexed(
 
         zippedMetadataPath = importMetadata(metadataPath, outputDir)
         ctx_qiime2.createSample(f"{index}-metadata", outputDataset.id, zippedMetadataPath, taskRun, "Step 1: Import")
+
+        taskRun.submitOutput("outputDataset", outputDataset)
