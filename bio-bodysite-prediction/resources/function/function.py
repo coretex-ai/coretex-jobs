@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 from pathlib import Path
 from zipfile import ZipFile, is_zipfile
 
@@ -6,8 +6,7 @@ import json
 
 from xgboost import XGBClassifier
 
-from coretex import folder_manager
-from coretex.networking import success, badRequest
+from coretex import folder_manager, functions
 
 from load_data import loadDataAtlas
 from load_data_std import loadDataStd
@@ -41,7 +40,7 @@ def response(requestData: dict[str, Any]) -> dict[str, Any]:
     inputPath = requestData.get("inputFile")
 
     if not isinstance(inputPath, Path):
-        return badRequest("Invalid input data")
+        return functions.badRequest("Invalid input data")
 
     inputPath = unzip(inputPath)
 
@@ -54,7 +53,7 @@ def response(requestData: dict[str, Any]) -> dict[str, Any]:
 
         modelInput, uniqueBodySites, sampleIdList = loadDataStd(inputPath, modelDir, level)
     else:
-        return badRequest("Invalid data format")
+        return functions.badRequest("Invalid data format")
 
     predicted = model.predict(modelInput)
 
@@ -64,7 +63,7 @@ def response(requestData: dict[str, Any]) -> dict[str, Any]:
     for predValue in predicted:
         predBodySites.append(reversedUniqueBodySites[predValue])
 
-    return success({
+    return functions.success({
         "name": sampleIdList,
         "bodySite": predBodySites
     })

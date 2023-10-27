@@ -1,8 +1,7 @@
 from typing import Any, Optional
 from pathlib import Path
 
-from coretex import folder_manager
-from coretex.networking import success, badRequest
+from coretex import folder_manager, functions
 
 import detect
 
@@ -27,11 +26,11 @@ def response(requestData: dict[str, Any]) -> dict[str, Any]:
 
     inputPath = prepareInputData(requestData.get("inputFile"))
     if inputPath is None:
-        return badRequest("Invalid input data. Single image file expected")
+        return functions.badRequest("Invalid input data. Single image file expected")
 
     boundingBoxes, classes = detect.run(inputPath, weights = weightsPath, imgsz = (imageSize, imageSize))
 
-    return success({
+    return functions.success({
         "bbox": boundingBoxes,
         "class": classes
     })
