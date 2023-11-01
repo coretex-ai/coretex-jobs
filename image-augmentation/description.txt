@@ -1,0 +1,71 @@
+--- Template description ---
+
+Task template for performing image augmentation on image datasets.
+
+Input to the task is an image dataset, while the output is an image dataset
+with augmented images generated from the input dataset.
+
+Each of the images in the input dataset get passed through an image augmenter
+pipeline which transforms the image in various ways based on the parameters
+of this task.
+
+----------------------------
+
+--- Template parameters description ---
+
+--- dataset description ---
+The image dataset from which images will be takenn for augmentation.
+---------------------------
+
+--- numOfImages description ---
+The number of augmented images each of the input images will generate.
+-------------------------------
+
+--- flipHorizontalPrc description ---
+Percent of images which will be flipped horizontally.
+If empty, augmentation will not be performed.
+-------------------------------------
+
+--- flipVerticalPrc description ---
+Percent of images which will be flipped vertically
+If empty, augmentation will not be performed.
+-----------------------------------
+
+--- affine description ---
+Determines if affine augmentation will be performed, which include:
+- scaling
+- translation
+- rotation
+- shearing
+--------------------------
+
+--- crop description --------------
+The image will be randomly cropped between 0 and this value.
+If empty, augmentation will not be performed.
+-----------------------------------
+
+--- noise description -------------
+The amount of gaussian noise that will be applied to the images.
+If empty, augmentation will not be performed.
+-----------------------------------
+
+--- blurPrc description -----------
+Percent of images which will be blurred.
+If empty, augmentation will not be performed.
+-----------------------------------
+
+--- contrast description ----------
+Determines if image contrast will be altered.
+-----------------------------------
+
+--- useCache description ----------
+Determines if task will search for a dataset generated with the same
+parameters as this one, and if successful, will submit that dataset as
+outputDataset.
+-----------------------------------
+
+--- outputDataset description -----
+The output image dataset with the augmented images.
+-----------------------------------
+
+------------------------------
