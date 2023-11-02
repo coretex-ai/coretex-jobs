@@ -41,8 +41,8 @@ def augmentImage(augmenter: iaa.Sequential, sample: ImageSample, numOfImages: in
 
         if ImageSample.createImageSample(outputDataset.id, outputPath) is None:
             logging.error(f">> [Image Augmentation] {outputPath.name} failed to uplaod")
-
-        logging.info(f">> [Image Augmentation] Uploaded {outputPath.name} to coretex")
+        else:
+            logging.info(f">> [Image Augmentation] Uploaded {outputPath.name} to coretex")
 
 
 def main() -> None:
