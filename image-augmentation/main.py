@@ -54,6 +54,7 @@ def main() -> None:
 
         if cache is not None:
             taskRun.submitOutput("outputDataset", cache)
+            return
 
     dataset = taskRun.dataset
     dataset.download()
