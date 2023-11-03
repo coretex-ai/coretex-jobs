@@ -50,7 +50,7 @@ def main() -> None:
 
     outputDatasetName = getOutputDatasetName(taskRun)
     if taskRun.parameters["useCache"]:
-        cache = getCache(outputDatasetName)
+        cache = getCache(outputDatasetName.split("-")[1])
 
         if cache is not None:
             taskRun.submitOutput("outputDataset", cache)
