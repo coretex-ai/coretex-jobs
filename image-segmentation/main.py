@@ -94,7 +94,6 @@ def main() -> None:
         dataset,
         count,
         taskRun.parameters["validationSplit"],
-        taskRun.parameters["bufferSize"],
         taskRun.parameters["batchSize"],
         taskRun.parameters["imageSize"]
     )
@@ -104,7 +103,7 @@ def main() -> None:
     model = UNetModel(classCount, taskRun.parameters["imageSize"])
 
     sample = testBatches.take(1).take(1)
-    saveDatasetPredictions("BeforeTraining", model, sample)
+    saveDatasetPredictions("BeforeTraining", model, sample, taskRun.dataset.classes)
 
     taskRun.updateStatus(TaskRunStatus.inProgress, "Training the model")
 
@@ -115,13 +114,13 @@ def main() -> None:
         steps_per_epoch = trainCount // taskRun.parameters["batchSize"],
         validation_steps = testCount // taskRun.parameters["batchSize"] // taskRun.parameters["validationSubSplits"],
         validation_data = testBatches,
-        callbacks = [DisplayCallback(model, sample, epochs)],
+        callbacks = [DisplayCallback(model, sample, epochs, taskRun.dataset.classes)],
         verbose = 0,
         use_multiprocessing = True
     )
 
     # Runs prediction for all test data and uploads it to coretex as artifacts
-    saveDatasetPredictions("AfterTraining", model, testBatches)
+    saveDatasetPredictions("AfterTraining", model, testBatches, taskRun.dataset.classes)
 
     taskRun.updateStatus(TaskRunStatus.inProgress, "Postprocessing model")
 

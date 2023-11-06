@@ -5,7 +5,7 @@ from keras.layers import RandomFlip
 import numpy as np
 import tensorflow as tf
 
-from coretex import TaskRun, TaskRunStatus, ImageSegmentationDataset
+from coretex import TaskRun, TaskRunStatus, ImageSegmentationDataset, folder_manager
 
 
 class Augment(tf.keras.layers.Layer):
@@ -64,7 +64,6 @@ def createBatches(
     dataset: tf.data.Dataset,
     count: int,
     validationSplit: float,
-    bufferSize: int,
     batchSize: int,
     imageSize: int
 ) -> tuple[int, tf.data.Dataset, int, tf.data.Dataset]:
@@ -97,12 +96,12 @@ def createBatches(
 
     trainBatches = (
         trainImages
-        .cache()
-        .shuffle(bufferSize)
+        .cache(filename = str(folder_manager.temp / "training"))
+        .shuffle(trainCount)
         .batch(batchSize)
         .repeat()
         .map(Augment())
-        .prefetch(buffer_size=tf.data.AUTOTUNE)
+        .prefetch(buffer_size = tf.data.AUTOTUNE)
     )
     testBatches = testImages.batch(batchSize)
 

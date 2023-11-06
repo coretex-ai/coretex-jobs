@@ -8,7 +8,7 @@ from keras.callbacks import Callback
 
 import tensorflow as tf
 
-from coretex import currentTaskRun
+from coretex import currentTaskRun, ImageDatasetClasses
 
 from .utils import saveDatasetPredictions
 
@@ -19,12 +19,14 @@ def timeDiff(value: float, decimalPlaces: int = 4) -> float:
 
 class DisplayCallback(Callback):
 
-    def __init__(self, model: KerasModel, dataset: tf.data.Dataset, epochs: int) -> None:
+    def __init__(self, model: KerasModel, dataset: tf.data.Dataset, epochs: int, classes: ImageDatasetClasses) -> None:
         super().__init__()
 
         self.__model: Final = model
         self.__dataset: Final = dataset
         self.__epochs: Final = epochs
+
+        self.classes = classes
 
     def on_train_begin(self, logs = None):
         self.trainBegin = time.time()
@@ -45,7 +47,7 @@ class DisplayCallback(Callback):
             }):
                 logging.warning(">> [BMSTraining] Failed to submit metrics!")
 
-        saveDatasetPredictions(f"After epoch {epoch + 1}", self.__model, self.__dataset)
+        saveDatasetPredictions(f"After epoch {epoch + 1}", self.__model, self.__dataset, self.classes)
         logging.info(f">> [ImageSegmentation] Finished epoch {epoch + 1}/{self.__epochs} in {timeDiff(self.epochBegin)}")
 
     def on_train_batch_begin(self, batch: int, logs = None):
