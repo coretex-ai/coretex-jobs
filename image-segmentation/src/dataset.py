@@ -103,6 +103,6 @@ def createBatches(
         .map(Augment())
         .prefetch(buffer_size = tf.data.AUTOTUNE)
     )
-    testBatches = testImages.batch(batchSize)
+    testBatches = testImages.batch(batchSize).repeat()
 
     return trainCount, trainBatches, testCount, testBatches
