@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+import math
 
 from keras import Model as KerasModel
 from keras.callbacks import History
@@ -11,10 +12,10 @@ import coremltools
 
 from coretex import TaskRunStatus, Model, ImageSegmentationDataset, TaskRun, Metric, MetricType, currentTaskRun, folder_manager
 
+from src import detect
 from src.model import UNetModel
 from src.dataset import loadDataset, createBatches
 from src.callbacks import DisplayCallback
-from src.utils import saveDatasetPredictions
 
 
 def saveLiteModel(model: KerasModel):
@@ -76,7 +77,9 @@ def main() -> None:
 
     taskRun.createMetrics([
         Metric.create("loss", "epoch", MetricType.int, "value", MetricType.float, [0, taskRun.parameters["epochs"]]),
-        Metric.create("accuracy", "epoch", MetricType.int, "value", MetricType.float, [0, taskRun.parameters["epochs"]], [0, 1])
+        Metric.create("accuracy", "epoch", MetricType.int, "value", MetricType.float, [0, taskRun.parameters["epochs"]], [0, 1]),
+        Metric.create("val_loss", "epoch", MetricType.int, "value", MetricType.float, [0, taskRun.parameters["epochs"]]),
+        Metric.create("val_accuracy", "epoch", MetricType.int, "value", MetricType.float, [0, taskRun.parameters["epochs"]], [0, 1])
     ])
 
     # path to which the model will be saved after training
@@ -86,7 +89,7 @@ def main() -> None:
     taskRun.dataset.download()
 
     excludedClasses: list[str] = taskRun.parameters["excludedClasses"]
-    logging.info(f">> [Task] Excluding classes: {excludedClasses}")
+    logging.info(f">> [Image Segmentation] Excluding classes: {excludedClasses}")
     taskRun.dataset.classes.exclude(excludedClasses)
 
     count, dataset = loadDataset(taskRun.dataset, taskRun)
@@ -94,7 +97,6 @@ def main() -> None:
         dataset,
         count,
         taskRun.parameters["validationSplit"],
-        taskRun.parameters["bufferSize"],
         taskRun.parameters["batchSize"],
         taskRun.parameters["imageSize"]
     )
@@ -103,27 +105,22 @@ def main() -> None:
     classCount = len(taskRun.dataset.classes) + 1
     model = UNetModel(classCount, taskRun.parameters["imageSize"])
 
-    sample = testBatches.take(1).take(1)
-    saveDatasetPredictions("BeforeTraining", model, sample)
-
     taskRun.updateStatus(TaskRunStatus.inProgress, "Training the model")
 
     epochs: int = taskRun.parameters["epochs"]
+
     history: History = model.fit(
         trainBatches,
         epochs = epochs,
-        steps_per_epoch = trainCount // taskRun.parameters["batchSize"],
-        validation_steps = testCount // taskRun.parameters["batchSize"] // taskRun.parameters["validationSubSplits"],
+        steps_per_epoch = math.ceil(trainCount / taskRun.parameters["batchSize"]),
+        validation_steps = math.ceil(testCount / taskRun.parameters["batchSize"]),
         validation_data = testBatches,
-        callbacks = [DisplayCallback(model, sample, epochs)],
+        callbacks = [DisplayCallback(epochs)],
         verbose = 0,
         use_multiprocessing = True
     )
 
-    # Runs prediction for all test data and uploads it to coretex as artifacts
-    saveDatasetPredictions("AfterTraining", model, testBatches)
-
-    taskRun.updateStatus(TaskRunStatus.inProgress, "Postprocessing model")
+    detect.run(taskRun, model, taskRun.dataset)
 
     coretexModel = Model.createModel(
         taskRun.name,
@@ -132,10 +129,15 @@ def main() -> None:
         {}
     )
 
-    logging.info(f">> [Task] Model accuracy is: {coretexModel.accuracy}")
+    logging.info(f">> [Image Segmentation] Model accuracy is: {coretexModel.accuracy}")
 
+    logging.info(">> [Image Segmentation] Converting model to TFLite format")
     saveLiteModel(model)
+
+    logging.info(">> [Image Segmentation] Converting model to CoreML format")
     saveCoremlModel(model)
+
+    logging.info(">> [Image Segmentation] Converting model to TFJS format")
     saveJSModel(model, taskRun, coretexModel)
 
     coretexModel.upload(folder_manager.temp / "model")

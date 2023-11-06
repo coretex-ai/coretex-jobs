@@ -1,84 +1,37 @@
-from typing import Final
+from typing import Optional, Any
 
-import time
 import logging
 
-from keras.models import Model as KerasModel
 from keras.callbacks import Callback
 
-import tensorflow as tf
-
 from coretex import currentTaskRun
-
-from .utils import saveDatasetPredictions
-
-
-def timeDiff(value: float, decimalPlaces: int = 4) -> float:
-    return round(time.time() - value, decimalPlaces)
 
 
 class DisplayCallback(Callback):
 
-    def __init__(self, model: KerasModel, dataset: tf.data.Dataset, epochs: int) -> None:
+    def __init__(self, epochs: int) -> None:
         super().__init__()
 
-        self.__model: Final = model
-        self.__dataset: Final = dataset
-        self.__epochs: Final = epochs
+        self.epochs = epochs
 
-    def on_train_begin(self, logs = None):
-        self.trainBegin = time.time()
-        logging.info(">> [ImageSegmentation] Started training")
+    def on_epoch_end(self, epoch: int, logs: Optional[dict[str, Any]] = None):
+        if logs is None:
+            return
 
-    def on_train_end(self, logs = None):
-        logging.info(f">> [ImageSegmentation] Finished training in {timeDiff(self.trainBegin)}")
+        loss = logs["loss"]
+        valLoss = logs["val_loss"]
 
-    def on_epoch_begin(self, epoch: int, logs = None):
-        self.epochBegin = time.time()
-        logging.info(f">> [ImageSegmentation] Started epoch {epoch + 1}/{self.__epochs}")
+        accuracy = logs["accuracy"]
+        valAccuracy = logs["val_accuracy"]
 
-    def on_epoch_end(self, epoch: int, logs = None):
-        if logs is not None:
-            if not currentTaskRun().submitMetrics({
-                "loss": (epoch + 1, logs["loss"]),
-                "accuracy": (epoch + 1, logs["accuracy"])
-            }):
-                logging.warning(">> [BMSTraining] Failed to submit metrics!")
+        logging.info(f">> [Image Segmentation] Finished epoch {epoch + 1}/{self.epochs}")
+        logging.info(f"\tLoss - train: {loss}, val: {valLoss}")
+        logging.info(f"\tAccuracy - train: {accuracy}, val: {valAccuracy}")
 
-        saveDatasetPredictions(f"After epoch {epoch + 1}", self.__model, self.__dataset)
-        logging.info(f">> [ImageSegmentation] Finished epoch {epoch + 1}/{self.__epochs} in {timeDiff(self.epochBegin)}")
-
-    def on_train_batch_begin(self, batch: int, logs = None):
-        self.trainBatchBegin = time.time()
-        logging.info(f">> [ImageSegmentation] Started train batch {batch + 1}")
-
-    def on_train_batch_end(self, batch, logs = None):
-        logging.info(f">> [ImageSegmentation] Finished train batch {batch + 1} in {timeDiff(self.trainBatchBegin)}")
-
-    def on_test_begin(self, logs = None):
-        self.testBegin = time.time()
-        logging.info(">> [ImageSegmentation] Started test")
-
-    def on_test_end(self, logs = None):
-        logging.info(f">> [ImageSegmentation] Finished test in {timeDiff(self.testBegin)}")
-
-    def on_test_batch_begin(self, batch: int, logs = None):
-        self.testBatchBegin = time.time()
-        logging.info(f">> [ImageSegmentation] Started test batch {batch + 1}")
-
-    def on_test_batch_end(self, batch: int, logs = None):
-        logging.info(f">> [ImageSegmentation] Finished test batch {batch + 1} in {timeDiff(self.testBatchBegin)}")
-
-    def on_predict_begin(self, logs = None):
-        self.predictBegin = time.time()
-        logging.info(">> [ImageSegmentation] Started predict")
-
-    def on_predict_end(self, logs = None):
-        logging.info(f">> [ImageSegmentation] Finished predict in {timeDiff(self.predictBegin)}")
-
-    def on_predict_batch_begin(self, batch: int, logs = None):
-        self.predictBatchBegin = time.time()
-        logging.info(f">> [ImageSegmentation] Started predict batch {batch + 1}")
-
-    def on_predict_batch_end(self, batch: int, logs = None):
-        logging.info(f">> [ImageSegmentation] Finished predict batch {batch + 1} in {timeDiff(self.predictBatchBegin)}")
+        if not currentTaskRun().submitMetrics({
+            "loss": (epoch + 1, loss),
+            "accuracy": (epoch + 1, accuracy),
+            "val_loss": (epoch + 1, valLoss),
+            "val_accuracy": (epoch + 1, valAccuracy)
+        }):
+            logging.warning(">> [Image Segmentation] Failed to submit metrics!")
