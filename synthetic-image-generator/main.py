@@ -65,6 +65,9 @@ def main() -> None:
             taskRun.parameters["rotation"],
             taskRun.parameters["scaling"],
             taskRun.parameters["augmentationsPerImage"],
+            imagesDataset.classes,
+            taskRun.parameters["documentClass"],
+            taskRun.parameters["unwarp"],
             outputDataset
         )
 

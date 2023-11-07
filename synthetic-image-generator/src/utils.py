@@ -29,4 +29,3 @@ def uploadAugmentedImage(
         logging.error(f">> [Image Stitching] Failed to update sample annotation {imagePath}")
 
     imagePath.unlink(missing_ok = True)
-
