@@ -23,7 +23,7 @@ Usage - formats:
                                          yolov5s.tflite             # TensorFlow Lite
                                          yolov5s_edgetpu.tflite     # TensorFlow Edge TPU
 """
-from typing import Optional
+from typing import Optional, Any
 
 import os
 import sys
@@ -48,12 +48,12 @@ from utils.general import (LOGGER, check_img_size, check_requirements, colorstr,
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, time_sync
 
-from coretex import ComputerVisionDataset, TaskRun, folder_manager
+from coretex import ComputerVisionDataset, TaskRun, folder_manager, BBox
 
 
 @torch.no_grad()
 def run(
-    taskRun: TaskRun[ComputerVisionDataset],
+    inputPath: Path,
     weights: Optional[Path] = None,
     imgsz=(640, 640),  # inference size (height, width)
     conf_thres=0.25,  # confidence threshold
@@ -75,9 +75,7 @@ def run(
     hide_conf=False,  # hide confidences
     half=False,  # use FP16 half-precision inference
     dnn=False,  # use OpenCV DNN for ONNX inference
-):
-
-    logging.info(">> [Object Detection] Running detections on validation dataset")
+) -> tuple[list[dict[str, int]], list[Any]]:
 
     save_img = not nosave
     # webcam = False
@@ -98,22 +96,12 @@ def run(
     stride, names, pt = model.stride, model.names, model.pt
     imgsz = check_img_size(imgsz, s=stride)  # check image size
 
-    coretexDataset = taskRun.dataset
-    coretexDataset.download()
+    dataset = LoadImages(list(inputPath.iterdir()), imgSize = imgsz, stride = stride, auto = pt)
 
-    if not taskRun.parameters["validation"]:
-        validationSplit = taskRun.parameters["validationSplit"]
-        if validationSplit <= 0 or validationSplit >= 1:
-            raise ValueError(">> [Object Detection] The validationSplit parameter value must be between 0 and 1")
-
-        validationCount = int(taskRun.parameters["validationSplit"] * coretexDataset.count)
-        if validationCount == 0:
-            raise ValueError(">> [Object Detection] The validationSplit parameter is too low given the number of samples in the dataset")
-    else:
-        validationCount = coretexDataset.count
-
-    dataset = LoadImages(coretexDataset, validationCount, imgSize = imgsz, stride = stride, auto = pt)
     bs = 1  # batch_size
+
+    boundingBoxes: list[dict[str, int]] = []
+    labels: list[Any] = []
 
     # Run inference
     logging.info(">> [Object Detection] Started inference")
@@ -169,9 +157,13 @@ def run(
 
                 # Write results
                 logging.info(f">> [Object Detection] Writting inference results")
+
                 for *xyxy, conf, cls in reversed(det):
+                    xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
+                    boundingBoxes.append(BBox(xywh[0], xywh[1], xywh[2], xywh[3]).encode())
+                    labels.append(names[int(c)])
+
                     if save_txt:  # Write to file
-                        xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
                         line = (cls, *xywh, conf) if save_conf else (cls, *xywh)  # label format
                         with open(txt_path + '.txt', 'a') as f:
                             f.write(('%g ' * len(line)).rstrip() % line + '\n')
@@ -192,11 +184,6 @@ def run(
             # Save results (image with detections)
             if save_img:
                 cv2.imwrite(pred_path, im0)
-                artifactPath = f"{uuid.uuid1()}.jpeg"
-
-                artifact = taskRun.createArtifact(pred_path, artifactPath)
-                if artifact is None:
-                    logging.info(f">> [Object Detection] Failed to create artifact: {artifactPath}")
 
         # Print time (inference-only)
         logging.info(f'{s}Done. ({t3 - t2:.3f}s)')
@@ -210,3 +197,5 @@ def run(
         logging.info(f"Results saved to {colorstr('bold', save_dir)}{s}")
     if update:
         strip_optimizer(weights)  # update model (to fix SourceChangeWarning)
+
+    return boundingBoxes, labels

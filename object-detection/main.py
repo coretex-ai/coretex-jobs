@@ -118,6 +118,9 @@ def main() -> None:
             ]
         })
 
+        modelFunction = Path(".", "resources", "function")
+        shutil.copytree(modelFunction, modelDirPath / "function")
+
         coretexModel = Model.createModel(taskRun.name, taskRun.id, accuracy, {})
         coretexModel.upload(modelDirPath)
 

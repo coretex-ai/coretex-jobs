@@ -3,6 +3,7 @@ from pathlib import Path
 
 import csv
 import json
+import shutil
 import logging
 
 from scipy.sparse import csr_matrix
@@ -20,13 +21,22 @@ def jsonPretty(data, savePath) -> None:
         json.dump(data, write_file, indent=4)
 
 
-def saveModel(accuracy: float, uniqueBodySites: dict[str, int], lenOfData: int, numOfUniqueTaxons: int, taskRun: TaskRun[CustomDataset]) -> None:
+def saveModel(
+    accuracy: float,
+    uniqueBodySites: dict[str, int],
+    lenOfData: int,
+    numOfUniqueTaxons: int,
+    taskRun: TaskRun[CustomDataset],
+    percentile: Optional[int],
+    taxonomicLevel: Optional[int]
+) -> None:
+
     modelPath = folder_manager.temp / "modelFolder"
 
     labels = list(uniqueBodySites.keys())
 
     model = Model.createModel(taskRun.name, taskRun.id, accuracy, {})
-    model.saveModelDescriptor(modelPath, {
+    contents = {
         "project_task": taskRun.projectType,
         "labels": labels,
         "modelName": model.name,
@@ -47,10 +57,25 @@ def saveModel(accuracy: float, uniqueBodySites: dict[str, int], lenOfData: int, 
             - 1 represents that output 2d array (table) is going to have only 1 column (1 prediction for each sample in dataset)
         """,
         "output_shape": [lenOfData, 1]
-    })
+    }
+
+    if percentile is not None:
+        contents["percentile"] = percentile
+
+    if taxonomicLevel is not None:
+        contents["taxonomicLevel"] = taxonomicLevel
+
+    modelFunction = Path(".", "resources", "function")
+    saveModelFunction(modelFunction, modelPath / "function")
+
+    model.saveModelDescriptor(modelPath, contents)
 
     model.upload(modelPath)
     taskRun.submitOutput("outputModel", model)
+
+
+def saveModelFunction(source: Path, destination: Path) -> None:
+    shutil.copytree(source, destination)
 
 
 def getKey(dictionary: dict[str, int], val: int) -> Optional[str] :

@@ -143,11 +143,9 @@ def create_dataloader(taskRun: TaskRun[ComputerVisionDataset],
 
 class LoadImages:
 
-    def __init__(self, dataset: ComputerVisionDataset, loadCount: int, imgSize = 640, stride = 32, auto = True) -> None:
-        startIndex = dataset.count - loadCount
-
-        self.samples = dataset.samples[startIndex:]
-        self.loadCount = loadCount
+    def __init__(self, dataset: list[Path], imgSize = 640, stride = 32, auto = True) -> None:
+        self.samples = dataset
+        self.loadCount = len(dataset)
         self.imgSize = imgSize
         self.stride = stride
         self.auto = auto
@@ -164,10 +162,9 @@ class LoadImages:
         self.count += 1
 
         # Load image
-        sample.unzip()
-        img0 = cv2.imread(sample.imagePath)  # BGR
-        assert img0 is not None, f"Image not found {sample.imagePath}"
-        s = f"image {self.count}/{self.loadCount} {sample.imagePath}: "
+        img0 = cv2.imread(sample)  # BGR
+        assert img0 is not None, f"Image not found {sample}"
+        s = f"image {self.count}/{self.loadCount} {sample}: "
 
         # Padded resize
         img = letterbox(img0, self.imgSize, stride = self.stride, auto = self.auto)[0]
@@ -176,7 +173,7 @@ class LoadImages:
         img = img.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
         img = np.ascontiguousarray(img)
 
-        return sample.imagePath, img, img0, s
+        return sample, img, img0, s
 
     def __len__(self):
         return self.loadCount
