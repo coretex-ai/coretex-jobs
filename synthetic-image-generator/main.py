@@ -68,6 +68,7 @@ def main() -> None:
             imagesDataset.classes,
             taskRun.parameters["documentClass"],
             taskRun.parameters["unwarp"],
+            taskRun.parameters["excludedClasses"],
             outputDataset
         )
 

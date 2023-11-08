@@ -21,6 +21,101 @@ from .utils import uploadAugmentedImage
 SegmentationType = list[int]
 
 
+class Point2D:
+
+    def __init__(self, x: int, y: int) -> None:
+        self.x = x
+        self.y = y
+
+
+class Rect:
+
+    def __init__(self, tl: Point2D, tr: Point2D, br: Point2D, bl: Point2D) -> None:
+        self.tl = tl
+        self.tr = tr
+        self.br = br
+        self.bl = bl
+
+    @property
+    def witdh(self) -> int:
+        return self.tr.x - self.tl.x
+
+    @property
+    def height(self) -> int:
+        return self.bl.y - self.tl.y
+
+    def numpy(self) -> np.ndarray:
+        return np.array([
+            [self.tl.x, self.tl.y],
+            [self.tr.x, self.tr.y],
+            [self.br.x, self.br.y],
+            [self.bl.x, self.bl.y]
+        ], dtype = np.float32)
+
+
+def sortRectPoints(points: list[Point2D]) -> list[Point2D]:
+    xSorted = sorted(points, key = lambda point: point.x)
+
+    left = xSorted[:2]
+    left.sort(key = lambda point: point.y)
+    tl, bl = left
+
+    right = xSorted[2:]
+    right.sort(key = lambda point: point.y)
+    tr, br = right
+
+    return [
+        tl, tr, br, bl
+    ]
+
+
+def extractRectangle(mask: np.ndarray) -> Rect:
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    if len(contours) != 1:
+        raise ValueError("Found more than one contour")
+
+    epsilon = 0.02 * cv2.arcLength(contours[0], True)
+    rectangle = cv2.approxPolyDP(contours[0], epsilon, True)
+
+    points: list[Point2D] = []
+    for point in rectangle:
+        points.append(Point2D(point[0][0], point[0][1]))
+
+    points = sortRectPoints(points)
+    return Rect(*points)
+
+
+def generateSegmentedImage(
+    image: np.ndarray,
+    segmentationMask: np.ndarray,
+    unwarp: bool
+) -> tuple[Image.Image, Optional[np.ndarray]]:
+
+    rgbaImage = Image.fromarray(image).convert("RGBA")
+
+    segmentedImage = np.asarray(rgbaImage) * segmentationMask[..., None]  # reshape segmentationMask for broadcasting
+    segmentedImage = Image.fromarray(segmentedImage)
+
+    if unwarp:
+        rectangle = extractRectangle(segmentationMask)
+
+        width = rectangle.witdh
+        height = rectangle.height
+
+        transformed = np.float32([[0, 0], [width, 0], [width, height], [0, height]])
+        transformMatrix = cv2.getPerspectiveTransform(rectangle.numpy(), transformed)
+        segmentedImage = Image.fromarray(cv2.warpPerspective(np.array(segmentedImage), transformMatrix, (width, height)))
+    else:
+        transformMatrix = None
+
+    alpha = segmentedImage.getchannel("A")
+    bbox = alpha.getbbox()
+    croppedImage = segmentedImage.crop(bbox)
+
+    return croppedImage, transformMatrix
+
+
 def isOverlapping(
     x: int,
     y: int,
@@ -35,71 +130,6 @@ def isOverlapping(
             return True
 
     return False
-
-
-def getCornerPoints(segmentation: list[int]):
-    return [(segmentation[i], segmentation[i + 1]) for i in range(0, len(segmentation), 2) if i < 8]
-
-    simplifedPoints = approximate_polygon(points, tolerance = 0.1)
-    subdividedPoints = subdivide_polygon(simplifedPoints)
-
-    # # PCA
-    # center = np.mean(subdividedPoints, axis = 0)
-    # subdividedPointsCentered = subdividedPoints - center
-    # covarianceMatrix = np.dot(subdividedPointsCentered.T, subdividedPointsCentered) / len(subdividedPointsCentered)
-    # eigenvalues, eigenvectors = np.linalg.eig(covarianceMatrix)
-    # sortedIndices = np.argsort(eigenvalues)[::-1]
-    # eigenvectorsSorted = eigenvectors[:, sortedIndices]
-    # xVector = eigenvectorsSorted[:, 0]
-    # yVector = eigenvectorsSorted[:, 1]
-
-    # cornerPoints = [
-    #     center + xVector * np.min(subdividedPointsCentered.dot(xVector)),
-    #     center + xVector * np.max(subdividedPointsCentered.dot(xVector)),
-    #     center + yVector * np.min(subdividedPointsCentered.dot(yVector)),
-    #     center + yVector * np.max(subdividedPointsCentered.dot(yVector))
-    # ]
-
-    rect = cv2.minAreaRect(points)
-    box = cv2.boxPoints(rect)
-    box = np.array(box, dtype = np.int32)
-
-    # Extract the four corner points
-    cornerPoints = box.tolist()
-
-    return cornerPoints
-
-
-def generateSegmentedImage(
-    image: np.ndarray,
-    segmentationMask: np.ndarray,
-    segmentation: list[int],
-    unwarp: bool
-) -> tuple[Image.Image, Optional[np.ndarray]]:
-
-    rgbaImage = Image.fromarray(image).convert("RGBA")
-
-    segmentedImage = np.asarray(rgbaImage) * segmentationMask[..., None]  # reshape segmentationMask for broadcasting
-    segmentedImage = Image.fromarray(segmentedImage)
-
-    if unwarp:
-        cornerPoints = getCornerPoints(segmentation)
-
-        width = int(np.average([math.dist(cornerPoints[0], cornerPoints[1]), math.dist(cornerPoints[2], cornerPoints[3])]))
-        height = int(np.average([math.dist(cornerPoints[0], cornerPoints[3]), math.dist(cornerPoints[1], cornerPoints[2])]))
-
-        rectPoints = np.float32([[0, 0], [width, 0], [width, height], [0, height]])
-
-        transformMatrix = cv2.getPerspectiveTransform(np.array(cornerPoints, dtype = np.float32), rectPoints)
-        segmentedImage = Image.fromarray(cv2.warpPerspective(np.array(segmentedImage), transformMatrix, (width, height)))
-    else:
-        transformMatrix = None
-
-    alpha = segmentedImage.getchannel("A")
-    bbox = alpha.getbbox()
-    croppedImage = segmentedImage.crop(bbox)
-
-    return croppedImage, transformMatrix
 
 
 def composeImage(
@@ -163,11 +193,14 @@ def transformAnnotation(
     centroid: tuple[int, int],
     offsetVector: tuple[int, int],
     angle: int,
-    unwarp: bool
+    unwarp: bool,
+    mask: ndarray
 ) -> CoretexSegmentationInstance:
 
     segmentations = instance.segmentations
     if unwarp:
+        rect = extractRectangle(mask).numpy().flatten()
+        segmentations = [list(np.append(rect, [rect[0], rect[1]]))]
         segmentations = [applyAffine(sublist, transformMatrix) for sublist in segmentations]
 
     segmentationsScaled = [[value * scale for value in sublist] for sublist in segmentations]
@@ -212,34 +245,35 @@ def processInstance(
     scale: float,
     classes: ImageDatasetClasses,
     documentClass: str,
-    unwarp: bool
+    unwarp: bool,
+    excludedClasses: list[str]
 ) -> tuple[PILImage, list[CoretexSegmentationInstance]]:
 
     augmentedInstances: list[CoretexSegmentationInstance]= []
 
     sampleData = sample.load()
-    if sampleData.annotation is None:
+
+    annotation = sampleData.annotation
+    if annotation is None:
         raise RuntimeError(f"CTX sample dataset sample id: {sample.id} image doesn't exist!")
 
-    for instance in sampleData.annotation.instances:
+    for instance in annotation.instances:
         if classes.classById(instance.classId).label != documentClass:
             continue
 
         oldDocCentroid = instance.centroid()
 
         foregroundMask = instance.extractBinaryMask(sampleData.image.shape[1], sampleData.image.shape[0])
-        segmentedImage, transformMatrix = generateSegmentedImage(
-            sampleData.image,
-            foregroundMask,
-            instance.segmentations[0],
-            unwarp
-        )
+        segmentedImage, transformMatrix = generateSegmentedImage(sampleData.image, foregroundMask, unwarp)
 
         composedImage, centroid, scalingModifier = composeImage(segmentedImage, backgroundSampleData.image, angle, scale)
 
     # Proccess info annotations
     index = 0
-    for instance in sampleData.annotation.instances:
+    for instance in annotation.instances:
+        if excludedClasses is not None and classes.classById(instance.classId).label in excludedClasses:
+            continue
+
         offsetVector = getDistanceVector(oldDocCentroid, instance.centroid())
         offsetVector = rotateVector(offsetVector, angle)
 
@@ -250,7 +284,8 @@ def processInstance(
             centroid,
             offsetVector,
             angle,
-            unwarp
+            unwarp,
+            instance.extractBinaryMask(annotation.width, annotation.height)
         ))
 
         index += 1
@@ -265,7 +300,8 @@ def processSample(
     scale: float,
     classes: ImageDatasetClasses,
     documentClass: str,
-    unwarp: bool
+    unwarp: bool,
+    excludedClasses: list[str]
 ) -> tuple[ndarray, CoretexImageAnnotation]:
 
     backgroundSampleData = backgroundSample.load()
@@ -277,7 +313,8 @@ def processSample(
         scale,
         classes,
         documentClass,
-        unwarp
+        unwarp,
+        excludedClasses
     )
     annotation = CoretexImageAnnotation.create(
         sample.name,
@@ -298,6 +335,7 @@ def augmentSample(
     classes: ImageDatasetClasses,
     documentClass: str,
     unwarp: bool,
+    excludedClasses: list[str],
     outputDataset: ImageDataset
 ) -> None:
 
@@ -315,7 +353,8 @@ def augmentSample(
             scale,
             classes,
             documentClass,
-            unwarp
+            unwarp,
+            excludedClasses
         )
 
         uploadAugmentedImage(f"{sample.id}-{i}", augmentedImage, annotations, outputDataset)
