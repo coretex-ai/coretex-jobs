@@ -1,0 +1,249 @@
+id: 19110f48-c05d-42cc-8ae2-5454e7788418
+name: Microbiome Forensics -> Body Site Prediction - LSPIN
+description: "Bodysite Classifier - LSPIN task template uses a neural network architecture\n\
+  based on the paper \"Locally Sparse Neural Networks for Tabular Biomedical Data\u201D\
+  ,\nwhich is a multilayer perceptron with gating layers.\n\nThis template takes BioInformatics\
+  \ sequence taxonomic compositions\nand traines a model which is capable of predicting\
+  \ body site (from which the\nsample originates) based on the sample taxonomic composition.\n\
+  \nData provided to the model can be in either of these two formats:\n    - MBA (Microbe\
+  \ Atlas)\n    - ForBiome (Forensics Microbiome Database, maintained by Microbiome\
+  \ Forensics Institute Zurich)\n\nInput of the model is a 2D matrix with input shape\
+  \ [samples, uniqueTaxons] where:\nsamples: number of samples in the dataset\nuniqueTaxons:\
+  \ number of unique taxons in the dataset\n\nOutput of the model is a 1D array with\
+  \ integers representing different bodysites.\n\nExpected TaskRun runtime on GPU\
+  \ with 1GB of MBA data is ~30minutes.\n\nSystem specifications on which the TaskRuns\
+  \ were run:\n    - CPU: AMD Ryzen 7 1800X Eight-Core Processor\n    - GPU: Nvidia\
+  \ GeForce GTX 1080 Ti 12 GB VRAM\n    - RAM: 32 GB 2666 MHz DDR4\n\nTaskRun parameters:\n\
+  Batch size: 512\nBuffer size: 512\nHIdden layers: [256, 256, 128]\nActivation function:\
+  \ tanh\nBatch norm: False\nCache: False\nEnviromnment: Clean"
+project_task: 11
+is_active: true
+param_groups:
+- name: inputs
+  params:
+  - name: dataset
+    description: "A dataset which contains OTU abundance data. Supported dataset formats\
+      \ are:\n    - MBA (Microbe Atlas): Dataset must contain one Coretex.ai sample\n\
+      \      with \"samples.env.info\" file, and one or more Coretex.ai samples\n\
+      \      which contain a single \".mapped\" file (file with \".mapped\" extension)\n\
+      \    - ForBiome (Forensics Microbiome Database, maintained by Microbiome Forensics\n\
+      \      Institute Zurich): Dataset must contain BioInformatics samples in json\n\
+      \      format as defined by \"Microbiome Forensics Institute Zurich\". Coretex.ai\n\
+      \      sample must contain only a single json file which contains data for a\n\
+      \      single BioInformatics sample."
+    value: null
+    data_type: dataset
+    required: true
+  - name: trainedModel
+    description: 'Id of the model on which the validation will run.
+
+      If validation mode is selected this parameter must be provided,
+
+      and if training mode is selected this parameter will be ignored.'
+    value: null
+    data_type: model
+    required: false
+- name: outputs
+  params:
+  - name: outputModel
+    description: Model trained by this task.
+    value: null
+    data_type: model
+    required: false
+- name: parameters
+  params:
+  - name: validation
+    description: "Defines if TaskRun will be executed in training or validation mode.\n\
+      If the value is set to false (unchecked) training mode will run,\nand if the\
+      \ value is set to true (checked) then validation mode will be run.\n\nIf training\
+      \ mode is selected following parameters must be provided:\n    - dataset\n \
+      \   - validation (value: false)\n    - datasetType\n    - taxonomicLevel\n \
+      \   - sampleOrigin\n    - sequencingTechnique\n    - batchSize\n    - bufferSize\n\
+      \    - hiddenLayers\n    - learningRate\n    - lambda\n    - activationFunction\n\
+      \    - epochs\n    - displayStep\n    - validationSplit\n    - batchNorm\n \
+      \   - randomSeed\n    - cache\n\nIf validation mode is selected following parameters\
+      \ must be provided:\n    - dataset\n    - validation (value: true)\n    - trainedModel\n\
+      \    - datasetType\n    - taxonomicLevel\n    - sampleOrigin\n    - quantize\n\
+      \    - sequencingTechnique\n    - batchSize\n    - cache"
+    value: false
+    data_type: bool
+    required: true
+  - name: datasetType
+    description: "Type of the provided dataset. Possible values are:\n    - MBA (Microbe\
+      \ Atlas)\n    - ForBiome (Microbiome Forensics Institute Zurich)\n\nFor more\
+      \ details see \"dataset\" parameter."
+    value: 0
+    data_type: int
+    required: true
+  - name: taxonomicLevel
+    description: "Taxonomic level used for creating OTU (feature) tables used as\n\
+      the input of the model. Expected value is a non-negative integer.\n\nExpected\
+      \ values for taxon \"B16S;90_3084;96_8430;97_10076\":\n    - Level 1: \"B16S\"\
+      \n    - Level 2: \"B16S;90_3084\"\n    - Level 3: \"B16S;90_3084;96_8430\""
+    value: 1
+    data_type: int
+    required: true
+  - name: sampleOrigin
+    description: 'Information on where sample originates from, the environment from
+
+      which the sample was collected from.
+
+
+      Example values are: animal, plant, aquatic, human, soil, field, etc.'
+    value:
+    - human
+    data_type: list[str]
+    required: true
+  - name: sequencingTechnique
+    description: "Sample sequencing techniques which were used to seqeuence the samples.\n\
+      Possible values are:\n    - AMPLICON\n    - SHOTGUN\n    - WGS\n\nIf value is\
+      \ set to \"AMPLICON\" then all samples which were sequenced using\nthat method\
+      \ will be used for further processing."
+    value:
+    - AMPLICON
+    - SHOTGUN
+    - WGS
+    data_type: list[str]
+    required: true
+  - name: batchSize
+    description: 'The model will be trained on data in batches rather then all at
+      once.
+
+      This parameter dictates the numner of samples that will be in one batch.'
+    value: 512
+    data_type: int
+    required: true
+  - name: bufferSize
+    description: 'The model will place samples in a buffer of limited capacity (usualy
+      less
+
+      then the total number of samples), and then randomly choose the next samples
+
+      to train on from that buffer, new samples replacing the chosen ones.
+
+      (a higher value can impove accuracy, but makes the shuffling take more time)'
+    value: 512
+    data_type: int
+    required: true
+  - name: hiddenLayers
+    description: 'A list in which each integer represents the number of nodes in that
+      hidden layer.
+
+      The number of hidden layers depends on the number of elements in the list
+
+      (a larger model can learn a more complex representation of the training data,
+
+      thereby possibly increasing accuracy, but is more prone to overfit
+
+      and needs longer to train)'
+    value:
+    - 256
+    - 256
+    - 128
+    data_type: list[int]
+    required: true
+  - name: learningRate
+    description: 'Learning rate of the gradiend boosting algorithm. Prefered range
+      of values
+
+      is 10^-6 (0,000001) - 1.0. Higher learning rates allow model to train faster,
+
+      but at the cost of final model accuracy. Lower learning rates make
+
+      model train significantly slower, but in a more optimal manner.'
+    value: 0.01
+    data_type: float
+    required: true
+  - name: lambda
+    description: 'The L0 regularization parameter
+
+      (a higher value can reduce overfitting, but risks weakening the model)'
+    value: 0.5
+    data_type: float
+    required: true
+  - name: activationFunction
+    description: "The activation function used in the hidden layers of the prediction\
+      \ network.\nThe result of each nodes calculation will be passed through this\
+      \ function.\n\nPossible functions:\n    - \"relu\" (only positive tensors pass,\
+      \ negative tensors become 0),\n    - \"tanh\" (tensors get squished between\
+      \ -1 and 1),\n    - \"sigmoid\" (tensors get squished between 0 and 1),\n  \
+      \  - \"linear\" (no actiavtion, i.e. x = x, hidden layers have no effect with\
+      \ this function)"
+    value: tanh
+    data_type: str
+    required: true
+  - name: epochs
+    description: 'Number of passes that the model will make through the dataset while
+
+      training. Higher values increase training time and accuracy, while lower
+
+      values decrease training time, but they might also decrease accuracy.'
+    value: 10
+    data_type: int
+    required: true
+  - name: displayStep
+    description: 'This integer will dictate how often training progress is printed.
+
+      It will print progress every n epochs, e.g. if 5 the metrics will
+
+      be displayed on epochs 5, 10, 15...'
+    value: 1
+    data_type: int
+    required: true
+  - name: validationSplit
+    description: 'Percentage of dataset which will be used for validation. Prefered
+      value range is
+
+      0.1 - 0.9, while the optimal value is 0.2. If values are close or equal to 0,
+      or
+
+      close or equal to 1 unexpected errors can appear.
+
+
+      If value for "validationSplit" is 0.2, then that means that 20% of the dataset
+
+      will go for validation, while the rest (80%) will go for training.'
+    value: 0.2
+    data_type: float
+    required: true
+  - name: batchNorm
+    description: 'Wheather to use batch normalization (batch norm) between the prediction
+      layers.
+
+      Batch normalization applies a transformation that maintains the mean output
+
+      close to 0 and the output standard deviation close to 1 (depending on the data
+
+      this could imporve training performance, make training faster and slightly
+
+      reduce overfitting)'
+    value: false
+    data_type: bool
+    required: true
+  - name: randomSeed
+    description: 'The seed that will be used for random processes such as parameter
+      initialization
+
+      and shuffling between epochs (this allows for reproducible results by making
+
+      randomization deterministic)'
+    value: 1
+    data_type: int
+    required: true
+  - name: cache
+    description: 'If set to true (checked) processed dataset will be cached to speed
+      up the
+
+      following runs of the task which uses the same dataset and parameter
+
+      configurations.
+
+
+      Caching is only implemented for MBA (Microbe Atlas) data. After the dataset
+
+      has been seperated into files for each sample, to work with TF dataset,
+
+      they are uploaded to coretex.'
+    value: false
+    data_type: bool
+    required: true

@@ -1,0 +1,22 @@
+id: c4043fa9-d4b9-41e9-b29e-9d576d94e7ea
+name: R -> Example task template
+description: Plots a normal distribution with provided parameters
+project_task: 8
+is_active: true
+param_groups:
+- name: inputs
+  params: []
+- name: outputs
+  params: []
+- name: parameters
+  params:
+  - name: mean
+    description: Mean value used for generating normal distribution
+    value: null
+    data_type: float
+    required: true
+  - name: sd
+    description: Standard deviation value used for generating normal distribution
+    value: null
+    data_type: float
+    required: true
