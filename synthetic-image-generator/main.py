@@ -20,10 +20,10 @@ def getOutputDatasetName(taskRun: TaskRun):
     return hashCacheName(f"{taskRun.id}-SynthImg", ".".join(relevantParams))
 
 
-def getCache(cacheName: str) -> Optional[ImageDataset]:
+def getCache(cacheName: str, sampleCount: int) -> Optional[ImageDataset]:
     caches = ImageDataset.fetchAll(name = cacheName, include_sessions = 1)
     for cache in caches:
-        if cache.count != 0:
+        if cache.count == sampleCount:
             logging.info(">> [Image Augmentation] Cache found!")
             return cache
 
@@ -32,10 +32,15 @@ def getCache(cacheName: str) -> Optional[ImageDataset]:
 
 def main() -> None:
     taskRun = currentTaskRun()
+    augmentationsPerImage = taskRun.parameters["augmentationsPerImage"]
 
     outputDatasetName = getOutputDatasetName(taskRun)
+
     if taskRun.parameters["useCache"]:
-        cache = getCache(outputDatasetName.split("-")[1])
+        cache = getCache(
+            outputDatasetName.split("-")[1],
+            taskRun.dataset.count * augmentationsPerImage
+        )
 
         if cache is not None:
             taskRun.submitOutput("outputDataset", cache)
@@ -62,9 +67,9 @@ def main() -> None:
         augmentSample(
             imageSample,
             backgroundDataset,
+            augmentationsPerImage,
             taskRun.parameters["rotation"],
             taskRun.parameters["scaling"],
-            taskRun.parameters["augmentationsPerImage"],
             imagesDataset.classes,
             taskRun.parameters["documentClass"],
             taskRun.parameters["unwarp"],
