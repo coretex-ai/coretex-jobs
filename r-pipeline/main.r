@@ -186,6 +186,24 @@ trackPctColumns <- function(names, track_matrix) {
     return(track_matrix)
 }
 
+validatePhyoseq <- function(phyloseqObject) {
+    x <- methods::as(phyloseq::otu_table(phyloseqObject), "matrix")
+    if (phyloseq::taxa_are_rows(phyloseqObject)) { x <- t(x) }
+    metadata <- data.frame(sample_data(phyloseqObject))
+
+    counter <- 0
+    for (asvCount in rowSums(x)) {
+        sampleName <- rownames(metadata)[counter + 1]
+        if (asvCount == 0) {
+            sample_data(phyloseqObject) <- subset(metadata, metadata$sampleId != sampleName)
+            print(paste0("Sample ", sampleName, " has 0 ASVs in the OTU table!"))
+        }
+        counter <- counter + 1
+    }
+
+    return (phyloseqObject)
+}
+
 dada2_phyloseq <- function(taskRun, output_path) {
     forward_read_paths <- c()
     reverse_read_paths <- c()
@@ -1357,7 +1375,10 @@ main <- function(taskRun) {
     pseq_bac <- subset_taxa(pseq, domain == "Bacteria")
 
     #Subset data removing undetermined samples
-    pseq_bac <- subset_samples(pseq, !grepl("\\Undetermined", sampleId, fixed = TRUE))
+    pseq_bac <- subset_samples(pseq_bac, !grepl("\\Undetermined", sampleId, fixed = TRUE))
+
+    #Remove samples with zero ASVs / empty OTU table values
+    pseq_bac <- validatePhyoseq(pseq_bac)
 
     file_path <- file.path(output_path, "pseq.RData")
     save(pseq_bac, file = file_path)
