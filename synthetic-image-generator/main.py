@@ -71,7 +71,6 @@ def main() -> None:
             taskRun.parameters["rotation"],
             taskRun.parameters["scaling"],
             imagesDataset.classes,
-            taskRun.parameters["documentClass"],
             taskRun.parameters["unwarp"],
             taskRun.parameters["excludedClasses"],
             outputDataset

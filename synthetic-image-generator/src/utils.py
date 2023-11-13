@@ -104,30 +104,3 @@ def uploadAugmentedImage(
         logging.error(f">> [Image Stitching] Failed to update sample annotation {imagePath}")
 
     imagePath.unlink(missing_ok = True)
-
-
-def getDistanceVector(
-    point1: tuple[int, int],
-    point2: tuple[int, int],
-    angle: Optional[int] = None
-) -> tuple[int, int]:
-
-    x = point1[0] - point2[0]
-    y = point1[1] - point2[1]
-
-    return rotateVector((x, y), angle)
-
-
-def rotateVector(vector: tuple[int, int], degrees: Optional[int]) -> tuple[int, int]:
-    if degrees is None:
-        return vector
-
-    x, y = vector
-
-    theta = math.radians(-degrees)
-    cosang, sinang = math.cos(theta), math.sin(theta)
-
-    newX = int(x * cosang - y * sinang)
-    newY = int(x * sinang + y * cosang)
-
-    return (newX, newY)
