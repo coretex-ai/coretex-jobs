@@ -9,7 +9,7 @@ from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src import document_extractor, utils
+from . import document_extractor, utils
 
 
 def updateAnnotationPosition(
