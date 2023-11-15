@@ -1,0 +1,6 @@
+opencv-python
+coretex
+Pillow
+numpy
+tensorflow
+matplotlib
