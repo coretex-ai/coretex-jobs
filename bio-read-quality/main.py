@@ -6,7 +6,7 @@ from Bio import SeqIO
 
 import matplotlib.pyplot as plt
 
-from coretex import currentTaskRun, SequenceDataset, folder_manager
+from coretex import currentTaskRun, SequenceDataset, folder_manager, TaskRun
 
 
 def calculateAverageScores(qualityScores: list[list[int]]) -> list[float]:
@@ -29,7 +29,7 @@ def analyzeFastq(sequencePath: Path) -> list[float]:
     return calculateAverageScores(qualityScores)
 
 
-def createPlot(scores: list[float], forward: bool) -> Path:
+def createPlot(scores: list[float], title: str, plotPath: Path) -> Path:
     fig, ax = plt.subplots(figsize = (10, 6))
     ax.plot(range(len(scores)), scores, linestyle = "-", color = "b", linewidth = 2, label = "Phred Scores")
 
@@ -55,15 +55,13 @@ def createPlot(scores: list[float], forward: bool) -> Path:
 
 
 def main() -> None:
-    taskRun = currentTaskRun()
-    taskRun.setDatasetType(SequenceDataset)
-    dataset = taskRun.dataset
-    dataset.download()
+    taskRun: TaskRun[SequenceDataset] = currentTaskRun()
+    taskRun.dataset.download()
 
     forwardScores: list[list[float]] = []
     reverseScores: list[list[float]] = []
 
-    for sample in dataset.samples:
+    for sample in taskRun.dataset.samples:
         logging.info(f">> [Quality Scores] Analysing sample \"{sample.name}\"")
         sample.unzip()
 
@@ -73,8 +71,17 @@ def main() -> None:
     forwardAverage = calculateAverageScores(forwardScores)
     reverseAverage = calculateAverageScores(reverseScores)
 
-    forwardPlot = createPlot(forwardAverage, True)
-    reversePlot = createPlot(reverseAverage, False)
+    forwardPlot = createPlot(
+        forwardAverage,
+        "Average Forward Read Quality Scores",
+        folder_manager.temp / "forward_qualities.png"
+    )
+
+    reversePlot = createPlot(
+        reverseAverage,
+        "Average Reverse Read Quality Scores",
+        folder_manager.temp / "reverse_qualities.png"
+    )
 
     logging.info(">> [Quality Scores] Uploading plots")
     taskRun.createArtifact(forwardPlot, forwardPlot.name)
