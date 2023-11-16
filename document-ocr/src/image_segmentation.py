@@ -6,9 +6,12 @@ import logging
 from PIL import Image
 from scipy import ndimage
 
-
 import cv2
 import numpy as np
+
+from coretex import BBox, TaskRun
+
+from .utils import createArtifact
 
 
 def processMask(predictedMask: np.ndarray) -> np.ndarray:
@@ -64,7 +67,7 @@ def warpPerspective(image: np.ndarray, mask: np.ndarray) -> Optional[Image.Image
         return Image.fromarray(cv2.warpPerspective(np.array(image, np.uint8), transformMatrix, (width, height)))
 
 
-def generateSegmentedImage(
+def segmentImage(
     image: Path,
     segmentationMask: np.ndarray
 ) -> Optional[Image.Image]:
@@ -82,3 +85,23 @@ def generateSegmentedImage(
     croppedImage = segmentedImage.crop(bbox)
 
     return croppedImage
+
+
+def segmentDetections(image: Image.Image, bboxes: list[BBox], classes: list[str], outputDir: Path, taskRun: TaskRun):
+    segments: list[Image.Image] = []
+    labels: list[str] = []
+
+    for i, bbox in enumerate(bboxes):
+        segment = image.crop((bbox.minX, bbox.minY, bbox.maxX, bbox.maxY))
+
+        classPath = outputDir / classes[i]
+        classSegmentPath = classPath / "image.png"
+        classPath.mkdir(parents = True, exist_ok = True)
+
+        segment.save(classSegmentPath)
+        createArtifact(taskRun, classSegmentPath, classSegmentPath.relative_to(outputDir.parent))
+
+        segments.append(segment)
+        labels.append(classes[i])
+
+    return segments, labels

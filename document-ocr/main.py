@@ -1,47 +1,52 @@
 import logging
 
-from coretex import currentTaskRun, ImageDataset, ImageSample, Model, folder_manager
+from coretex import currentTaskRun, ImageDataset, folder_manager
 
-from src import detect
-from src.model import loadModel
-from src.image_segmentation import processMask, generateSegmentedImage
-from src.utils import savePlot
+from src import detect_document
+from src.model import loadSegmentationModel, getWeights
+from src.image_segmentation import processMask, segmentImage, segmentDetections
+from src.ocr import performOCR
+from src.utils import savePlot, saveDocumentWithDetections, removeDuplicalteDetections
+from src.object_detection.detect import run as runObjectDetection
 
 
 def main() -> None:
     taskRun = currentTaskRun()
 
-    outputdir = folder_manager.createTempFolder("images")
+    outputDir = folder_manager.createTempFolder("sampleOutputs")
 
     dataset: ImageDataset = taskRun.dataset
     dataset.download()
 
-    coretexModel: Model = taskRun.parameters["model"]
-    coretexModel.download()
+    segmentationModel = loadSegmentationModel(taskRun.parameters["segmentationModel"])
+    predictedMasks = detect_document.run(segmentationModel, dataset)
 
-    model = loadModel(coretexModel.path / "model.tflite")
-    predictions = detect.run(model, dataset)
-
-    outputDataset = ImageDataset.createDataset(f"{taskRun.id}-segmented-images", taskRun.projectId)
-    if outputDataset is None:
-        raise ValueError(">> [Document OCR] Failed to create output dataset")
+    objDetModelWeights = getWeights(taskRun.parameters["objectDetectionModel"])
 
     for i, sample in enumerate(dataset.samples):
-        logging.info(f">> [Document OCR] Performig segmentation on sample \"{sample.name}\"")
+        logging.info(f">> [Document OCR] Performing segmentation on sample \"{sample.name}\"")
+        sampleOutputdir = outputDir / f"{sample.name}"
+        sampleOutputdir.mkdir()
 
-        mask = processMask(predictions[i])
+        mask = processMask(predictedMasks[i])
 
-        image = generateSegmentedImage(sample.imagePath, mask)
-        if image is None:
+        segmentedImage = segmentImage(sample.imagePath, mask)
+        if segmentedImage is None:
             continue
 
-        savePlot(sample.name, image, mask, taskRun)
+        segmentedOutput = sampleOutputdir / "segmented.png"
+        segmentedImage.save(segmentedOutput)
 
-        savePath = outputdir / f"{sample.name}.png"
-        image.save(savePath)
-        ImageSample.createImageSample(outputDataset.id, savePath)
+        savePlot(sample, mask, taskRun)
 
-    taskRun.submitOutput("outputDataset", outputDataset)
+        bboxes, classes = runObjectDetection(segmentedOutput, objDetModelWeights)
+        bboxes, classes = removeDuplicalteDetections(bboxes, classes)
+
+        segmentedDetections, labels = segmentDetections(segmentedImage, bboxes, classes, sampleOutputdir, taskRun)
+
+        saveDocumentWithDetections(segmentedImage, bboxes, classes, sampleOutputdir, taskRun)
+
+        performOCR(segmentedDetections, labels, sampleOutputdir, taskRun)
 
 
 if __name__ == "__main__":
