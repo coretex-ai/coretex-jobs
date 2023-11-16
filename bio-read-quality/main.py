@@ -33,13 +33,6 @@ def createPlot(scores: list[float], title: str, plotPath: Path) -> Path:
     fig, ax = plt.subplots(figsize = (10, 6))
     ax.plot(range(len(scores)), scores, linestyle = "-", color = "b", linewidth = 2, label = "Phred Scores")
 
-    if forward:
-        title = "Average Forward Read Quality Scores"
-        plotPath = folder_manager.temp / "forward_qualities.png"
-    else:
-        title = "Average Reverse Read Quality Scores"
-        plotPath = folder_manager.temp / "reverse_qualities.png"
-
     ax.set_title(title, fontsize = 18)
     ax.set_xlabel("Base Pair Index", fontsize = 14)
     ax.set_ylabel("Phred Quality Score", fontsize = 14)
