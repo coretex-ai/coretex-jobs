@@ -3,6 +3,7 @@ name: Sequencing Read Quality Analysis
 description: This task creates a plot that showcases the average quality soceres per base pair index for the sequencing reads in the dataset.
 project_task: 11
 is_active: true
+param_groups:
 - name: inputs
   params:
   - name: dataset
