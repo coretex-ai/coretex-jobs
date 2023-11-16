@@ -1,0 +1,42 @@
+id: 30bbf145-974f-4349-885f-d1562e78f553
+name: Image Segmentation
+description: TODO
+is_active: true
+project_type: 1
+param_groups:
+- name: inputs
+  params:
+  - name: dataset
+    description: Dataset id that is used for fetching dataset from coretex.
+    value: null
+    data_type: dataset
+    required: true
+- name: parameters
+  params:
+  - name: epochs
+    description: Number of times the data is run throught the model
+    value: 10
+    data_type: int
+    required: true
+  - name: batchSize
+    description: Number of segments into which dataset is split during the training
+    value: 16
+    data_type: int
+    required: true
+  - name: validationSplit
+    description: Percentage of data from the dataset which will be used as validation
+      data
+    value: 0.2
+    data_type: float
+    required: true
+  - name: imageSize
+    description: Size to which the images from the dataset will be resized for training
+    value: 128
+    data_type: int
+    required: true
+  - name: excludedClasses
+    description: Classes from the dataset which will be excluded from training the
+      model
+    value: []
+    data_type: list[str]
+    required: false
