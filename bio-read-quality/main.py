@@ -49,6 +49,7 @@ def createPlot(scores: list[float], title: str, plotPath: Path) -> Path:
 
 def main() -> None:
     taskRun: TaskRun[SequenceDataset] = currentTaskRun()
+    taskRun.setDatasetType(SequenceDataset)
     taskRun.dataset.download()
 
     forwardScores: list[list[float]] = []
@@ -61,6 +62,7 @@ def main() -> None:
         forwardScores.append(analyzeFastq(sample.forwardPath))
         reverseScores.append(analyzeFastq(sample.reversePath))
 
+    logging.info(">> [Quality Scores] Calculating average scores")
     forwardAverage = calculateAverageScores(forwardScores)
     reverseAverage = calculateAverageScores(reverseScores)
 
