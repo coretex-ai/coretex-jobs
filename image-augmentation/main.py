@@ -1,13 +1,12 @@
 from typing import Optional
-from pathlib import Path
 
 import logging
 
 import imgaug.augmenters as iaa
-import imageio.v3 as imageio
-
-from coretex import TaskRun, ImageDataset, ImageSample, folder_manager, currentTaskRun
+from coretex import TaskRun, ImageDataset, folder_manager, currentTaskRun
 from coretex.utils import hashCacheName
+
+from src.augmentation import augmentImage
 
 
 def getOutputDatasetName(taskRun: TaskRun) -> str:
@@ -28,21 +27,6 @@ def getCache(cacheName: str) -> Optional[ImageDataset]:
             return cache
 
     return None
-
-
-def augmentImage(augmenter: iaa.Sequential, sample: ImageSample, numOfImages: int, outputDir: Path, outputDataset: ImageDataset) -> None:
-    sample.unzip()
-
-    image = imageio.imread(sample.imagePath)
-    for i in range(numOfImages):
-        augmentedImage = augmenter.augment_image(image)
-        outputPath = outputDir / f"{sample.name}-{i}.jpg"
-        imageio.imwrite(outputPath, augmentedImage)
-
-        if ImageSample.createImageSample(outputDataset.id, outputPath) is None:
-            logging.error(f">> [Image Augmentation] {outputPath.name} failed to uplaod")
-        else:
-            logging.info(f">> [Image Augmentation] Uploaded {outputPath.name} to coretex")
 
 
 def main() -> None:
@@ -66,23 +50,19 @@ def main() -> None:
     outputDir = folder_manager.createTempFolder("augmentedImages")
 
     flipH = taskRun.parameters["flipHorizontalPrc"]
-    flipV = taskRun.parameters["flipVerticalPrc"]
     affine = taskRun.parameters["affine"]
     noise = taskRun.parameters["noise"]
     blur = taskRun.parameters["blurPrc"]
     crop = taskRun.parameters["crop"]
     contrast = taskRun.parameters["contrast"]
 
-    augmenters: list[iaa.Augmenter] = []
+    firstAugmenters: list[iaa.Augmenter] = []
 
     if flipH is not None:
-        augmenters.append(iaa.Fliplr(flipH))
-
-    if flipV is not None:
-        augmenters.append(iaa.Flipud(flipV))
+        firstAugmenters.append(iaa.Fliplr(flipH))
 
     if affine:
-        augmenters.append(iaa.Affine(
+        firstAugmenters.append(iaa.Affine(
             scale={"x": (0.8, 1.2), "y": (0.8, 1.2)},
             translate_percent={"x": (-0.2, 0.2), "y": (-0.2, 0.2)},
             rotate=(-25, 25),
@@ -90,25 +70,36 @@ def main() -> None:
         ))
 
     if crop is not None:
-        augmenters.append(iaa.Crop(percent=(0, crop)))
+        firstAugmenters.append(iaa.Crop(percent=(0, crop)))
+
+    secondAugmenters = firstAugmenters
 
     if noise is not None:
-        augmenters.append(iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, noise*255), per_channel=0.5))
+        secondAugmenters.append(iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, noise*255), per_channel=0.5))
 
     if blur is not None:
-        augmenters.append(iaa.Sometimes(
+        secondAugmenters.append(iaa.Sometimes(
             blur,
             iaa.GaussianBlur(sigma=(0, 0.5))
         ))
 
     if contrast:
-        augmenters.append(iaa.LinearContrast((0.75, 1.5)))
+        secondAugmenters.append(iaa.LinearContrast((0.75, 1.5)))
 
-    augmentationPipeline = iaa.Sequential(augmenters)
+    firstPipeline = iaa.Sequential(firstAugmenters)
+    secondPipeline = iaa.Sequential(secondAugmenters)
 
     for sample in dataset.samples:
         logging.info(f">> [Image Augmentation] Performing augmentation on image {sample.name}")
-        augmentImage(augmentationPipeline, sample, taskRun.parameters["numOfImages"], outputDir, outputDataset)
+
+        augmentImage(
+            firstPipeline,
+            secondPipeline,
+            sample,
+            taskRun.parameters["numOfImages"],
+            outputDir,
+            outputDataset
+        )
 
     taskRun.submitOutput("outputDataset", outputDataset)
 

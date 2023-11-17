@@ -44,13 +44,6 @@ param_groups:
     value: 0.5
     data_type: float
     required: false
-  - name: flipVerticalPrc
-    description: 'Percent of images which will be flipped vertically
-
-      If empty, augmentation will not be performed.'
-    value: null
-    data_type: float
-    required: false
   - name: affine
     description: 'Determines if affine augmentation will be performed, which include:
 
@@ -97,6 +90,6 @@ param_groups:
       parameters as this one, and if successful, will submit that dataset as
 
       outputDataset.'
-    value: true
+    value: false
     data_type: bool
     required: true
