@@ -1,0 +1,9 @@
+id: 2dccde99-7c5b-4407-8d8d-fe996d7404c3
+name: Microbiome Forensics -> Sequence Alignment
+description: Task template for aligning/mapping sequence reads to reference genome.
+  Either genomeUrl or referenceDataset has to be filled
+project_type: 11
+is_active: true
+jobs:
+  microbiome-forensics-sequence-alignment:
+    template_id: 27e5357c-9cdb-4610-accb-9c05ed2815cc

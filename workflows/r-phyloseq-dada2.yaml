@@ -1,0 +1,9 @@
+id: c60657ca-3404-4807-a182-eac392590d07
+name: 'Phyloseq -> Step 1: DADA2 + Phylogenetic Tree'
+description: Task template for cleaning the data using DADA2 and generating phylogenetic
+  tree based on the cleaned data
+project_type: 11
+is_active: true
+jobs:
+  phyloseq-step-1-dada2-phylogenetic-tree:
+    template_id: 096d8aaa-4a70-4324-a1f6-74d640d470ae

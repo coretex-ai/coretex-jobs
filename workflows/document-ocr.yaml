@@ -1,0 +1,8 @@
+id: 15820fbf-16ac-41a2-b5f9-9dee26b57a25
+name: Document OCR
+description: This task template performs original character recognition (OCR) on documents
+project_type: 1
+is_active: true
+jobs:
+  document-ocr:
+    template_id: 9a100929-c55f-4f1d-a4ff-eb8607cb31a6

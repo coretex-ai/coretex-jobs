@@ -1,0 +1,8 @@
+id: 8b7c5b78-d678-4736-afd1-0f96dff507cc
+name: R -> Example task template
+description: Plots a normal distribution with provided parameters
+project_type: 8
+is_active: true
+jobs:
+  r-example-task-template:
+    template_id: c4043fa9-d4b9-41e9-b29e-9d576d94e7ea

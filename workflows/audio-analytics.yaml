@@ -1,0 +1,8 @@
+id: 3f966625-3cb4-42d5-a443-26a2e94d534d
+name: NLP -> Named Entity Recognition
+description: Searches text for provided keywords
+project_type: 8
+is_active: false
+jobs:
+  nlp-named-entity-recognition:
+    template_id: adf92e59-35a6-47b9-b526-0d6615d74b4e

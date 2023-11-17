@@ -1,0 +1,8 @@
+id: 21e4726c-8885-4e60-bddd-fedbf40bd97b
+name: Image Segmentation
+description: TODO
+project_type: 1
+is_active: true
+jobs:
+  image-segmentation:
+    template_id: 30bbf145-974f-4349-885f-d1562e78f553

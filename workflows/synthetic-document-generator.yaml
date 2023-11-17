@@ -1,0 +1,8 @@
+id: 3b967bad-4009-4ec7-b2b2-2114e3c2b386
+name: Synthetic Document Generator
+description: Generates document images and annotations using provided parameters
+project_type: 1
+is_active: true
+jobs:
+  synthetic-document-generator:
+    template_id: fc6add9d-4477-4510-ae1f-785fa8b67742
