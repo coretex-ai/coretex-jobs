@@ -1,8 +1,4 @@
-from pathlib import Path
-
 import logging
-
-from PIL import Image
 
 import cv2
 import numpy as np
@@ -10,11 +6,55 @@ import imgaug.augmenters as iaa
 import imageio.v3 as imageio
 import matplotlib.pyplot as plt
 
-from coretex import TaskRun, ImageDataset, ImageSample
+from coretex import ImageDataset, ImageSample, CoretexSegmentationInstance, BBox, CoretexImageAnnotation, AnnotatedImageSampleData
+
+from .utils import uploadAugmentedImage
 
 
 def mask2poly(mask: np.ndarray) -> list[int]:
-    cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    mask = cv2.resize(mask.astype(np.uint8), (mask.shape[0] * 4, mask.shape[1] * 4))
+    plt.imshow(mask)
+    contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    if len(contours) == 0:
+        logging.warning(">> [Image Augmentation] Could not find annotated area on augmented image")
+        return None
+
+    epsilon = 0.005 * cv2.arcLength(contours[0], True)
+    poly = cv2.approxPolyDP(contours[0], epsilon, True)
+
+    segmentation: list[int] = []
+    for point in poly:
+        segmentation.append(int(point[0][0]))
+        segmentation.append(int(point[0][1]))
+
+    return segmentation
+
+
+def transformAnnotationInstances(sampleData: AnnotatedImageSampleData, pipeline: iaa.Sequential) -> CoretexImageAnnotation:
+    augmentedInstances: list[CoretexSegmentationInstance] = []
+
+    for instance in sampleData.annotation.instances:
+        mask = instance.extractSegmentationMask(
+            sampleData.annotation.width,
+            sampleData.annotation.height
+        )
+
+        mask = np.repeat(mask[..., None] * 255, 3, axis = -1)
+
+        augmentedMask = pipeline.augment_image(mask)
+        augmentedMask = (np.average(augmentedMask, axis=-1) > 127).astype(int)
+
+        newSegmentations = mask2poly(augmentedMask)
+        if newSegmentations is None:
+            continue
+
+        augmentedInstances.append(CoretexSegmentationInstance.create(
+            instance.classId,
+            BBox.fromPoly(newSegmentations),
+            [newSegmentations]
+        ))
+
+    return augmentedInstances
 
 
 def augmentImage(
@@ -22,7 +62,6 @@ def augmentImage(
     secondPipeline: iaa.Sequential,
     sample: ImageSample,
     numOfImages: int,
-    outputDir: Path,
     outputDataset: ImageDataset
 ) -> None:
 
@@ -32,31 +71,19 @@ def augmentImage(
     sampleData = sample.load()
 
     for i in range(numOfImages):
-        fig, axes = plt.subplots(1, 3)
 
-        secondPipeline_ = secondPipeline.localize_random_state()
-        secondPipeline_ = secondPipeline_.to_deterministic()
+        firstPipeline_ = firstPipeline.localize_random_state()
+        firstPipeline_ = firstPipeline_.to_deterministic()
 
-        augmentedImage = secondPipeline_.augment_image(image)
-        axes[0].imshow(augmentedImage)
+        augmentedImage = firstPipeline_.augment_image(image)
+        augmentedImage = secondPipeline.augment_image(augmentedImage)
+        augmentedInstances = transformAnnotationInstances(sampleData, firstPipeline_)
 
-        for instance in sampleData.annotation.instances:
-            mask = instance.extractSegmentationMask(sampleData.annotation.width, sampleData.annotation.height)
-            axes[2].imshow(mask)
-            mask = np.repeat(mask[..., None] * 255, 3, axis = -1)
-            augmentedMask = secondPipeline_.augment_image(mask)
-            augmentedMask = (np.average(augmentedMask, axis=-1) > 128).astype(int)
-            axes[1].imshow(augmentedMask)
+        annotation = CoretexImageAnnotation.create(
+            sample.name,
+            augmentedImage.shape[1],
+            augmentedImage.shape[0],
+            augmentedInstances
+        )
 
-            plt.show()
-            plt.close()
-
-            Image.fromarray(augmentedMask).show()
-
-        outputPath = outputDir / f"{sample.name}-{i}.jpg"
-        imageio.imwrite(outputPath, augmentedImage)
-
-        if ImageSample.createImageSample(outputDataset.id, outputPath) is None:
-            logging.error(f">> [Image Augmentation] {outputPath.name} failed to uplaod")
-        else:
-            logging.info(f">> [Image Augmentation] Uploaded {outputPath.name} to coretex")
+        uploadAugmentedImage(f"{sample.name}-{i}", augmentedImage, annotation, outputDataset)

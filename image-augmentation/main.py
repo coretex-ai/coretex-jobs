@@ -3,7 +3,7 @@ from typing import Optional
 import logging
 
 import imgaug.augmenters as iaa
-from coretex import TaskRun, ImageDataset, folder_manager, currentTaskRun
+from coretex import TaskRun, ImageDataset, currentTaskRun
 from coretex.utils import hashCacheName
 
 from src.augmentation import augmentImage
@@ -47,7 +47,7 @@ def main() -> None:
     if outputDataset is None:
         raise ValueError(">> [Image Augmentation] Failed to create output dataset")
 
-    outputDir = folder_manager.createTempFolder("augmentedImages")
+    outputDataset.saveClasses(dataset.classes)
 
     flipH = taskRun.parameters["flipHorizontalPrc"]
     affine = taskRun.parameters["affine"]
@@ -72,7 +72,7 @@ def main() -> None:
     if crop is not None:
         firstAugmenters.append(iaa.Crop(percent=(0, crop)))
 
-    secondAugmenters = firstAugmenters
+    secondAugmenters: list[iaa.Augmenter] = []
 
     if noise is not None:
         secondAugmenters.append(iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, noise*255), per_channel=0.5))
@@ -97,7 +97,6 @@ def main() -> None:
             secondPipeline,
             sample,
             taskRun.parameters["numOfImages"],
-            outputDir,
             outputDataset
         )
 
