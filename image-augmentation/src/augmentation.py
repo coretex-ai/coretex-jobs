@@ -12,7 +12,7 @@ from .utils import uploadAugmentedImage
 
 
 def mask2poly(mask: np.ndarray) -> list[int]:
-    mask = cv2.resize(mask.astype(np.uint8), (mask.shape[0] * 4, mask.shape[1] * 4))
+    mask = cv2.resize(mask.astype(np.uint8), (mask.shape[0], mask.shape[1]))
     plt.imshow(mask)
     contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     if len(contours) == 0:
