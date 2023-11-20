@@ -25,9 +25,9 @@ def trOCR(image: Image.Image) -> str:
     return processor.batch_decode(generatedIds, skip_special_tokens = True)[0]  # type: ignore
 
 
-def performOCR(images: list[Image.Image], labels: list[str], outputDir: Path, taskRun: TaskRun):
+def performOCR(images: list[Image.Image], classes: list[str], outputDir: Path, taskRun: TaskRun):
     for i, image in enumerate(images):
-        classResultPath = outputDir / labels[i]
+        classResultPath = outputDir / classes[i]
         classResultPath.mkdir(exist_ok = True)
 
         tesseractOutputPath = classResultPath / "pytesseract.txt"

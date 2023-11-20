@@ -87,10 +87,15 @@ def segmentImage(
     return croppedImage
 
 
-def segmentDetections(image: Image.Image, bboxes: list[BBox], classes: list[str], outputDir: Path, taskRun: TaskRun):
-    segments: list[Image.Image] = []
-    labels: list[str] = []
+def segmentDetections(
+    image: Image.Image,
+    bboxes: list[BBox],
+    classes: list[str],
+    outputDir: Path,
+    taskRun: TaskRun
+) -> list[Image.Image]:
 
+    segments: list[Image.Image] = []
     for i, bbox in enumerate(bboxes):
         segment = image.crop((bbox.minX, bbox.minY, bbox.maxX, bbox.maxY))
 
@@ -102,6 +107,5 @@ def segmentDetections(image: Image.Image, bboxes: list[BBox], classes: list[str]
         createArtifact(taskRun, classSegmentPath, classSegmentPath.relative_to(outputDir.parent))
 
         segments.append(segment)
-        labels.append(classes[i])
 
-    return segments, labels
+    return segments

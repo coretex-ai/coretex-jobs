@@ -20,7 +20,7 @@ def trOCR(image: Image.Image) -> str:
     return processor.batch_decode(generatedIds, skip_special_tokens = True)[0]  # type: ignore
 
 
-def performOCR(images: list[Image.Image], labels: list[str]) -> list[dict[str, str]]:
+def performOCR(images: list[Image.Image], classes: list[str]) -> list[dict[str, str]]:
     detections: list[dict[str, str]] = []
     for i, image in enumerate(images):
         tesseractOutput = pytesseract.image_to_string(image).replace("\n", " ")
@@ -28,7 +28,7 @@ def performOCR(images: list[Image.Image], labels: list[str]) -> list[dict[str, s
         trOcrOutput = trOCR(image)
 
         detections.append({
-            "class": labels[i],
+            "class": classes[i],
             "tesseract": tesseractOutput,
             "easyOCR": easyOcrOutput,
             "trOCR": trOcrOutput

@@ -18,3 +18,4 @@ coretex
 pytesseract
 easyocr
 transformers
+ultralytics

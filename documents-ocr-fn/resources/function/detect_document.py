@@ -6,7 +6,7 @@ import tensorflow as tf
 
 
 def run(model: tf.lite.Interpreter, imagePath: Path) -> list[np.ndarray]:
-    image = cv2.imread(imagePath)
+    image = cv2.imread(str(imagePath))
 
     inputDetails = model.get_input_details()
     outputDetails = model.get_output_details()

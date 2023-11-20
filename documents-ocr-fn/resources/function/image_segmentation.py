@@ -85,14 +85,14 @@ def segmentImage(
     return croppedImage
 
 
-def segmentDetections(image: Image.Image, bboxes: list[BBox], classes: list[str]):
-    segments: list[Image.Image] = []
-    labels: list[str] = []
+def segmentDetections(
+    image: Image.Image,
+    bboxes: list[BBox]
+) -> list[Image.Image]:
 
+    segments: list[Image.Image] = []
     for i, bbox in enumerate(bboxes):
         segment = image.crop((bbox.minX, bbox.minY, bbox.maxX, bbox.maxY))
-
         segments.append(segment)
-        labels.append(classes[i])
 
-    return segments, labels
+    return segments
