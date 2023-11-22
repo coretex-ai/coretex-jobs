@@ -1,0 +1,3 @@
+coretex
+biopython
+matplotlib
