@@ -25,7 +25,7 @@ def main() -> None:
     objetDetectionModel = getObjectDetectionModel(taskRun.parameters["objectDetectionModel"])
 
     for i, sample in enumerate(dataset.samples):
-        logging.info(f">> [Document OCR] Performing segmentation on sample \"{sample.name}\"")
+        logging.info(f">> [Document OCR] Performing segmentation on sample \"{sample.name}\" ({i + 1}/{dataset.count})")
         sampleOutputdir = outputDir / f"{sample.name}"
         sampleOutputdir.mkdir()
 
