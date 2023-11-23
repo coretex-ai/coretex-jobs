@@ -35,7 +35,7 @@ def main() -> None:
         if segmentedImage is None:
             continue
 
-        savePlot(sample, mask, taskRun)
+        savePlot(sample, predictedMasks[i], mask, taskRun)
 
         bboxes, classes = runObjectDetection(segmentedImage, objetDetectionModel)
         segmentedDetections = segmentDetections(segmentedImage, bboxes, classes, sampleOutputdir, taskRun)

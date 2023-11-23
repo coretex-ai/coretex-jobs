@@ -15,9 +15,15 @@ def createArtifact(taskRun: TaskRun[ImageDataset], filePath: Path, artifactPath:
         logging.error(f"\tFailed to create artifact \"{artifactPath}\"")
 
 
-def savePlot(sample: ImageSample, predictedMask: np.ndarray, taskRun: TaskRun) -> None:
+def savePlot(
+    sample: ImageSample,
+    predictedMask: np.ndarray,
+    processedMask: np.ndarray,
+    taskRun: TaskRun
+) -> None:
+
     plotPath = folder_manager.temp / f"segmentation.png"
-    fig, axes = plt.subplots(1, 3)
+    fig, axes = plt.subplots(2, 2)
 
     originalImage = Image.open(sample.imagePath)
 
@@ -33,14 +39,17 @@ def savePlot(sample: ImageSample, predictedMask: np.ndarray, taskRun: TaskRun) -
         logging.warning(">> [Document OCR] No ground truth mask found")
         return
 
-    axes[0].set_title("Input image")
-    axes[0].imshow(originalImage)
+    axes[0][0].set_title("Input image")
+    axes[0][0].imshow(originalImage)
 
-    axes[1].set_title("Groundtruth mask")
-    axes[1].imshow(groundTruth)
+    axes[0][1].set_title("Groundtruth mask")
+    axes[0][1].imshow(groundTruth)
 
-    axes[2].set_title("Predicted mask")
-    axes[2].imshow(predictedMask)
+    axes[1][0].set_title("Predicted mask")
+    axes[1][0].imshow(predictedMask)
+
+    axes[1][1].set_title("Processed predicted mask")
+    axes[1][1].imshow(processedMask)
 
     plt.savefig(plotPath)
     plt.close()

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import logging
 
-from PIL import Image
+from PIL import Image, ImageDraw
 from scipy import ndimage
 
 import cv2
@@ -12,6 +12,39 @@ import numpy as np
 from coretex import BBox, TaskRun
 
 from .utils import createArtifact
+
+
+def findRectangle(mask: np.ndarray) -> Optional[np.ndarray]:
+        contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        if len(contours) == 0:
+            logging.error("Failed to find predicted mask")
+            return
+
+        contour = max(contours, key = cv2.contourArea)
+
+        epsilon = 0.02 * cv2.arcLength(contour, True)
+        rectangle = cv2.approxPolyDP(contour, epsilon, True)
+
+        if rectangle.shape[0] > 4:
+            rectangle = cv2.minAreaRect(contour)
+            return cv2.boxPoints(rectangle)
+
+        points: list[list[int]] = []
+        for point in rectangle:
+            points.append([point[0][0], point[0][1]])
+
+        xSorted = sorted(points, key = lambda point: point[0])
+
+        left = xSorted[:2]
+        left.sort(key = lambda point: point[1])
+        tl, bl = left
+
+        right = xSorted[2:]
+        right.sort(key = lambda point: point[1])
+        tr, br = right
+
+        return np.array([tl, tr, br, bl], dtype = np.float32)
 
 
 def processMask(predictedMask: np.ndarray) -> np.ndarray:
@@ -28,43 +61,23 @@ def processMask(predictedMask: np.ndarray) -> np.ndarray:
     # Hole Filling
     filledMask = ndimage.binary_fill_holes(cleanMask)
 
-    return filledMask
+    # Finding quadrilateral
+    cornerPoints = findRectangle(filledMask)
+    if cornerPoints is None:
+        return None
 
+    width = predictedMask.shape[1]
+    height = predictedMask.shape[0]
 
-def warpPerspective(image: np.ndarray, mask: np.ndarray) -> Optional[Image.Image]:
-        contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    polygon = [min(value, width - 1) if i % 2 == 0 else min(value, height - 1) for i, value in enumerate(cornerPoints.flatten())]
+    polygon.extend((polygon[0], polygon[1]))  # Close polygon
 
-        if len(contours) != 1:
-            raise ValueError("Found more than one contour")
+    image = Image.new("L", (predictedMask.shape[1], predictedMask.shape[0]))
 
-        epsilon = 0.02 * cv2.arcLength(contours[0], True)
-        rectangle = cv2.approxPolyDP(contours[0], epsilon, True)
-        if rectangle.shape[0] > 4:
-            logging.error(">> [Document OCR] Failed to approximate rectangle. Mask may be too noisy")
-            return None
+    draw = ImageDraw.Draw(image)
+    draw.polygon(polygon, fill = 1)
 
-        points: list[list[int]] = []
-        for point in rectangle:
-            points.append([point[0][0], point[0][1]])
-
-        xSorted = sorted(points, key = lambda point: point[0])
-
-        left = xSorted[:2]
-        left.sort(key = lambda point: point[1])
-        tl, bl = left
-
-        right = xSorted[2:]
-        right.sort(key = lambda point: point[1])
-        tr, br = right
-
-        width = tr[0] - tl[0]
-        height = bl[1] - tl[1]
-
-        cornerPoints = np.array([tl, tr, br, bl], dtype = np.float32)
-
-        transformed = np.array([[0, 0], [width, 0], [width, height], [0, height]], dtype = np.float32)
-        transformMatrix = cv2.getPerspectiveTransform(cornerPoints, transformed)
-        return Image.fromarray(cv2.warpPerspective(np.array(image, np.uint8), transformMatrix, (width, height)))
+    return np.array(image)
 
 
 def segmentImage(
@@ -74,11 +87,18 @@ def segmentImage(
 
     rgbaImage = Image.open(image).convert("RGBA")
 
-    segmentedImage = np.asarray(rgbaImage) * segmentationMask[..., None]  # reshape segmentationMask for broadcasting
+    segmentedImage = (np.array(rgbaImage) * segmentationMask[..., None]).astype(np.uint8)  # reshape segmentationMask for broadcasting
 
-    segmentedImage = warpPerspective(segmentedImage, segmentationMask)
-    if segmentedImage is None:
+    cornerPoints = findRectangle(segmentationMask)
+    if cornerPoints is None:
         return None
+
+    width = int(cornerPoints[1][0] - cornerPoints[0][0])  # Top left x minus top ritht x
+    height = int(cornerPoints[3][1] - cornerPoints[0][1])  # Bottom left y minus top left y
+
+    transformed = np.array([[0, 0], [width, 0], [width, height], [0, height]], dtype = np.float32)
+    transformMatrix = cv2.getPerspectiveTransform(cornerPoints, transformed)
+    segmentedImage = Image.fromarray(cv2.warpPerspective(np.array(segmentedImage, np.uint8), transformMatrix, (width, height)))
 
     alpha = segmentedImage.getchannel("A")
     bbox = alpha.getbbox()
