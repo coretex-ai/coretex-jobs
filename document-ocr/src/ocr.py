@@ -30,17 +30,17 @@ def performOCR(images: list[Image.Image], classes: list[str], outputDir: Path, t
         classResultPath = outputDir / classes[i]
         classResultPath.mkdir(exist_ok = True)
 
-        tesseractOutputPath = classResultPath / "pytesseract.txt"
-        with tesseractOutputPath.open("w") as file:
-            file.write(pytesseract.image_to_string(image))
-        createArtifact(taskRun, tesseractOutputPath, str(tesseractOutputPath.relative_to(outputDir.parent)))
+        # tesseractOutputPath = classResultPath / "pytesseract.txt"
+        # with tesseractOutputPath.open("w") as file:
+        #     file.write(pytesseract.image_to_string(image))
+        # createArtifact(taskRun, tesseractOutputPath, str(tesseractOutputPath.relative_to(outputDir.parent)))
 
-        easyOcrOutputPath = classResultPath / "easyocr.txt"
-        with easyOcrOutputPath.open("w") as file:
-            result = reader.readtext(np.array(image))
-            if len(result) > 0:
-                file.write("\n".join([e[1] for e in result]))
-        createArtifact(taskRun, easyOcrOutputPath, str(easyOcrOutputPath.relative_to(outputDir.parent)))
+        # easyOcrOutputPath = classResultPath / "easyocr.txt"
+        # with easyOcrOutputPath.open("w") as file:
+        #     result = reader.readtext(np.array(image))
+        #     if len(result) > 0:
+        #         file.write("\n".join([e[1] for e in result]))
+        # createArtifact(taskRun, easyOcrOutputPath, str(easyOcrOutputPath.relative_to(outputDir.parent)))
 
         trOcrOutputPath = classResultPath.joinpath("trocr.txt")
         with trOcrOutputPath.open("w") as file:
