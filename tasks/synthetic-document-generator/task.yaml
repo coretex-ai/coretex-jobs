@@ -9,13 +9,13 @@ param_groups:
   - name: dataset
     description: Dataset containing the annotations which will be used for synthetically
       generating more data
-    value: null
+    value: 19654
     data_type: dataset
     required: true
   - name: backgroundDataset
     description: Dataset containing background images on which the annotations from
       the "dataset" parameter will be pasted on
-    value: null
+    value: 16901
     data_type: dataset
     required: true
 - name: outputs
@@ -29,7 +29,7 @@ param_groups:
   params:
   - name: imagesPerDocument
     description: How many images will be generated per document
-    value: 10
+    value: 6
     data_type: int
     required: true
   - name: seed
