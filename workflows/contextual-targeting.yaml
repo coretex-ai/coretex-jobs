@@ -1,9 +1,0 @@
-id: 6be59ad0-3882-43be-9212-163046462670
-name: NLP -> Contextual Targeting
-description: Textual search using text embeddings and cosine similarity instead of
-  directly comparing the text
-project_type: 8
-is_active: false
-jobs:
-  nlp-contextual-targeting:
-    template_id: 6ef766b1-fedb-47f7-97c6-9f3c374c5f6d

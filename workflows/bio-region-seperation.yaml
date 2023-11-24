@@ -1,9 +1,0 @@
-id: 91dfe91d-e260-4334-8dd5-36686a2bbe3b
-name: Microbiome Forensics -> Region Separation
-description: Task template for separating short sequence read files based on the hypervariable
-  regions they cover
-project_type: 11
-is_active: true
-jobs:
-  microbiome-forensics-region-separation:
-    template_id: 9c2cd862-ca76-4a93-ac1d-906c6e78a869

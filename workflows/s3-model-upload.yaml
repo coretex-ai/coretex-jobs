@@ -1,8 +1,0 @@
-id: 8e6de62c-9aef-48a8-bae7-92c11778b6d1
-name: AWS -> S3 Model upload
-description: Task template for uploading model from Coretex.ai to AWS S3 bucket.
-project_type: 8
-is_active: true
-jobs:
-  aws-s3-model-upload:
-    template_id: fb8375e6-14e4-4c7b-8e64-e6f799197897

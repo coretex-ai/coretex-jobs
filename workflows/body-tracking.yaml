@@ -1,8 +1,0 @@
-id: cfc24585-3be6-4048-b4d5-9213a287c499
-name: Body Tracking (Multipose-Lightning)
-description: TODO
-project_type: 7
-is_active: false
-jobs:
-  body-tracking-multipose-lightning-:
-    template_id: 4d9d09b0-8866-40d1-9fc9-94568fc0d13a
