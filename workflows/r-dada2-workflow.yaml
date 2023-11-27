@@ -1,0 +1,15 @@
+id: ff3d05d5-81e9-408e-8dfd-a1de2509739d
+name: Phyloseq -> Full Workflow
+description: Workflow for cleaning the data using DADA2 and generating phylogenetic
+  tree based on the cleaned data then running Alpha & Beta diversity analyses.
+project_type: 11
+is_active: true
+jobs:
+  step-1-dada2-and-phylogenetic-tree:
+    template_id: 096d8aaa-4a70-4324-a1f6-74d640d470ae
+
+  step-2-alpha-and-beta-diversity-analysis:
+    template_id: 953551c1-77aa-4e60-b3d0-35c9531bf40c
+    param_groups:
+      inputs:
+        dataset: step-1-dada2-and-phylogenetic-tree.outputDataset
