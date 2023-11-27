@@ -10,7 +10,7 @@ jobs:
     template_id: 41198e45-7e21-44f4-9c90-ff98c2c8196b
 
   step-2-demultiplexing-sequences:
-    template_id: 5451638b-ab1b-4083-8acc-6d46ccbb644f
+    template_id: 72fee3bd-33d9-42fa-a5da-e41fefc0ab2d
     param_groups:
       inputs:
         dataset: step-1-import.outputDataset
