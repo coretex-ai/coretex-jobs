@@ -9,9 +9,7 @@ from scipy import ndimage
 import cv2
 import numpy as np
 
-from coretex import BBox, TaskRun
-
-from .utils import createArtifact
+from coretex import BBox
 
 
 def findRectangle(mask: np.ndarray) -> Optional[np.ndarray]:
@@ -109,23 +107,12 @@ def segmentImage(
 
 def segmentDetections(
     image: Image.Image,
-    bboxes: list[BBox],
-    classes: list[str],
-    outputDir: Path,
-    taskRun: TaskRun
+    bboxes: list[BBox]
 ) -> list[Image.Image]:
 
     segments: list[Image.Image] = []
-    for i, bbox in enumerate(bboxes):
+    for bbox in bboxes:
         segment = image.crop((bbox.minX, bbox.minY, bbox.maxX, bbox.maxY))
-
-        classPath = outputDir / classes[i]
-        classSegmentPath = classPath / "image.png"
-        classPath.mkdir(parents = True, exist_ok = True)
-
-        segment.save(classSegmentPath)
-        createArtifact(taskRun, classSegmentPath, classSegmentPath.relative_to(outputDir.parent))
-
         segments.append(segment)
 
     return segments

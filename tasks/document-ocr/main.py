@@ -1,13 +1,14 @@
+import shutil
 import logging
 
 from coretex import currentTaskRun, ImageDataset, folder_manager
 
 from src import detect_document
-from src.model import loadSegmentationModel, getWeights
+from src.model import loadSegmentationModel, getObjectDetectionModel
 from src.image_segmentation import processMask, segmentImage, segmentDetections
 from src.ocr import performOCR
-from src.utils import savePlot, saveDocumentWithDetections, removeDuplicalteDetections
-from src.object_detection.detect import run as runObjectDetection
+from src.utils import savePlot, saveDocumentWithDetections
+from src.object_detection import runObjectDetection
 
 
 def main() -> None:
@@ -21,10 +22,10 @@ def main() -> None:
     segmentationModel = loadSegmentationModel(taskRun.parameters["segmentationModel"])
     predictedMasks = detect_document.run(segmentationModel, dataset)
 
-    objDetModelWeights = getWeights(taskRun.parameters["objectDetectionModel"])
+    objetDetectionModel = getObjectDetectionModel(taskRun.parameters["objectDetectionModel"])
 
     for i, sample in enumerate(dataset.samples):
-        logging.info(f">> [Document OCR] Performing segmentation on sample \"{sample.name}\"")
+        logging.info(f">> [Document OCR] Performing segmentation on sample \"{sample.name}\" ({i + 1}/{dataset.count})")
         sampleOutputdir = outputDir / f"{sample.name}"
         sampleOutputdir.mkdir()
 
@@ -34,19 +35,16 @@ def main() -> None:
         if segmentedImage is None:
             continue
 
-        segmentedOutput = sampleOutputdir / "segmented.png"
-        segmentedImage.save(segmentedOutput)
+        savePlot(sample, predictedMasks[i], mask, taskRun)
 
-        savePlot(sample, mask, taskRun)
-
-        bboxes, classes = runObjectDetection(segmentedOutput, objDetModelWeights)
-        bboxes, classes = removeDuplicalteDetections(bboxes, classes)
-
-        segmentedDetections, labels = segmentDetections(segmentedImage, bboxes, classes, sampleOutputdir, taskRun)
+        bboxes, classes = runObjectDetection(segmentedImage, objetDetectionModel)
+        segmentedDetections = segmentDetections(segmentedImage, bboxes, classes, sampleOutputdir, taskRun)
 
         saveDocumentWithDetections(segmentedImage, bboxes, classes, sampleOutputdir, taskRun)
 
-        performOCR(segmentedDetections, labels, sampleOutputdir, taskRun)
+        performOCR(segmentedDetections, classes, sampleOutputdir, taskRun)
+
+        shutil.rmtree(sampleOutputdir)
 
 
 if __name__ == "__main__":

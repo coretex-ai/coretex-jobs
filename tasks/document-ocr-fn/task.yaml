@@ -1,0 +1,18 @@
+id: 9a100929-c55f-4f1d-a4ff-eb8607cb31a6
+name: Document OCR
+description: This task template performs original character recognition (OCR) on documents
+is_active: true
+project_type: 1
+param_groups:
+- name: inputs
+  params:
+  - name: segmentationModel
+    description: Image segmentation model.
+    value: null
+    data_type: model
+    required: true
+  - name: objectDetectionModel
+    description: Object detection model.
+    value: null
+    data_type: model
+    required: true
