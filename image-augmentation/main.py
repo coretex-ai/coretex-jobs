@@ -13,16 +13,15 @@ def getOutputDatasetName(taskRun: TaskRun) -> str:
     relevantParams = taskRun.parameters.copy()
 
     relevantParams["dataset"] = relevantParams["dataset"].id
-    relevantParams.pop("useCache")
     relevantParams.pop("outputDataset")
 
     return hashCacheName(f"{taskRun.id}-AugImg", ".".join(str(relevantParams.values())))
 
 
-def getCache(cacheName: str) -> Optional[ImageDataset]:
+def getCache(cacheName: str, expectedSize: int) -> Optional[ImageDataset]:
     caches = ImageDataset.fetchAll(name = cacheName, include_sessions = 1)
     for cache in caches:
-        if cache.count != 0:
+        if cache.count == expectedSize:
             logging.info(">> [Image Augmentation] Cache found!")
             return cache
 
@@ -33,12 +32,11 @@ def main() -> None:
     taskRun: TaskRun[ImageDataset] = currentTaskRun()
 
     outputDatasetName = getOutputDatasetName(taskRun)
-    if taskRun.parameters["useCache"]:
-        cache = getCache(outputDatasetName.split("-")[1])
 
-        if cache is not None:
-            taskRun.submitOutput("outputDataset", cache)
-            return
+    cache = getCache(outputDatasetName.split("-")[1], taskRun.dataset.count * taskRun.parameters["numOfImages"])
+    if cache is not None:
+        taskRun.submitOutput("outputDataset", cache)
+        return
 
     dataset = taskRun.dataset
     dataset.download()
@@ -52,7 +50,7 @@ def main() -> None:
     flipH = taskRun.parameters["flipHorizontalPrc"]
     affine = taskRun.parameters["affine"]
     noise = taskRun.parameters["noise"]
-    blur = taskRun.parameters["blurPrc"]
+    blur = taskRun.parameters["blurPercentage"]
     crop = taskRun.parameters["crop"]
     contrast = taskRun.parameters["contrast"]
 

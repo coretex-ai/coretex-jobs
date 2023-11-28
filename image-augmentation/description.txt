@@ -49,7 +49,7 @@ The amount of gaussian noise that will be applied to the images.
 If empty, augmentation will not be performed.
 -----------------------------------
 
---- blurPrc description -----------
+--- blurPercentage description -----------
 Percent of images which will be blurred.
 If empty, augmentation will not be performed.
 -----------------------------------

@@ -26,5 +26,3 @@ def uploadAugmentedImage(
     augmentedSample.unzip()
     if not augmentedSample.saveAnnotation(annotation):
         logging.error(f">> [Image Augmentation] Failed to update sample annotation {imagePath}")
-
-    imagePath.unlink(missing_ok = True)

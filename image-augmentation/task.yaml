@@ -19,7 +19,7 @@ param_groups:
 - name: inputs
   params:
   - name: dataset
-    description: The image dataset from which images will be takenn for augmentation.
+    description: The image dataset from which images will be taken for augmentation.
     value: null
     data_type: dataset
     required: true
@@ -71,7 +71,7 @@ param_groups:
     value: 0.05
     data_type: float
     required: false
-  - name: blurPrc
+  - name: blurPercentage
     description: 'Percent of images which will be blurred.
 
       If empty, augmentation will not be performed.'
@@ -81,15 +81,5 @@ param_groups:
   - name: contrast
     description: Determines if image contrast will be altered.
     value: true
-    data_type: bool
-    required: true
-  - name: useCache
-    description: 'Determines if task will search for a dataset generated with the
-      same
-
-      parameters as this one, and if successful, will submit that dataset as
-
-      outputDataset.'
-    value: false
     data_type: bool
     required: true
