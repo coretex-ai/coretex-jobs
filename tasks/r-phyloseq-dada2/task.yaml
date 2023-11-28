@@ -34,13 +34,13 @@ param_groups:
     value: 100
     data_type: int
     required: true
-    - name: truncLenForward
-    description: Trunc forward reads to this lenghth. Reads below this length will be ignored.
+  - name: truncLenForward
+    description: Truncate forward reads to this length. Reads below this length will be removed.
     value: 0
     data_type: int
     required: true
   - name: truncLenReverse
-    description: Trunc reverse reads to this lenghth. Reads below this length will be ignored.
+    description: Truncate reverse reads to this length. Reads below this length will be removed.
     value: 0
     data_type: int
     required: true
