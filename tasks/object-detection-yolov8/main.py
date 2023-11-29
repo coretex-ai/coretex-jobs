@@ -130,8 +130,19 @@ def main() -> None:
     configurationPath = folder_manager.temp / "dataset_configuration.yaml"
     generateDatasetYaml(datasetPath, trainPath, validPath, configurationPath, taskRun.dataset.classes)
 
-    # TODO: Add model picker instead of hardcoded model
-    model = YOLO("yolov8n.pt")
+    ctxModel: Optional[Model] = taskRun.parameters.get("model")
+    if ctxModel is None:
+        # Start training from specified YoloV8 weights
+        weights = taskRun.parameters.get("weights", "yolov8n.pt")
+        logging.info(f">> [ObjectDetection] Using \"{weights}\" for training the model")
+
+        model = YOLO(taskRun.parameters.get("weights", "yolov8n.pt"))
+    else:
+        logging.info(f">> [ObjectDetection] Using \"{ctxModel.name}\" for training the model")
+
+        # Start training from specified model checkpoint
+        ctxModel.download()
+        model = YOLO(ctxModel.path / "best.pt")
 
     model.add_callback("on_train_start", cb.onTrainStart)
     model.add_callback("on_train_epoch_end", cb.onEpochEnd)
