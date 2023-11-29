@@ -20,8 +20,6 @@ def main() -> None:
     dataset.download()
 
     segmentationModel = loadSegmentationModel(taskRun.parameters["segmentationModel"])
-    predictedMasks = detect_document.run(segmentationModel, dataset)
-
     objetDetectionModel = getObjectDetectionModel(taskRun.parameters["objectDetectionModel"])
 
     for i, sample in enumerate(dataset.samples):
@@ -29,13 +27,15 @@ def main() -> None:
         sampleOutputdir = outputDir / f"{sample.name}"
         sampleOutputdir.mkdir()
 
-        mask = processMask(predictedMasks[i])
+        predictedMask = detect_document.run(segmentationModel, sample)
+
+        mask = processMask(predictedMask)
 
         segmentedImage = segmentImage(sample.imagePath, mask)
         if segmentedImage is None:
             continue
 
-        savePlot(sample, predictedMasks[i], mask, taskRun)
+        savePlot(sample, predictedMask, mask, taskRun)
 
         bboxes, classes = runObjectDetection(segmentedImage, objetDetectionModel)
         segmentedDetections = segmentDetections(segmentedImage, bboxes, classes, sampleOutputdir, taskRun)
