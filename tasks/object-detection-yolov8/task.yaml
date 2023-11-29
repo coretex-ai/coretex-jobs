@@ -13,6 +13,12 @@ param_groups:
       value: null
       data_type: dataset
       required: true
+    - name: model
+      description: "Coretex model used as a checkpoint for transfer learning. If this\n
+        value is specified it is used over \"weights\" parameter."
+      value: null
+      data_type: model
+      required: false
   - name: outputs
     params:
     - name: outputModel
@@ -22,6 +28,18 @@ param_groups:
       required: false
   - name: parameters
     params:
+    - name: weights
+      description: "YoloV8 weights which are used for training the model."
+      value:
+        selected: 0
+        options:
+        - yolov8n.pt
+        - yolov8s.pt
+        - yolov8m.pt
+        - yolov8l.pt
+        - yolov8x.pt
+      data_type: enum
+      required: false
     - name: epochs
       description: "Number of passes that the model will make through the dataset while\r\
         \ntraining. Higher values increase training time and accuracy, while lower\r\

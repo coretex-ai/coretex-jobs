@@ -32,9 +32,9 @@ def run(model: YOLO, dataset: ComputerVisionDataset, resultPath: Path) -> None:
                     continue
 
                 plt.gca().add_patch(pth.Rectangle(
-                    (box.minX, box.minY),
-                    box.width,
-                    box.height,
+                    (float(box.minX), float(box.minY)),
+                    float(box.width),
+                    float(box.height),
                     linewidth = 3,
                     edgecolor = clazz.color,
                     facecolor = "none"
