@@ -33,7 +33,6 @@ def runObjectDetection(image: Image, model: YOLO) -> tuple[list[BBox], list[str]
     ) for xyxy in result.boxes.xyxy]
 
     classes = [result.names[int(clazz)] for clazz in result.boxes.cls]
-
-    confidence = list(result.boxes.conf)
+    confidence = [float(conf) for conf in result.boxes.conf]
 
     return removeDuplicalteDetections(bboxes, classes, confidence)
