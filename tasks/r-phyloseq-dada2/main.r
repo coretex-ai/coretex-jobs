@@ -260,37 +260,21 @@ main <- function(taskRun) {
     trunc_len_forward <- taskRun$parameters[["truncLenForward"]]
     trunc_len_reverse <- taskRun$parameters[["truncLenReverse"]]
 
-    if (trim_right_forward != 0 | trim_right_reverse != 0){
-        filtering_results <- filterAndTrim(
-            forward_read_paths,
-            filtered_forward_read_paths,
-            reverse_read_paths,
-            filtered_reverse_read_paths,
-            trimLeft = c(trim_left_forward, trim_left_reverse),
-            trimRight = c(trim_right_forward, trim_right_reverse),
-            maxN = max_n,
-            maxEE = c(max_ee_forward, max_ee_reverse),
-            truncQ = trunc_q,
-            rm.phix = TRUE,
-            compress = TRUE,
-            multithread = TRUE
-        )
-    } else {
-        filtering_results <- filterAndTrim(
-            forward_read_paths,
-            filtered_forward_read_paths,
-            reverse_read_paths,
-            filtered_reverse_read_paths,
-            trimLeft = c(trim_left_forward, trim_left_reverse),
-            truncLen = c(trunc_len_forward, trunc_len_reverse),
-            maxN = max_n,
-            maxEE = c(max_ee_forward, max_ee_reverse),
-            truncQ = trunc_q,
-            rm.phix = TRUE,
-            compress = TRUE,
-            multithread = TRUE
-        )
-    }
+    filtering_results <- filterAndTrim(
+        forward_read_paths,
+        filtered_forward_read_paths,
+        reverse_read_paths,
+        filtered_reverse_read_paths,
+        trimLeft = c(trim_left_forward, trim_left_reverse),
+        trimRight = c(trim_right_forward, trim_right_reverse),
+        truncLen = c(trunc_len_forward, trunc_len_reverse),
+        maxN = max_n,
+        maxEE = c(max_ee_forward, max_ee_reverse),
+        truncQ = trunc_q,
+        rm.phix = TRUE,
+        compress = TRUE,
+        multithread = TRUE
+    )
 
     for (path in filtered_forward_read_paths) {
         taskRun$createArtifact(
