@@ -73,7 +73,7 @@ def augmentImage(
 
         augmentedImage = firstPipeline_.augment_image(image)
         augmentedImage = secondPipeline.augment_image(augmentedImage)
-        augmentedInstances = transformAnnotationInstances(sampleData, firstPipeline_, image, augmentedImage)
+        augmentedInstances = transformAnnotationInstances(sampleData, firstPipeline_)
 
         annotation = CoretexImageAnnotation.create(
             sample.name,
