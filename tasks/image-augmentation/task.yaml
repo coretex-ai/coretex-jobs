@@ -1,17 +1,11 @@
 id: 2fed1efa-7b55-47ca-acdf-f186cb04fb5c
 name: Image Augmentation
 description: 'Task template for performing image augmentation on image datasets.
-
-
   Input to the task is an image dataset, while the output is an image dataset
-
   with augmented images generated from the input dataset.
 
-
   Each of the images in the input dataset get passed through an image augmenter
-
   pipeline which transforms the image in various ways based on the parameters
-
   of this task.'
 is_active: false
 project_type: 1
