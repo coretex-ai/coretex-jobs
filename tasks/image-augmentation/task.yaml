@@ -1,0 +1,70 @@
+id: 2fed1efa-7b55-47ca-acdf-f186cb04fb5c
+name: Image Augmentation
+description: 'Task template for performing image augmentation on image datasets.
+  Input to the task is an image dataset, while the output is an image dataset
+  with augmented images generated from the input dataset.
+  Each of the images in the input dataset get passed through an image augmenter
+  pipeline which transforms the image in various ways based on the parameters
+  of this task.'
+is_active: false
+project_type: 1
+param_groups:
+- name: inputs
+  params:
+  - name: dataset
+    description: The image dataset from which images will be taken for augmentation.
+    value: null
+    data_type: dataset
+    required: true
+- name: outputs
+  params:
+  - name: outputDataset
+    description: The output image dataset with the augmented images.
+    value: null
+    data_type: dataset
+    required: false
+- name: parameters
+  params:
+  - name: numOfImages
+    description: The number of augmented images each of the input images will generate.
+    value: 5
+    data_type: int
+    required: true
+  - name: flipHorizontalPrc
+    description: 'Percent of images which will be flipped horizontally.
+      If empty, augmentation will not be performed.'
+    value: 0.5
+    data_type: float
+    required: false
+  - name: affine
+    description: 'Determines if affine augmentation will be performed, which include:
+      - scaling
+      - translation
+      - rotation
+      - shearing'
+    value: true
+    data_type: bool
+    required: true
+  - name: crop
+    description: 'The image will be randomly cropped between 0 and this value.
+      If empty, augmentation will not be performed.'
+    value: 0.3
+    data_type: float
+    required: false
+  - name: noise
+    description: 'The amount of gaussian noise that will be applied to the images.
+      If empty, augmentation will not be performed.'
+    value: 0.05
+    data_type: float
+    required: false
+  - name: blurPercentage
+    description: 'Percent of images which will be blurred.
+      If empty, augmentation will not be performed.'
+    value: 0.5
+    data_type: float
+    required: false
+  - name: contrast
+    description: Determines if image contrast will be altered.
+    value: true
+    data_type: bool
+    required: true
