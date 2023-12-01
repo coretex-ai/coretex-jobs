@@ -267,6 +267,7 @@ main <- function(taskRun) {
         filtered_reverse_read_paths,
         trimLeft = c(trim_left_forward, trim_left_reverse),
         trimRight = c(trim_right_forward, trim_right_reverse),
+        truncLen = c(trunc_len_forward, trunc_len_reverse),
         maxN = max_n,
         maxEE = c(max_ee_forward, max_ee_reverse),
         truncQ = trunc_q,
