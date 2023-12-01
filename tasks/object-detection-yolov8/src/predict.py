@@ -14,13 +14,8 @@ def classByLabelId(labelId: int, classes: ImageDatasetClasses) -> Optional[Image
 
 
 def run(model: YOLO, dataset: ComputerVisionDataset, resultPath: Path) -> None:
-    results: list[Results] = model.predict(
-        [sample.imagePath for sample in dataset.samples],
-        save = True,
-        project = "./results"
-    )
-
-    for sample, result in zip(dataset.samples, results):
+    for sample in dataset.samples:
+        result: Results = model.predict(sample.imagePath, save = True, project = "./results")[0]
         plt.imshow(result.orig_img)
 
         if result.boxes is not None:
