@@ -22,6 +22,8 @@ def response(requestData: dict[str, Any]) -> dict[str, Any]:
 
     predictedMask = detect_document.run(segmentationModel, imagePath)
     predictedMask = processMask(predictedMask)
+    if predictedMask is None:
+        return functions.badRequest("Failed to determine document borders")
 
     segmentedImage = segmentImage(imagePath, predictedMask)
     if segmentedImage is None:
