@@ -139,10 +139,23 @@ subset_samples_custom <- function(pseq, targetColumnValue) {
     return(pseq_subset)
 }
 
-all_target_column_values_listed <- function(sampleDataFrame, targetColumnValues) {
-    for (uniqueTargetColumnValues in unique(sampleDataFrame$target)) {
-        if (!uniqueTargetColumnValues %in% targetColumnValues){
+all_target_column_values_listed <- function(sampleDataFrame, targetValues) {
+    for (uniqueTargetColumnValue in unique(sampleDataFrame$target)) {
+        if (!uniqueTargetColumnValue %in% targetValues) {
             return (FALSE)
+        }
+    }
+
+    return (TRUE)
+}
+
+validateTargetValues <- function(sampleDataFrame, targetValues) {
+    for (targetValue in targetValues) {
+        if (!targetValue %in% unique(sampleDataFrame$target)) {
+            stop(
+                paste("Entered target value is not present in phyloseq object:", targetValue,
+                "\nUnique values are", paste(c(unique(sampleDataFrame$target)), collapse = ", "))
+            )
         }
     }
 
@@ -664,13 +677,12 @@ main <- function(taskRun) {
     targetColumn <- trimws(taskRun$parameters[["targetColumn"]])
     pseq <- perpareSampleData(pseq, targetColumn)
 
-    pseq_bac <- subset_taxa(pseq, domain == "Bacteria")
-
     ########## 3. Process phyloseq object ##########
     print("3. Process phyloseq object")
 
     #Subset data removing non-bacteria
     pseq_bac <- subset_taxa(pseq, domain == "Bacteria")
+    validateTargetValues(data.frame(sample_data(pseq_bac)), taskRun$parameters[["targetColumnValues"]])
 
     #Subset data removing undetermined samples
     pseq_bac <- subset_samples(pseq_bac, !grepl("\\Undetermined", sampleId, fixed = TRUE))
