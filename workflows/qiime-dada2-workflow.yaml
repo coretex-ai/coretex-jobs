@@ -1,0 +1,20 @@
+id: 17a31b89-d00b-465d-a829-8939ce44794f
+name: Qiime2 -> DADA2 Workflow
+description: Workflow from raw multiplexed or demultiplexed sequence reads to DADA2 denoising
+project_type: 11
+is_active: true
+jobs:
+  step-1-import:
+    template_id: 41198e45-7e21-44f4-9c90-ff98c2c8196b
+
+  step-2-demultiplexing-sequences:
+    template_id: 72fee3bd-33d9-42fa-a5da-e41fefc0ab2d
+    param_groups:
+      inputs:
+        dataset: step-1-import.outputDataset
+
+  step-3-dada2-denoising:
+    template_id: 5a132273-d895-44cd-ad1f-665a98dd35b1
+    param_groups:
+      inputs:
+        dataset: step-2-demultiplexing-sequences.outputDataset
