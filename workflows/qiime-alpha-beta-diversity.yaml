@@ -1,4 +1,4 @@
-id: 17a31b89-d00b-465d-a829-8939ce44794f
+id: 7de5eaf8-0b4e-493c-9d5d-00e581bd18c2
 name: Qiime2 -> Alpha & Beta diversity
 description: Workflow from denoise sequence reads to feature table generation, OTU clustering,
   taxonomic analysis, phylogenetic tree generation and alpha and beta diversity analysis
