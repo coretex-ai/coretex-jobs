@@ -11,7 +11,7 @@ from object_detection import runObjectDetection
 
 
 DOCUMENT_NOT_FOUND = {
-    "code": 404,
+    "code": 500,
     "body": {
         "error": "Failed to find document on the provided image"
     }
