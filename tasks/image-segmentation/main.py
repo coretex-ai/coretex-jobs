@@ -1,6 +1,6 @@
+from pathlib import Path
+
 import logging
-import os
-import shutil
 import math
 
 from keras import Model as KerasModel
@@ -18,37 +18,32 @@ from src.dataset import loadDataset, createBatches
 from src.callbacks import DisplayCallback
 
 
-def saveLiteModel(model: KerasModel):
-    modelPath = folder_manager.temp / "model"
+def saveLiteModel(model: KerasModel, path: Path) -> None:
     converter = tf.lite.TFLiteConverter.from_keras_model(model)
-    tflite_model = converter.convert()
+    tfLiteModel = converter.convert()
 
-    with open(f"{modelPath}/model.tflite", 'wb') as f:
-        f.write(tflite_model)
+    with path.open("wb") as file:
+        file.write(tfLiteModel)
 
 
-def saveCoremlModel(model: KerasModel):
-    modelPath = folder_manager.temp / "model"
+def saveCoremlModel(model: KerasModel, path: Path) -> None:
     model = coremltools.converters.convert(model)
-    model.save(f"{modelPath}/model.mlmodel")
+    model.save(str(path))
 
 
-def saveTFJSModelFromTFModel(model: KerasModel, path: str) -> None:
-    tensorflowModelPath = os.path.join(path, "tensorflow-model")
-    model.save(tensorflowModelPath)
-
-    tensorflowJSModelPath = os.path.join(path, "tensorflowjs-model")
+def saveTFJSModel(modelPath: Path, path: Path) -> None:
     tfjs.converters.convert_tf_saved_model(
-        tensorflowModelPath,
-        tensorflowJSModelPath
+        str(modelPath),
+        str(path)
     )
 
-    shutil.rmtree(tensorflowModelPath)
 
-
-def saveJSModel(model: KerasModel, taskRun: TaskRun[ImageSegmentationDataset], coretexModel: Model):
-    modelPath = folder_manager.temp / "model"
-    saveTFJSModelFromTFModel(model, modelPath)
+def saveModelDescriptor(
+    model: KerasModel,
+    taskRun: TaskRun[ImageSegmentationDataset],
+    coretexModel: Model,
+    path: Path
+) -> None:
 
     labels = [
         {
@@ -58,7 +53,7 @@ def saveJSModel(model: KerasModel, taskRun: TaskRun[ImageSegmentationDataset], c
         for clazz in taskRun.dataset.classes
     ]
 
-    coretexModel.saveModelDescriptor(modelPath, {
+    coretexModel.saveModelDescriptor(path, {
         "project_task": taskRun.projectType,
         "labels": labels,
         "modelName": coretexModel.name,
@@ -81,9 +76,6 @@ def main() -> None:
         Metric.create("val_loss", "epoch", MetricType.int, "value", MetricType.float, [0, taskRun.parameters["epochs"]]),
         Metric.create("val_accuracy", "epoch", MetricType.int, "value", MetricType.float, [0, taskRun.parameters["epochs"]], [0, 1])
     ])
-
-    # path to which the model will be saved after training
-    folder_manager.createTempFolder("model")
 
     taskRun.updateStatus(TaskRunStatus.inProgress, "Downloading dataset")
     taskRun.dataset.download()
@@ -125,20 +117,26 @@ def main() -> None:
     coretexModel = Model.createModel(
         taskRun.name,
         taskRun.id,
-        history.history["accuracy"][-1],  # gets the accuracy after last epoch
+        history.history["val_accuracy"][-1],  # gets the validation accuracy after last epoch
         {}
     )
 
     logging.info(f">> [Image Segmentation] Model accuracy is: {coretexModel.accuracy}")
 
+    modelDirPath = folder_manager.createTempFolder("model")
+    model.save(modelDirPath / "tensorflow-model")
+
     logging.info(">> [Image Segmentation] Converting model to TFLite format")
-    saveLiteModel(model)
+    saveLiteModel(model, modelDirPath / "model.tflite")
 
     logging.info(">> [Image Segmentation] Converting model to CoreML format")
-    saveCoremlModel(model)
+    saveCoremlModel(model, modelDirPath / "model.mlmodel")
 
     logging.info(">> [Image Segmentation] Converting model to TFJS format")
-    saveJSModel(model, taskRun, coretexModel)
+    saveTFJSModel(modelDirPath / "tensorflow-model", modelDirPath / "tensorflowjs-model")
+
+    logging.info(">> [Image Segmentation] Saving model descriptor")
+    saveModelDescriptor(model, taskRun, coretexModel, modelDirPath)
 
     coretexModel.upload(folder_manager.temp / "model")
 
