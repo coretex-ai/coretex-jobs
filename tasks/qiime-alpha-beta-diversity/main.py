@@ -5,7 +5,7 @@ import os
 import csv
 import logging
 
-from coretex import CustomDataset, CustomSample, TaskRun, folder_manager, currentTaskRun
+from coretex import CustomDataset, CustomSample, TaskRun, folder_manager, currentTaskRun, createDataset
 from coretex.bioinformatics import ctx_qiime2
 from coretex.bioinformatics.utils import CommandException
 
@@ -340,36 +340,32 @@ def main() -> None:
     denoisedDataset.download()
 
     outputDir = folder_manager.createTempFolder("alpha_beta_output")
-    outputDataset = CustomDataset.createDataset(
-        f"{taskRun.id} - Step 7: Alpha & Beta diversity",
-        taskRun.projectId
-    )
 
-    if outputDataset is None:
-        raise ValueError(">> [Qiime: Alpha & Beta Diversity] Failed to create output dataset")
+    datasetName = f"{taskRun.id} - Step 7: Alpha & Beta diversity"
+    with createDataset(CustomDataset, datasetName, taskRun.projectId) as outputDataset:
 
-    for sample in phylogeneticTreeSamples:
-        index = ctx_qiime2.sampleNumber(sample)
+        for sample in phylogeneticTreeSamples:
+            index = ctx_qiime2.sampleNumber(sample)
 
-        metadataSample = importedDataset.getSample(f"{index}-metadata")
-        if metadataSample is None:
-            raise ValueError(f">> [Qiime: Alpha & Beta Diversity] metadata sample not found")
+            metadataSample = importedDataset.getSample(f"{index}-metadata")
+            if metadataSample is None:
+                raise ValueError(f">> [Qiime: Alpha & Beta Diversity] metadata sample not found")
 
-        denoisedSample = denoisedDataset.getSample(f"{index}-denoise")
-        if denoisedSample is None:
-            raise ValueError(f">> [Qiime: Alpha & Beta Diversity] Denoised sample not found")
+            denoisedSample = denoisedDataset.getSample(f"{index}-denoise")
+            if denoisedSample is None:
+                raise ValueError(f">> [Qiime: Alpha & Beta Diversity] Denoised sample not found")
 
-        processSample(
-            index,
-            sample,
-            metadataSample,
-            denoisedSample,
-            taskRun,
-            outputDataset,
-            outputDir
-        )
+            processSample(
+                index,
+                sample,
+                metadataSample,
+                denoisedSample,
+                taskRun,
+                outputDataset,
+                outputDir
+            )
 
-    taskRun.submitOutput("outputDataset", outputDataset)
+        taskRun.submitOutput("outputDataset", outputDataset)
 
 
 if __name__ == "__main__":

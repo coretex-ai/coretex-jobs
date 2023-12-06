@@ -10,7 +10,7 @@ from sklearn.feature_selection import SelectPercentile
 
 import numpy as np
 
-from coretex import CustomDataset, CustomSample, folder_manager
+from coretex import CustomDataset, CustomSample, folder_manager, createDataset
 from coretex.utils.hash import hashCacheName
 
 from . import cache_filenames as cf
@@ -103,15 +103,11 @@ def cacheMatrix(
         for item in cachedItemsStr:
             archive.write(cachePath.joinpath(f"{item}.pkl"), f"{item}.pkl")
 
-    cacheDataset = CustomDataset.createDataset(cacheName, projectId)
-    if cacheDataset is None:
-        logging.warning(">> [MicrobiomeForensics] Failed to create cache for processed data")
-        return
-
-    if CustomSample().createCustomSample("zipedCache", cacheDataset.id, zipPath):
-        logging.info(">> [MicrobiomeForensics] Successfuly cached processed data")
-    else:
-        logging.warning(">> [MicrobiomeForensics] Failed to cache processed data")
+    with createDataset(CustomDataset, cacheName, projectId) as cacheDataset:
+        if CustomSample().createCustomSample("zipedCache", cacheDataset.id, zipPath):
+            logging.info(">> [MicrobiomeForensics] Successfuly cached processed data")
+        else:
+            logging.warning(">> [MicrobiomeForensics] Failed to cache processed data")
 
 
 def matrixCacheExists(cacheName: str) -> bool:

@@ -8,7 +8,7 @@ from qiime2.sdk.result import Artifact
 
 import qiime2.core.archive as archive
 
-from coretex import CustomDataset, CustomSample, TaskRun, folder_manager, currentTaskRun
+from coretex import CustomDataset, CustomSample, TaskRun, folder_manager, currentTaskRun, createDataset
 from coretex.bioinformatics import ctx_qiime2
 
 
@@ -66,19 +66,19 @@ def importReferenceDataset(dataset: CustomDataset, outputDir: Path, taskRun: Tas
         qzaPath = outputDir / f"{fastaPath.stem}.qza"
         ctx_qiime2.toolsImport("FeatureData[Sequence]", str(fastaPath), str(qzaPath))
 
-        referenceCache = CustomDataset.createDataset(referenceCacheName, taskRun.projectId)
-        if referenceCache is None:
+        try:
+            with CustomDataset.createDataset(referenceCacheName, taskRun.projectId) as referenceCache:
+                outputPath = outputDir / "reference-sequences"
+                with ZipFile(outputPath, "w") as outputFile:
+                    outputFile.write(qzaPath, qzaPath.name)
+
+                if CustomSample.createCustomSample("reference-sequences", referenceCache.id, outputPath) is None:
+                    logging.error(">> [Qiime: Clustering] Failed to upload imported reference sequences cache")
+
+                return qzaPath
+        except:
             logging.error(">> [Qiime: Clustering] Failed to create imported reference sequences cache")
             return qzaPath
-
-        outputPath = outputDir / "reference-sequences"
-        with ZipFile(outputPath, "w") as outputFile:
-            outputFile.write(qzaPath, qzaPath.name)
-
-        if CustomSample.createCustomSample("reference-sequences", referenceCache.id, outputPath) is None:
-            logging.error(">> [Qiime: Clustering] Failed to upload imported reference sequences cache")
-
-        return qzaPath
 
     if qzaPath is not None and len(fastaPaths) == 0:
         return qzaPath
@@ -227,19 +227,14 @@ def main() -> None:
     clusteringMethod = taskRun.parameters["clusteringMethod"]
 
     outputDir = folder_manager.createTempFolder("otu_output")
-    outputDataset = CustomDataset.createDataset(
-        f"{taskRun.id} - Step 4: OTU clustering - {clusteringMethod}",
-        taskRun.projectId
-    )
 
-    if outputDataset is None:
-        raise ValueError(">> [Qiime: Clustering] Failed to create output dataset")
+    outputDatasetName = f"{taskRun.id} - Step 4: OTU clustering - {clusteringMethod}"
+    with createDataset(CustomDataset, outputDatasetName, taskRun.projectId) as outputDataset:
+        for sample in denoisedSamples:
+            index = ctx_qiime2.sampleNumber(sample)
+            processSample(index, sample, taskRun, outputDataset, outputDir, clusteringMethod)
 
-    for sample in denoisedSamples:
-        index = ctx_qiime2.sampleNumber(sample)
-        processSample(index, sample, taskRun, outputDataset, outputDir, clusteringMethod)
-
-    taskRun.submitOutput("outputDataset", outputDataset)
+        taskRun.submitOutput("outputDataset", outputDataset)
 
 
 if __name__ == "__main__":

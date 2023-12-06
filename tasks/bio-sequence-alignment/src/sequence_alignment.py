@@ -3,7 +3,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 import logging
 
-from coretex import TaskRun, CustomDataset, CustomSample, folder_manager
+from coretex import TaskRun, CustomDataset, CustomSample, folder_manager, createDataset
 from coretex.bioinformatics import sequence_alignment as sa
 
 from .filepaths import BWA
@@ -18,33 +18,27 @@ def sequeneAlignment(taskRun: TaskRun[CustomDataset], genomePrefix: Path) -> Pat
     logging.info(">> [Sequence Alignment] Dataset downloaded")
     sequencePaths = sa.loadFa(taskRun.dataset)
 
-    samDataset = CustomDataset.createDataset(
-        f"{taskRun.id} - Sequence alignment: SAM",
-        taskRun.projectId
-    )
+    datasetName = f"{taskRun.id} - Sequence alignment: SAM"
+    with createDataset(CustomDataset, datasetName, taskRun.projectId) as samDataset:
+        logging.info(f">> [Sequence Alignment] Output SAM files will be uploaded to coretex dataset: \"{samDataset.name}\", ID: {samDataset.id}")
+        logging.info(">> [Sequence Alignment] Starting sequence alignment process")
 
-    if samDataset is None:
-        raise RuntimeError(">> [Sequence Alignment] Failed to create coretex dataset")
+        for path in sequencePaths:
+            outputPath = samDir / path.name.replace(path.suffix, ".sam")
 
-    logging.info(f">> [Sequence Alignment] Output SAM files will be uploaded to coretex dataset: \"{samDataset.name}\", ID: {samDataset.id}")
-    logging.info(">> [Sequence Alignment] Starting sequence alignment process")
+            sa.alignCommand(Path(BWA), genomePrefix, path, outputPath)
 
-    for path in sequencePaths:
-        outputPath = samDir / path.name.replace(path.suffix, ".sam")
+            zipSam = folder_manager.temp / f"{outputPath.name}.zip"
+            with ZipFile(zipSam , "w", ZIP_DEFLATED) as archive:
+                archive.write(outputPath, outputPath.name)
 
-        sa.alignCommand(Path(BWA), genomePrefix, path, outputPath)
+            if CustomSample.createCustomSample(outputPath.name, samDataset.id, zipSam) is None:
+                raise RuntimeError(f">> [Sequence Alignment] Failed to upload {outputPath.name} to coretex")
 
-        zipSam = folder_manager.temp / f"{outputPath.name}.zip"
-        with ZipFile(zipSam , "w", ZIP_DEFLATED) as archive:
-            archive.write(outputPath, outputPath.name)
+            logging.info(f">> [Sequence Alignment] {outputPath.name} succesfully created")
 
-        if CustomSample.createCustomSample(outputPath.name, samDataset.id, zipSam) is None:
-            raise RuntimeError(f">> [Sequence Alignment] Failed to upload {outputPath.name} to coretex")
+        logging.info(">> [Sequence Alignment] Sequence alignment finished")
 
-        logging.info(f">> [Sequence Alignment] {outputPath.name} succesfully created")
-
-    logging.info(">> [Sequence Alignment] Sequence alignment finished")
-
-    taskRun.submitOutput("samDataset", samDataset)
+        taskRun.submitOutput("samDataset", samDataset)
 
     return samDir

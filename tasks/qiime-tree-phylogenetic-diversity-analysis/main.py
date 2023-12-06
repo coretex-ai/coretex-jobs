@@ -3,7 +3,7 @@ from zipfile import ZipFile
 
 import logging
 
-from coretex import CustomDataset, CustomSample, TaskRun, folder_manager, currentTaskRun
+from coretex import CustomDataset, CustomSample, TaskRun, folder_manager, currentTaskRun, createDataset
 from coretex.bioinformatics import ctx_qiime2
 
 
@@ -62,19 +62,14 @@ def main() -> None:
         raise ValueError(">> [Qiime: Phylogenetic Diversity] Dataset has 0 denoised samples")
 
     outputDir = folder_manager.createTempFolder("tree_output")
-    outputDataset = CustomDataset.createDataset(
-        f"{taskRun.id} - Step 6: Phylogenetic tree",
-        taskRun.projectId
-    )
 
-    if outputDataset is None:
-        raise ValueError(">> [Qiime: Phylogenetic Diversity] Failed to create output dataset")
+    outputDatasetName = f"{taskRun.id} - Step 6: Phylogenetic tree"
+    with createDataset(CustomDataset, outputDatasetName, taskRun.projectId) as outputDataset:
+        for sample in denoisedSamples:
+            index = ctx_qiime2.sampleNumber(sample)
+            processSample(index, sample, taskRun, outputDataset, outputDir)
 
-    for sample in denoisedSamples:
-        index = ctx_qiime2.sampleNumber(sample)
-        processSample(index, sample, taskRun, outputDataset, outputDir)
-
-    taskRun.submitOutput("outputDataset", outputDataset)
+        taskRun.submitOutput("outputDataset", outputDataset)
 
 
 if __name__ == "__main__":

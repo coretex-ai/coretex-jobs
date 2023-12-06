@@ -5,7 +5,7 @@ import pickle
 import zipfile
 import logging
 
-from coretex import CustomDataset, CustomSample, folder_manager
+from coretex import CustomDataset, CustomSample, folder_manager, createDataset
 from coretex.utils.hash import hashCacheName
 
 from . import cache_filenames as cf
@@ -66,15 +66,11 @@ def cacheJson(
         for item in cachedItemsStr:
             archive.write(cachePath.joinpath(f"{item}.pkl"), f"{item}.pkl")
 
-    cacheDataset = CustomDataset.createDataset(cacheName, projectId)
-    if cacheDataset is None:
-        logging.warning(">> [MicrobiomeForensics] Failed to create cache for processed data")
-        return
-
-    if CustomSample.createCustomSample("zipedCache", cacheDataset.id, zipPath):
-        logging.info(">> [MicrobiomeForensics] Successfuly cached assembled dataset")
-    else:
-        logging.info(">> [MicrobiomeForensics] Failed to cache assembled dataset")
+    with createDataset(CustomDataset, cacheName, projectId) as cacheDataset:
+        if CustomSample.createCustomSample("zipedCache", cacheDataset.id, zipPath):
+            logging.info(">> [MicrobiomeForensics] Successfuly cached assembled dataset")
+        else:
+            logging.info(">> [MicrobiomeForensics] Failed to cache assembled dataset")
 
 
 def jsonCacheExists(cacheName: str) -> bool:

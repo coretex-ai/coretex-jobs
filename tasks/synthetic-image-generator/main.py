@@ -2,7 +2,7 @@ from typing import Optional
 
 import logging
 
-from coretex import currentTaskRun, ImageDataset, TaskRun
+from coretex import currentTaskRun, ImageDataset, TaskRun, createDataset
 from coretex.utils import hashCacheName
 
 from src.generator import augmentSample
@@ -54,29 +54,26 @@ def main() -> None:
     backgroundDataset: ImageDataset
     backgroundDataset.download()
 
-    outputDataset = ImageDataset.createDataset(outputDatasetName, taskRun.projectId)
-    if outputDataset is None:
-        raise ValueError(">> [Image Stitching] Failed to create output dataset")
+    with createDataset(ImageDataset, outputDatasetName, taskRun.projectId) as outputDataset:
+        outputDataset.saveClasses(imagesDataset.classes)
 
-    outputDataset.saveClasses(imagesDataset.classes)
+        for imageSample in imagesDataset.samples:
+            imageSample.unzip()
 
-    for imageSample in imagesDataset.samples:
-        imageSample.unzip()
+            logging.info(f">> [Image Stitching] Generating augmented images for {imageSample.name}")
+            augmentSample(
+                imageSample,
+                backgroundDataset,
+                augmentationsPerImage,
+                taskRun.parameters["rotation"],
+                taskRun.parameters["scaling"],
+                imagesDataset.classes,
+                taskRun.parameters["unwarp"],
+                taskRun.parameters["excludedClasses"],
+                outputDataset
+            )
 
-        logging.info(f">> [Image Stitching] Generating augmented images for {imageSample.name}")
-        augmentSample(
-            imageSample,
-            backgroundDataset,
-            augmentationsPerImage,
-            taskRun.parameters["rotation"],
-            taskRun.parameters["scaling"],
-            imagesDataset.classes,
-            taskRun.parameters["unwarp"],
-            taskRun.parameters["excludedClasses"],
-            outputDataset
-        )
-
-    taskRun.submitOutput("outputDataset", outputDataset)
+        taskRun.submitOutput("outputDataset", outputDataset)
 
 
 if __name__ == "__main__":
