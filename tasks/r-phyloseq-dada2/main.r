@@ -472,6 +472,24 @@ main <- function(taskRun) {
         basename(track_matrix_path)
     )
 
+    taskRun$createMetrics(list(
+        ctx$Metric$create("input", "sample", ctx$MetricType$int, "value", ctx$MetricType$int),
+        ctx$Metric$create("nonchim", "sample", ctx$MetricType$int, "value", ctx$MetricType$int),
+        ctx$Metric$create("nonchim_pct", "sample", ctx$MetricType$int, "value", ctx$MetricType$percent)
+    ))
+
+    for (index in 1:nrow(track_matrix)) {
+        input = c(index, track_matrix[index,][["input"]])
+        nonchim = c(index, track_matrix[index,][["nonchim"]])
+        nonchimPct = c(index, track_matrix[index,][["nonchimPct"]])
+
+        taskRun$submitMetrics(list(
+            "input" = input,
+            "nonchim" = nonchim,
+            "nonchim_pct" = nonchimPct
+        ))
+    }
+
     # Step 3.8: Taxonomy assignment using DADA2 or DECIPHER
     print("Step 3.8: Taxonomy assignment using DADA2 or DECIPHER")
 
