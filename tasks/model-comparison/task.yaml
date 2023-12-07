@@ -7,7 +7,7 @@ param_groups:
   - name: inputs
     params:
       - name: models
-        description: List of ids of Coretex models that will be used for comparison.
+        description: List of Coretex models that will be used for comparison.
         value: null
         data_type: list[model]
         required: true
