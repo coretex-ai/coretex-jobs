@@ -48,6 +48,7 @@ def cacheDataset(
     with createDataset(CustomDataset, cacheName, projectId) as cacheDataset:
         cachedItems = [taxonDistribution, classDistribution]
         cachedItemNames = ["taxonDistribution", "classDistribution"]
+
         for cachedItem, cachedItemName in zip(cachedItems, cachedItemNames):
             picklePath = folder_manager.temp / cachedItemName
             with picklePath.open("wb") as cacheFile:
