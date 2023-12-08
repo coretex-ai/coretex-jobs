@@ -75,8 +75,8 @@ def createBatches(
         return inputImage, inputMask
 
     def loadImage(element: dict[str, tf.Tensor]) -> tuple[tf.Tensor, tf.Tensor]:
-        inputImage = tf.image.resize(element['image'], (imageSize, imageSize))
-        inputMask = tf.image.resize(element['segmentation_mask'], (imageSize, imageSize))
+        inputImage = tf.image.resize_with_pad(element['image'], imageSize, imageSize)
+        inputMask = tf.image.resize_with_pad(element['segmentation_mask'], imageSize, imageSize)
 
         return normalize(inputImage, inputMask)
 

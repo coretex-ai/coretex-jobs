@@ -2,8 +2,8 @@ import logging
 
 from keras import Model as KerasModel
 from coretex import ImageSegmentationDataset, TaskRun, folder_manager
+from coretex.utils import resizeWithPadding
 
-import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -16,11 +16,11 @@ def run(taskRun: TaskRun, model: KerasModel, dataset: ImageSegmentationDataset) 
 
         sampleData = sample.load()
 
-        resized = cv2.resize(sampleData.image, (imageSize, imageSize))
+        resized, _ = resizeWithPadding(sampleData.image, (imageSize, imageSize))
         normalized = resized / 255
 
         groundtruth = sampleData.extractSegmentationMask(dataset.classes)
-        groundtruth = cv2.resize(groundtruth, (imageSize, imageSize))
+        groundtruth, _ = resizeWithPadding(groundtruth, (imageSize, imageSize))
 
         prediction = model(np.reshape(normalized, (1,) + normalized.shape), training = False)[0]
         prediction = np.argmax(prediction, axis = -1)
