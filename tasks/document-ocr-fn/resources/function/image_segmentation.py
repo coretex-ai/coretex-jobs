@@ -16,13 +16,17 @@ def findRectangle(mask: np.ndarray) -> Optional[np.ndarray]:
         contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         if len(contours) == 0:
-            logging.error("Failed to find predicted mask")
-            return
+            logging.error("Failed to find document")
+            return None
 
         contour = max(contours, key = cv2.contourArea)
 
         epsilon = 0.02 * cv2.arcLength(contour, True)
         rectangle = cv2.approxPolyDP(contour, epsilon, True)
+
+        if rectangle.shape[0] < 4:
+            logging.error("Failed to find document")
+            return None
 
         if rectangle.shape[0] > 4:
             rectangle = cv2.minAreaRect(contour)
