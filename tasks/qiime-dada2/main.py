@@ -233,7 +233,7 @@ def main() -> None:
                 outputDir
             )
 
-            taskRun.submitOutput("outputDataset", outputDataset)
+    taskRun.submitOutput("outputDataset", outputDataset)
 
 
 if __name__ == "__main__":

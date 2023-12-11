@@ -114,4 +114,4 @@ def importDemultiplexed(
         visualizationPath = demuxSummarize(demuxSample, outputDir)
         ctx_qiime2.createSample("0-summary", outputDataset.id, visualizationPath, taskRun, "Step 1: Import")
 
-        taskRun.submitOutput("outputDataset", outputDataset)
+    taskRun.submitOutput("outputDataset", outputDataset)

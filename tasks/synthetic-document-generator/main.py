@@ -74,7 +74,7 @@ def main() -> None:
 
                     future.add_done_callback(functools.partial(didGenerateSample, outputDataset.id))
 
-        taskRun.submitOutput("outputDataset", outputDataset)
+    taskRun.submitOutput("outputDataset", outputDataset)
 
 
 if __name__ == "__main__":
