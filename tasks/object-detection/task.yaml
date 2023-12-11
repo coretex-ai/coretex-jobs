@@ -30,14 +30,6 @@ param_groups:
     value: null
     data_type: dataset
     required: true
-  - name: augmentationDataset
-    description: "A dataset which contains images used for augmenting dataset used\
-      \ for training the model.\r\nAugmentation is performed in a way where annotations\
-      \ are extracted from dataset images\r\nand pasted on the images from \"augmentationDatasetId\"\
-      \ parameter."
-    value: null
-    data_type: dataset
-    required: false
   - name: model
     description: Model that will be validated.
     value: null
@@ -52,22 +44,6 @@ param_groups:
     required: false
 - name: parameters
   params:
-  - name: rotationAngle
-    description: "Angle by which the annotation will be rotated during the augmentation\
-      \ process.\r\nValue is represented in degrees. Expected range of values is 0\
-      \ - 360."
-    value: 0
-    data_type: int
-    required: false
-  - name: scaleFactor
-    description: "Factor by which the annotation size will be scaled during the augmentation\
-      \ process.\r\nBehaviour based on values:\r\n    - if the value is equal to 1\
-      \ annotation size remains unchanged\r\n    - if the value is bigger than 1 annotation\
-      \ size will increase\r\n    - if the value is smaller than 1 annotation size\
-      \ will decrease"
-    value: 1.0
-    data_type: float
-    required: false
   - name: epochs
     description: "Number of passes that the model will make through the dataset while\r\
       \ntraining. Higher values increase training time and accuracy, while lower\r\
