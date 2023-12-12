@@ -44,9 +44,8 @@ def processSample(
     # First step:
     # Assign taxonomy to the sequences in our FeatureData[Sequence] QIIME 2 artifact
 
-    # TODO: Do not zip cached samples
     if not cache.exists(taskRun.parameters["classifier"]):
-        cache.storeUrl(taskRun.parameters["classifier"], "classifier.zip")
+        cache.storeUrl(taskRun.parameters["classifier"], taskRun.parameters["classifier"])
 
     classifierPath = cache.getPath(taskRun.parameters["classifier"])
     classifierPath = classifierPath.rename(classifierPath.parent / f"{classifierPath.stem}.qza")
