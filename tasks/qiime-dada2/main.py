@@ -5,7 +5,7 @@ from zipfile import ZipFile
 import logging
 import csv
 
-from coretex import CustomDataset, CustomSample, TaskRun, folder_manager, currentTaskRun
+from coretex import CustomDataset, CustomSample, TaskRun, folder_manager, currentTaskRun, createDataset
 from coretex.bioinformatics import ctx_qiime2
 
 
@@ -203,42 +203,37 @@ def main() -> None:
         raise ValueError(">> [Qiime: DADA2] Dataset has 0 demultiplexed samples")
 
     outputDir = folder_manager.createTempFolder("qiime_output")
-    outputDataset = CustomDataset.createDataset(
-        f"{taskRun.id} - Step 3: DADA2",
-        taskRun.projectId
-    )
 
-    if outputDataset is None:
-        raise ValueError(">> [Qiime: DADA2] Failed to create output dataset")
+    outputDatasetName = f"{taskRun.id} - Step 3: DADA2"
+    with createDataset(CustomDataset, outputDatasetName, taskRun.projectId) as outputDataset:
+        for sample in demuxSamples:
+            sample.unzip()
 
-    for sample in demuxSamples:
-        sample.unzip()
+            index = ctx_qiime2.sampleNumber(sample)
 
-        index = ctx_qiime2.sampleNumber(sample)
+            metadataSample = dataset.getSample(f"{index}-metadata")
+            if metadataSample is None:
+                raise ValueError(f">> [Qiime: DADA2] Imported sample not found")
 
-        metadataSample = dataset.getSample(f"{index}-metadata")
-        if metadataSample is None:
-            raise ValueError(f">> [Qiime: DADA2] Imported sample not found")
+            metadataSample.unzip()
 
-        metadataSample.unzip()
+            summarySample = dataset.getSample(f"{index}-summary")
+            if summarySample is None:
+                raise ValueError(f">> [Qiime: DADA2] Summary sample not found")
 
-        summarySample = dataset.getSample(f"{index}-summary")
-        if summarySample is None:
-            raise ValueError(f">> [Qiime: DADA2] Summary sample not found")
+            summarySample.unzip()
 
-        summarySample.unzip()
+            processSample(
+                index,
+                sample,
+                metadataSample,
+                summarySample,
+                taskRun,
+                outputDataset,
+                outputDir
+            )
 
-        processSample(
-            index,
-            sample,
-            metadataSample,
-            summarySample,
-            taskRun,
-            outputDataset,
-            outputDir
-        )
-
-        taskRun.submitOutput("outputDataset", outputDataset)
+    taskRun.submitOutput("outputDataset", outputDataset)
 
 
 if __name__ == "__main__":

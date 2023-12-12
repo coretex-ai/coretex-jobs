@@ -1,7 +1,7 @@
 from pathlib import Path
 from zipfile import ZipFile
 
-from coretex import CustomDataset, CustomSample, TaskRun, cache, folder_manager, currentTaskRun
+from coretex import CustomDataset, CustomSample, TaskRun, cache, folder_manager, currentTaskRun, createDataset
 from coretex.bioinformatics import ctx_qiime2
 
 
@@ -99,29 +99,24 @@ def main() -> None:
     importedDataset.download()
 
     outputDir = folder_manager.createTempFolder("taxonomy_output")
-    outputDataset = CustomDataset.createDataset(
-        f"{taskRun.id} - Step 5: Taxonomic analysis",
-        taskRun.projectId
-    )
 
-    if outputDataset is None:
-        raise ValueError(">> [Qiime: Taxonomic Analysis] Failed to create output dataset")
+    outputDatasetName = f"{taskRun.id} - Step 5: Taxonomic analysis"
+    with createDataset(CustomDataset, outputDatasetName,taskRun.projectId) as outputDataset:
+        for sample in denoisedSamples:
+            index = ctx_qiime2.sampleNumber(sample)
 
-    for sample in denoisedSamples:
-        index = ctx_qiime2.sampleNumber(sample)
+            metadataSample = importedDataset.getSample(f"{index}-metadata")
+            if metadataSample is None:
+                raise ValueError(f">> [Qiime: Taxonomic Analysis] Imported sample not found")
 
-        metadataSample = importedDataset.getSample(f"{index}-metadata")
-        if metadataSample is None:
-            raise ValueError(f">> [Qiime: Taxonomic Analysis] Imported sample not found")
-
-        processSample(
-            index,
-            sample,
-            metadataSample,
-            taskRun,
-            outputDataset,
-            outputDir
-        )
+            processSample(
+                index,
+                sample,
+                metadataSample,
+                taskRun,
+                outputDataset,
+                outputDir
+            )
 
     taskRun.submitOutput("outputDataset", outputDataset)
 

@@ -6,7 +6,7 @@ import logging
 
 import requests
 
-from coretex import TaskRun, CustomDataset, CustomSample, folder_manager
+from coretex import TaskRun, CustomDataset, CustomSample, folder_manager, createDataset
 from coretex.utils.file import isGzip, gzipDecompress
 from coretex.utils.hash import hashCacheName
 from coretex.bioinformatics import sequence_alignment as sa
@@ -18,27 +18,20 @@ GENOME_SUFFIXES = [".fasta", ".fna", ".fa"]
 
 
 def saveCache(cacheName: str, temp: Path, genomeIndexDir: Path, projectId: int) -> None:
-    genomeDataset = CustomDataset.createDataset(
-        cacheName,
-        projectId
-    )
+    with createDataset(CustomDataset, cacheName, projectId) as genomeDataset:
+        logging.info(">> [Sequence Alignment] Compressing indexed reference genome for upload to coretex")
 
-    if genomeDataset is None:
-        raise RuntimeError(">> [Sequence Alignment] Failed to create coretex dataset for indexed genome cache")
+        zipPath = temp / "genome.zip"
+        with ZipFile(zipPath , "w", ZIP_DEFLATED) as archive:
+            for filePath in genomeIndexDir.iterdir():
+                archive.write(filePath, filePath.name)
 
-    logging.info(">> [Sequence Alignment] Compressing indexed reference genome for upload to coretex")
+        logging.info(">> [Sequence Alignment] Uploading indexed reference genome to coretex for later reuse")
 
-    zipPath = temp / "genome.zip"
-    with ZipFile(zipPath , "w", ZIP_DEFLATED) as archive:
-        for filePath in genomeIndexDir.iterdir():
-            archive.write(filePath, filePath.name)
+        if CustomSample.createCustomSample(zipPath.name, genomeDataset.id, zipPath) is None:
+            raise RuntimeError(">> [Sequence Alignment] Failed to upload indexed genome")
 
-    logging.info(">> [Sequence Alignment] Uploading indexed reference genome to coretex for later reuse")
-
-    if CustomSample.createCustomSample(zipPath.name, genomeDataset.id, zipPath) is None:
-        raise RuntimeError(">> [Sequence Alignment] Failed to upload indexed genome")
-
-    logging.info(">> [Sequence Alignment] Indexed reference genome has been successfuly uploaded to coretex")
+        logging.info(">> [Sequence Alignment] Indexed reference genome has been successfuly uploaded to coretex")
 
 
 def loadCache(cache: CustomDataset) -> Path:

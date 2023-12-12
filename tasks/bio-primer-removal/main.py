@@ -104,6 +104,7 @@ def main() -> None:
                 outputDataset
             )
 
+    outputDataset.finalize()
     taskRun.submitOutput("outputDataset", outputDataset)
 
 

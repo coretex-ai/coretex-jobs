@@ -6,7 +6,7 @@ import logging
 import os
 import functools
 
-from coretex import currentTaskRun, TaskRun, ComputerVisionDataset, ComputerVisionSample, CoretexImageAnnotation
+from coretex import currentTaskRun, TaskRun, ComputerVisionDataset, ComputerVisionSample, CoretexImageAnnotation, createDataset
 
 from src import sample_generator
 
@@ -61,27 +61,29 @@ def main() -> None:
     # Seed used for multiple operations - needed for reproducibility
     random.seed(taskRun.parameters["seed"])
 
-    outputDataset = ComputerVisionDataset.createDataset(f"{taskRun.id} - {taskRun.dataset.name}", taskRun.projectId)
-    if outputDataset is None:
-        raise ValueError("Failed to create output dataset")
+    outputDatasetName = f"{taskRun.id} - {taskRun.dataset.name}"
+    with createDataset(ComputerVisionDataset, outputDatasetName, taskRun.projectId) as outputDataset:
+        outputDataset.saveClasses(taskRun.dataset.classes)
 
-    outputDataset.saveClasses(taskRun.dataset.classes)
+        with ProcessPoolExecutor(max_workers = os.cpu_count()) as executor:
+            for sample in taskRun.dataset.samples:
+                sample.unzip()
 
-    with ProcessPoolExecutor(max_workers = os.cpu_count()) as executor:
-        for sample in taskRun.dataset.samples:
-            sample.unzip()
+                for backgroundSample in getRandomSamples(backgroundDataset, taskRun.parameters["imagesPerDocument"]):
+                    backgroundSample.unzip()
+                    backgroundData = backgroundSample.load()
+
+                    future = executor.submit(sample_generator.generateSample,
+                        sample,
+                        backgroundData.image,
+                        taskRun.dataset.classes,
+                        taskRun.parameters["minDocumentSize"],
+                        taskRun.parameters["maxDocumentSize"]
+                    )
 
             for backgroundSample in getRandomSamples(backgroundDataset, imagesPerDocument):
                 backgroundSample.unzip()
                 backgroundData = backgroundSample.load()
-
-                future = executor.submit(sample_generator.generateSample,
-                    sample,
-                    backgroundData.image,
-                    taskRun.dataset.classes,
-                    taskRun.parameters["minDocumentSize"],
-                    taskRun.parameters["maxDocumentSize"]
-                )
 
                 future.add_done_callback(functools.partial(didGenerateSample, outputDataset.id))
 

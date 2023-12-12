@@ -6,7 +6,7 @@ import zipfile
 import pickle
 import time
 
-from coretex import TaskRun, CustomDataset, CustomSample, folder_manager
+from coretex import TaskRun, CustomDataset, CustomSample, folder_manager, createDataset
 from coretex.utils.hash import hashCacheName
 
 from .utils import plots
@@ -45,32 +45,30 @@ def cacheDataset(
 
     logging.info(">> [MicrobiomeForensics] Saving assembled dataset to cache (this may take a while)")
 
-    cacheDataset = CustomDataset.createDataset(cacheName, projectId)
-    if cacheDataset is None:
-        raise RuntimeError(">> [MicrobiomeForensics] Failed to create coretex dataset for cache")
+    with createDataset(CustomDataset, cacheName, projectId) as cacheDataset:
+        cachedItems = [taxonDistribution, classDistribution]
+        cachedItemNames = ["taxonDistribution", "classDistribution"]
 
-    cachedItems = [taxonDistribution, classDistribution]
-    cachedItemNames = ["taxonDistribution", "classDistribution"]
-    for cachedItem, cachedItemName in zip(cachedItems, cachedItemNames):
-        picklePath = folder_manager.temp / cachedItemName
-        with picklePath.open("wb") as cacheFile:
-            pickle.dump(cachedItem, cacheFile)
+        for cachedItem, cachedItemName in zip(cachedItems, cachedItemNames):
+            picklePath = folder_manager.temp / cachedItemName
+            with picklePath.open("wb") as cacheFile:
+                pickle.dump(cachedItem, cacheFile)
 
-        zipPath = cachePath / f"{cachedItemName}.zip"
-        with zipfile.ZipFile(zipPath, 'w', zipfile.ZIP_DEFLATED) as archive:
-            archive.write(picklePath, picklePath.name)
+            zipPath = cachePath / f"{cachedItemName}.zip"
+            with zipfile.ZipFile(zipPath, 'w', zipfile.ZIP_DEFLATED) as archive:
+                archive.write(picklePath, picklePath.name)
 
-    for path in datasetPath.iterdir():
-        zipPath = cachePath / f"{path.name}.zip"
-        with zipfile.ZipFile(zipPath, 'w', zipfile.ZIP_DEFLATED) as archive:
-            archive.write(path, path.name)
+        for path in datasetPath.iterdir():
+            zipPath = cachePath / f"{path.name}.zip"
+            with zipfile.ZipFile(zipPath, 'w', zipfile.ZIP_DEFLATED) as archive:
+                archive.write(path, path.name)
 
-    for path in cachePath.iterdir():
-        customSample = CustomSample.createCustomSample(path.name[:-4], cacheDataset.id, path)
-        if customSample is None:
-            raise RuntimeError(">> [MicrobiomeForensics] Failed to upload cache")
+        for path in cachePath.iterdir():
+            customSample = CustomSample.createCustomSample(path.name[:-4], cacheDataset.id, path)
+            if customSample is None:
+                raise RuntimeError(">> [MicrobiomeForensics] Failed to upload cache")
 
-    logging.info(">> [MicrobiomeForensics] Successfuly cached assembled dataset")
+        logging.info(">> [MicrobiomeForensics] Successfuly cached assembled dataset")
 
 
 def loadCache(taskRun: TaskRun[CustomDataset], cacheName: str) -> tuple[Path, dict[str, int], dict[str, int]]:

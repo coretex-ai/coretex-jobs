@@ -5,7 +5,7 @@ from zipfile import ZipFile
 import csv
 import logging
 
-from coretex import SequenceDataset, CustomDataset, CustomSample, TaskRun, SequenceSample
+from coretex import SequenceDataset, CustomDataset, CustomSample, TaskRun, SequenceSample, createDataset
 from coretex.bioinformatics import ctx_qiime2
 
 from .utils import convertMetadata
@@ -83,40 +83,35 @@ def importDemultiplexed(
     outputDir: Path
 ) -> None:
 
-    outputDataset = CustomDataset.createDataset(
-        f"{taskRun.id} - Step 1: Import - Demultiplexed",
-        taskRun.projectId
-    )
+    outputDatasetName = f"{taskRun.id} - Step 1: Import - Demultiplexed"
+    with createDataset(CustomDataset, outputDatasetName, taskRun.projectId) as outputDataset:
 
-    if outputDataset is None:
-        raise ValueError(">> [Qiime: Import] Failed to create output dataset")
+        logging.info(">> [Qiime: Import] Preparing demultiplexed data for import into Qiime2")
+        inputPath = outputDir / "manifest.tsv"
 
-    logging.info(">> [Qiime: Import] Preparing demultiplexed data for import into Qiime2")
-    inputPath = outputDir / "manifest.tsv"
+        if dataset.isPairedEnd():
+            createManifestPaired(dataset.samples, inputPath)
+            sequenceType = "SampleData[PairedEndSequencesWithQuality]"
+            inputFormat = "PairedEndFastqManifestPhred33V2"
+        else:
+            createManifestSingle(dataset.samples, inputPath)
+            sequenceType = "SampleData[SequencesWithQuality]"
+            inputFormat = "SingleEndFastqManifestPhred33V2"
 
-    if dataset.isPairedEnd():
-        createManifestPaired(dataset.samples, inputPath)
-        sequenceType = "SampleData[PairedEndSequencesWithQuality]"
-        inputFormat = "PairedEndFastqManifestPhred33V2"
-    else:
-        createManifestSingle(dataset.samples, inputPath)
-        sequenceType = "SampleData[SequencesWithQuality]"
-        inputFormat = "SingleEndFastqManifestPhred33V2"
+        logging.info(">> [Qiime: Import] Importing data...")
+        importZipPath = importSample(inputPath, sequenceType, inputFormat, outputDir)
 
-    logging.info(">> [Qiime: Import] Importing data...")
-    importZipPath = importSample(inputPath, sequenceType, inputFormat, outputDir)
+        logging.info(">> [Qiime: Import] Uploading sample")
+        demuxSample = ctx_qiime2.createSample("0-demux", outputDataset.id, importZipPath, taskRun, "Step 1: Import")
 
-    logging.info(">> [Qiime: Import] Uploading sample")
-    demuxSample = ctx_qiime2.createSample("0-demux", outputDataset.id, importZipPath, taskRun, "Step 1: Import")
+        metadataZipPath = importMetadata(dataset.metadata, outputDir, taskRun.parameters["metadataFileName"])
+        ctx_qiime2.createSample("0-metadata", outputDataset.id, metadataZipPath, taskRun, "Step 1: Import")
 
-    metadataZipPath = importMetadata(dataset.metadata, outputDir, taskRun.parameters["metadataFileName"])
-    ctx_qiime2.createSample("0-metadata", outputDataset.id, metadataZipPath, taskRun, "Step 1: Import")
+        demuxSample.download()
+        demuxSample.unzip()
 
-    demuxSample.download()
-    demuxSample.unzip()
-
-    logging.info(">> [Qiime: Import] Creating summarization...")
-    visualizationPath = demuxSummarize(demuxSample, outputDir)
-    ctx_qiime2.createSample("0-summary", outputDataset.id, visualizationPath, taskRun, "Step 1: Import")
+        logging.info(">> [Qiime: Import] Creating summarization...")
+        visualizationPath = demuxSummarize(demuxSample, outputDir)
+        ctx_qiime2.createSample("0-summary", outputDataset.id, visualizationPath, taskRun, "Step 1: Import")
 
     taskRun.submitOutput("outputDataset", outputDataset)
