@@ -49,6 +49,15 @@ def main() -> None:
     backgroundDataset: ComputerVisionDataset = taskRun.parameters["backgroundDataset"]
     backgroundDataset.download()
 
+    imagesPerDocument = taskRun.parameters["imagesPerDocument"]
+    if imagesPerDocument > backgroundDataset.count:
+        logging.warning(
+            ">> [SyntheticDocumentGenerator] \"imagesPerDocument\" value: "
+            f"{imagesPerDocument} is higher than \"backgroundDataset\" "
+            f"count: {backgroundDataset.count}. Limiting value to: {backgroundDataset.count}"
+        )
+        imagesPerDocument = backgroundDataset.count
+
     # Seed used for multiple operations - needed for reproducibility
     random.seed(taskRun.parameters["seed"])
 
@@ -72,7 +81,11 @@ def main() -> None:
                         taskRun.parameters["maxDocumentSize"]
                     )
 
-                    future.add_done_callback(functools.partial(didGenerateSample, outputDataset.id))
+            for backgroundSample in getRandomSamples(backgroundDataset, imagesPerDocument):
+                backgroundSample.unzip()
+                backgroundData = backgroundSample.load()
+
+                future.add_done_callback(functools.partial(didGenerateSample, outputDataset.id))
 
     taskRun.submitOutput("outputDataset", outputDataset)
 

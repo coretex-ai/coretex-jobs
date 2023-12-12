@@ -116,7 +116,12 @@ perpareSampleData <- function(phyloseqObject, targetColumn) {
         ))
     }
 
-    colnames(metadata)[which(columnNames == targetColumn)] <- "target"
+    if (targetColumn == "sampleId") {
+        metadata$target <- metadata$sampleId
+    } else {
+        colnames(metadata)[which(columnNames == targetColumn)] <- "target"
+    }
+
     sample_data(phyloseqObject) <- sample_data(metadata)
 
     print("Sample Data / Metadata")

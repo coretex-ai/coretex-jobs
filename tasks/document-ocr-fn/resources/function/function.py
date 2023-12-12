@@ -10,6 +10,14 @@ from ocr import performOCR
 from object_detection import runObjectDetection
 
 
+DOCUMENT_NOT_FOUND = {
+    "code": 500,
+    "body": {
+        "error": "Failed to find document on the provided image"
+    }
+}
+
+
 def response(requestData: dict[str, Any]) -> dict[str, Any]:
     modelsDir = requestData.get("model")
 
@@ -22,10 +30,12 @@ def response(requestData: dict[str, Any]) -> dict[str, Any]:
 
     predictedMask = detect_document.run(segmentationModel, imagePath)
     predictedMask = processMask(predictedMask)
+    if predictedMask is None:
+        return DOCUMENT_NOT_FOUND
 
     segmentedImage = segmentImage(imagePath, predictedMask)
     if segmentedImage is None:
-        return functions.badRequest("Failed to determine document borders")
+        return DOCUMENT_NOT_FOUND
 
     bboxes, classes = runObjectDetection(segmentedImage, objDetModelWeights)
     segmentedDetections = segmentDetections(segmentedImage, bboxes)

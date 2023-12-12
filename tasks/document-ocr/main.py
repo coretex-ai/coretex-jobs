@@ -30,6 +30,8 @@ def main() -> None:
         predictedMask = detect_document.run(segmentationModel, sample)
 
         mask = processMask(predictedMask)
+        if mask is None:
+            continue
 
         segmentedImage = segmentImage(sample.imagePath, mask)
         if segmentedImage is None:

@@ -60,6 +60,11 @@ def main() -> None:
 
     importedSamples = ctx_qiime2.getImportedSamples(dataset)
     if len(importedSamples) == 0:
+        if len(ctx_qiime2.getDemuxSamples(dataset)) > 0:
+            logging.info(">> [Qiime: Demux] Forwarding demultiplexed samples")
+            taskRun.submitOutput("outputDataset", dataset)
+            return None
+
         raise ValueError(">> [Qiime: Demux] Dataset has 0 imported samples")
 
     outputDir = folder_manager.createTempFolder("demux_output")
