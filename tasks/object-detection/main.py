@@ -6,7 +6,7 @@ import logging
 
 import numpy as np
 
-from coretex import ComputerVisionDataset, TaskRun, Model, augmentDataset, Metric, MetricType, folder_manager, currentTaskRun
+from coretex import ComputerVisionDataset, TaskRun, Model, Metric, MetricType, folder_manager, currentTaskRun
 
 import src.train as train
 import src.detect as detect
@@ -50,17 +50,6 @@ def main() -> None:
 
         if not hasAnnotations(taskRun.dataset, excludedClasses):
             raise RuntimeError(">> [Object Detection] No annotations found in the provided dataset. Please add at least 1 annotation before training an object detector.")
-
-        augmentationDataset = taskRun.parameters.get("augmentationDataset", None)
-        if augmentationDataset is not None:
-            logging.info(">> [Object Detection] Augmenting the dataset")
-
-            rotationAngle = taskRun.parameters.get("rotationAngle", 0)
-            scaleFactor = taskRun.parameters.get("scaleFactor", 1.0)
-
-            augmentationDataset.download()
-
-            augmentDataset(taskRun.dataset, augmentationDataset, rotationAngle, scaleFactor)
 
         # start the training
         f1 = train.main(taskRun)

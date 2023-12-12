@@ -34,8 +34,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import SGD, lr_scheduler
 # from tqdm.auto import tqdm
 
-from coretex import ComputerVisionDataset, TaskRun, folder_manager
-from coretex import cache
+from coretex import ComputerVisionDataset, TaskRun, folder_manager, cache
 
 
 FILE = Path(__file__).resolve()
@@ -50,10 +49,8 @@ WORLD_SIZE = int(os.getenv('WORLD_SIZE', 1))
 
 
 def getWeightsPath(weightsUrl: str) -> str:
-    fileName = "yolov5n-7.pt"
-
     if not cache.exists(weightsUrl):
-        cache.storeUrl(weightsUrl, fileName, True)
+        cache.storeUrl(weightsUrl, weightsUrl, True)
 
     cachePath = cache.getPath(weightsUrl)
 
