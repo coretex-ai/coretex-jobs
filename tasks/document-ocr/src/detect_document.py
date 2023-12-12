@@ -20,7 +20,7 @@ def run(model: tf.lite.Interpreter, sample: ImageSegmentationSample) -> np.ndarr
     image = sample.load().image
     originalSize = (image.shape[1], image.shape[0])
 
-    resized, pad = resizeWithPadding(image, (inputShape[2], inputShape[1]))
+    resized, verticalPadding, horizontalPadding = resizeWithPadding(image, inputShape[2], inputShape[1])
     normalized = resized / 255
 
     model.set_tensor(inputDetails[0]["index"], np.reshape(normalized, (1,) + normalized.shape).astype(np.float32))
@@ -30,7 +30,10 @@ def run(model: tf.lite.Interpreter, sample: ImageSegmentationSample) -> np.ndarr
     prediction = model.get_tensor(outputDetails[0]["index"])[0]
 
     # Crop out padding
-    prediction = prediction[0 + pad[0]:prediction.shape[1] - pad[0], 0 + pad[1]:prediction.shape[0] - pad[1]]
+    prediction = prediction[
+        0 + verticalPadding:prediction.shape[1] - verticalPadding,
+        0 + horizontalPadding:prediction.shape[0] - horizontalPadding
+    ]
 
     prediction = cv2.resize(prediction, originalSize)
     prediction = np.argmax(prediction, axis = -1)

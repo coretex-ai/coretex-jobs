@@ -16,11 +16,11 @@ def run(taskRun: TaskRun, model: KerasModel, dataset: ImageSegmentationDataset) 
 
         sampleData = sample.load()
 
-        resized, _ = resizeWithPadding(sampleData.image, (imageSize, imageSize))
+        resized, _, _ = resizeWithPadding(sampleData.image, imageSize, imageSize)
         normalized = resized / 255
 
         groundtruth = sampleData.extractSegmentationMask(dataset.classes)
-        groundtruth, _ = resizeWithPadding(groundtruth, (imageSize, imageSize))
+        groundtruth, _, _ = resizeWithPadding(groundtruth, imageSize, imageSize)
 
         prediction = model(np.reshape(normalized, (1,) + normalized.shape), training = False)[0]
         prediction = np.argmax(prediction, axis = -1)
