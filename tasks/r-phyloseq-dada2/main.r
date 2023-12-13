@@ -182,6 +182,104 @@ trackPctColumns <- function(names, track_matrix) {
     return(track_matrix)
 }
 
+countReads <- function(file_path) {
+    file_connection <- file(file_path, "r")
+    lines <- readLines(file_connection)
+    close(file_connection)
+
+    return (length(lines) %/% 4)
+}
+
+getFilteringResults <- function(read_paths, filtered_read_paths) {
+    reads_in <- c()
+    reads_out <- c()
+
+    for (read_path in read_paths) {
+        reads_in <- c(reads_in, countReads(read_path))
+    }
+    for (filtered_read_path in filtered_read_paths) {
+        reads_out <- c(reads_out, countReads(filtered_read_path))
+    }
+    results <- data.frame("reads.in" = reads_in, "reads.out" = reads_out)
+    rownames(results) <- basename(read_paths)
+    return (results)
+}
+
+tryFilterAndTrim <- function(
+    forward_read_paths,
+    filtered_forward_read_paths,
+    reverse_read_paths,
+    filtered_reverse_read_paths,
+    trimLeft,
+    trimRight,
+    truncLen,
+    maxN,
+    maxEE,
+    truncQ,
+    rm_phix = TRUE,
+    compress = TRUE,
+    multithread = TRUE,
+    matchIDs = FALSE
+) {
+    tryCatch(
+        expr = {
+            filtering_results <- filterAndTrim(
+                forward_read_paths,
+                filtered_forward_read_paths,
+                reverse_read_paths,
+                filtered_reverse_read_paths,
+                trimLeft = trimLeft,
+                trimRight = trimRight,
+                truncLen = truncLen,
+                maxN = maxN,
+                maxEE = maxEE,
+                truncQ = truncQ,
+                rm.phix = rm_phix,
+                compress = compress,
+                multithread = multithread,
+                matchIDs = matchIDs
+            )
+        },
+        error = function(cond) {
+            print("Failed filterAndTrim. Retrying for unsuccessful samples")
+
+            lo_forward_read_paths <- c()
+            lo_reverse_read_paths <- c()
+            lo_filtered_forward_read_paths <- c()
+            lo_filtered_reverse_read_paths <- c()
+
+            for (i in 1:length(filtered_forward_read_paths)){
+                if (!file.exists(filtered_forward_read_paths[i])){
+                    lo_forward_read_paths <- c(lo_forward_read_paths, forward_read_paths[i])
+                    lo_reverse_read_paths <- c(lo_reverse_read_paths, reverse_read_paths[i])
+                    lo_filtered_forward_read_paths <- c(lo_filtered_forward_read_paths, filtered_forward_read_paths[i])
+                    lo_filtered_reverse_read_paths <- c(lo_filtered_reverse_read_paths, filtered_reverse_read_paths[i])
+                }
+            }
+
+            leftover_filtering_results = tryFilterAndTrim(
+                lo_forward_read_paths,
+                lo_filtered_forward_read_paths,
+                lo_reverse_read_paths,
+                lo_filtered_reverse_read_paths,
+                trimLeft = trimLeft,
+                trimRight = trimRight,
+                truncLen = truncLen,
+                maxN = maxN,
+                maxEE = maxEE,
+                truncQ = truncQ,
+                rm_phix = rm_phix,
+                compress = compress,
+                multithread = multithread,
+                matchIDs = TRUE
+            )
+        },
+        finally = {
+            return (getFilteringResults(forward_read_paths, filtered_forward_read_paths))
+        }
+    )
+}
+
 main <- function(taskRun) {
     output_path <- builtins$str(ctx_folder_manager$temp)
     taskRun$parameters[["dataset"]]$download()
@@ -260,7 +358,7 @@ main <- function(taskRun) {
     trunc_len_forward <- taskRun$parameters[["truncLenForward"]]
     trunc_len_reverse <- taskRun$parameters[["truncLenReverse"]]
 
-    filtering_results <- filterAndTrim(
+    filtering_results <- tryFilterAndTrim(
         forward_read_paths,
         filtered_forward_read_paths,
         reverse_read_paths,
@@ -271,7 +369,7 @@ main <- function(taskRun) {
         maxN = max_n,
         maxEE = c(max_ee_forward, max_ee_reverse),
         truncQ = trunc_q,
-        rm.phix = TRUE,
+        rm_phix = TRUE,
         compress = TRUE,
         multithread = TRUE
     )
