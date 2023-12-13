@@ -28,8 +28,8 @@ def run(model: tf.lite.Interpreter, imagePath: Path) -> list[np.ndarray]:
 
     # Crop out padding
     prediction = prediction[
-        0 + verticalPadding:prediction.shape[1] - verticalPadding,
-        0 + horizontalPadding:prediction.shape[0] - horizontalPadding
+        verticalPadding:prediction.shape[1] - verticalPadding,
+        horizontalPadding:prediction.shape[0] - horizontalPadding
     ]
 
     prediction = cv2.resize(prediction, originalSize)
