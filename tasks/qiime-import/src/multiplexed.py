@@ -10,6 +10,7 @@ from coretex.bioinformatics import ctx_qiime2
 from .utils import convertMetadata
 
 
+SEQUENCES_FASTQ = "sequences.fastq"
 FORWARD_FASTQ = "forward.fastq"
 REVERSE_FASTQ = "reverse.fastq"
 BARCODES_FASTQ = "barcodes.fastq"
@@ -73,6 +74,9 @@ def importMultiplexed(
             barcodesPath = prepareFastq(sample, BARCODES_FASTQ, sequenceFolderPath)
             forwardPath = prepareFastq(sample, FORWARD_FASTQ, sequenceFolderPath)
             reversePath = prepareFastq(sample, REVERSE_FASTQ, sequenceFolderPath)
+
+            if forwardPath is None:
+                forwardPath = prepareFastq(sample, SEQUENCES_FASTQ, sequenceFolderPath)
 
             metadataPath = sample.path / taskRun.parameters["metadataFileName"]
 
