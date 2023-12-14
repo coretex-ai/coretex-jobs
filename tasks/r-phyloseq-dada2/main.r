@@ -849,7 +849,7 @@ main <- function(taskRun) {
 
     pseq_sample <- ctx$CustomSample$createCustomSample("phyloseq-object", output_dataset$id, pseq_archive_path)
 
-    output_dataset$finalizeState()
+    output_dataset$finalize()
 
     taskRun$submitOutput("outputDataset", output_dataset)
 }
