@@ -52,12 +52,7 @@ def getWeightsPath(weightsUrl: str) -> str:
     if not cache.exists(weightsUrl):
         cache.storeUrl(weightsUrl, weightsUrl, True)
 
-    cachePath = cache.getPath(weightsUrl)
-
-    with ZipFile(cachePath, "r") as zipFile:
-        zipFile.extractall(folder_manager.cache)
-
-    return cachePath.with_suffix('.pt')
+    return str(cache.getPath(weightsUrl))
 
 
 def train(taskRun: TaskRun[ComputerVisionDataset], hyp, callbacks):  # hyp is path/to/hyp.yaml or hyp dictionary
