@@ -58,7 +58,8 @@ def savePlot(
     plotPath.unlink()
 
 
-def saveDocumentWithDetections(image: Image.Image, bboxes: list[BBox], classes: list[str], outputDir: Path, taskRun: TaskRun):
+def saveDocumentWithDetections(imageData: np.ndarray, bboxes: list[BBox], classes: list[str], outputDir: Path, taskRun: TaskRun):
+    image = Image.fromarray(imageData)
     font = ImageFont.load_default()
 
     for i, bbox in enumerate(bboxes):

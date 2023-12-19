@@ -1,6 +1,6 @@
 import logging
 
-from coretex import ImageSegmentationSample
+from coretex import ComputerVisionSample
 from coretex.utils import resizeWithPadding
 
 import cv2
@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow as tf
 
 
-def run(model: tf.lite.Interpreter, sample: ImageSegmentationSample) -> np.ndarray:
+def run(model: tf.lite.Interpreter, sample: ComputerVisionSample) -> np.ndarray:
     logging.info(f">> [Document OCR] Running segmentation mask prediction on sample \"{sample.name}\"")
     sample.unzip()
 
