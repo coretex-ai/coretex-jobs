@@ -1,3 +1,4 @@
 coretex
+py3nvml
 cchardet
 pandas
