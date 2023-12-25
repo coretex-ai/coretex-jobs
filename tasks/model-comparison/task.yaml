@@ -1,7 +1,7 @@
 id: adf92e59-35a6-47b9-b526-0d6615d74b4e
 name: Model Comparison
 description: "Task that takes a list of Coretex models as input and compares them by their accuracy. Output of the task is the model with highest accuracy."
-is_active: false
+is_active: true
 project_type: 8
 param_groups:
   - name: inputs
