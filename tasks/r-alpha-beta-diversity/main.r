@@ -21,15 +21,30 @@ ctx_folder_manager <- import("coretex.folder_manager")
 print("Step 2: Loading packages")
 library(remotes)
 
-# I have no idea how to install this using conda
-if (!requireNamespace("phyloseq.extended", quietly = TRUE)) {
-    print("Installing \"phyloseq.extended\" package")
-    remotes::install_github(
-        "mahendra-mariadassou/phyloseq-extended",
-        ref = "dev",
-        quiet = TRUE
+installPhyloseqExtended <- function(attempt = NULL) {
+    tryCatch(
+        {
+            if (is.null(attempt)) attempt <- 1
+            if (attempt > 3) stop("Failed to install phyloseq.extended package")
+
+            # I have no idea how to install this using conda
+            if (!requireNamespace("phyloseq.extended", quietly = TRUE)) {
+                print("Installing \"phyloseq.extended\" package")
+                remotes::install_github(
+                    "mahendra-mariadassou/phyloseq-extended",
+                    ref = "dev",
+                    quiet = TRUE
+                )
+            }
+        },
+        error = function(e) {
+            print("Retrying install of phyloseq.extended package")
+            installPhyloseqExtended(attempt + 1)
+        }
     )
 }
+
+installPhyloseqExtended()
 
 library(phyloseq)
 library(phyloseq.extended)
