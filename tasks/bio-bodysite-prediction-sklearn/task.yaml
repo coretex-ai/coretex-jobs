@@ -1,0 +1,90 @@
+id: c03f9553-ab91-43ed-bcde-299cf68d99ed
+name: Body Site Prediction -> Scikit-Learn
+description: This template trains a RandomForestClassifier for predicting body sites from OTU table data
+is_active: true
+project_type: 11
+param_groups:
+- name: inputs
+  params:
+  - name: dataset
+    description: Dataset with a single sample containing two CSV files. An OTU table and a metadata file with a body site columnn
+    value: null
+    data_type: dataset
+    required: true
+- name: outputs
+  params:
+  - name: outputModel
+    description: RandomForestClassifier moded created by this template.
+    value: null
+    data_type: model
+    required: false
+- name: parameters
+  params:
+  - name: metadataFileName
+    description: Name of the metadata file in the dataset.
+    value: null
+    data_type: str
+    required: true
+  - name: targetMetadataColumn
+    description: Column of the metadata file that has the target data (model output data y).
+    value: null
+    data_type: str
+    required: true
+  - name: validationSplit
+    description: Ratio of samples to be used for validation.
+    value: 0.2
+    data_type: float
+    required: true
+  - name: criterion
+    description: The function to measure the quality of a split. Supported criteria are “gini” for the Gini impurity and “log_loss” and “entropy” both for the Shannon information gain
+    value: entropy
+    data_type: str
+    required: true
+  - name: nEstimators
+    description: The number of trees in the forest.
+    value: 100
+    data_type: int
+    required: true
+  - name: maxFeatures
+    description: "The number of features to consider when looking for the best split:
+      If int, then consider max_features features at each split.
+      If float, then max_features is a fraction and max(1, int(max_features * n_features_in_)) features are considered at each split.
+      If “sqrt”, then max_features=sqrt(n_features).
+      If “log2”, then max_features=log2(n_features).
+      If None, then max_features=n_features."
+    value: sqrt
+    data_type: str
+  - name: maxDepth
+    description: The maximum depth of the tree. If None, then nodes are expanded until all leaves are pure or until all leaves contain less than min_samples_split samples.
+    value: 25
+    data_type: int
+    required: false
+  - name: bootstrap
+    description: Whether bootstrap samples are used when building trees. If False, the whole dataset is used to build each tree.
+    value: false
+    data_type: bool
+    required: true
+  - name: minSamplesSplit
+    description: "The minimum number of samples required to split an internal node:
+      If int, then consider min_samples_split as the minimum number.
+      If float, then min_samples_split is a fraction and ceil(min_samples_split * n_samples) are the minimum number of samples for each split. "
+    value: 0.01
+    data_type: float
+    required: true
+  - name: minWeightFractionLeaf
+    description: The minimum weighted fraction of the sum total of weights (of all the input samples) required to be at a leaf node. Samples have equal weight when sample_weight is 0.0.
+    value: 0.001
+    data_type: float
+    required: true
+  - name: minSamplesLeaf
+    description: "The minimum number of samples required to be at a leaf node. A split point at any depth will only be considered if it leaves at least min_samples_leaf training samples in each of the left and right branches. This may have the effect of smoothing the model, especially in regression.
+      If int, then consider min_samples_leaf as the minimum number.
+      If float, then min_samples_leaf is a fraction and ceil(min_samples_leaf * n_samples) are the minimum number of samples for each node."
+    value: 1
+    data_type: int
+    required: true
+  - name: seed
+    description: The random seed for the RandomForestClassifier
+    value: 42
+    data_type: int
+    required: true
