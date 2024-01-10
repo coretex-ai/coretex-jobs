@@ -67,7 +67,7 @@ def main() -> None:
 
         raise ValueError(">> [Qiime: Demux] Dataset has 0 imported samples")
 
-    if taskRun.parameters["barcodeColumn"] is None:
+    if taskRun.parameters.get("barcodeColumn") is None:
         raise ValueError(">> [Qiime: Demux] barcodeColumnn parameter is empty, but input is multiplexed")
 
     outputDir = folder_manager.createTempFolder("demux_output")
