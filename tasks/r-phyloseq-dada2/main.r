@@ -554,7 +554,7 @@ main <- function(taskRun) {
     track_matrix_path <- file.path(
         output_path,
         paste0(
-            "track_trimLeft_trimRight_", trim_left_forward, "_", trim_right_forward,
+            "track_trimLeft_trimRight_", trim_left_forward, "_", trim_right_reverse,
             "_maxEE_", max_ee_forward, "_", max_ee_reverse, ".csv"
         )
     )
