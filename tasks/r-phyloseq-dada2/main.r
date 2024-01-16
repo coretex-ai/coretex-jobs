@@ -320,7 +320,7 @@ main <- function(taskRun) {
     metadata <- loadMetadata(taskRun$dataset$getSample("_metadata"))
 
     # Step 3.2.2: Extract sample names
-    sample_names <- metadata$sampleId
+    sample_names <- sapply(strsplit(basename(forward_read_paths), "_"), function(x) x[1])
 
     print("Sample names")
     print(sample_names)
