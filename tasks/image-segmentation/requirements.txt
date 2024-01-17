@@ -6,3 +6,5 @@ opencv-python
 coremltools==6.3.0
 coretex
 tensorflowjs
+jax<=0.4.21  # tensorflowjs bug https://github.com/google/jax/issues/18978
+jaxlib<=0.4.21  # tensorflowjs bug https://github.com/google/jax/issues/18978
