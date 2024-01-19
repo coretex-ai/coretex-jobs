@@ -81,11 +81,7 @@ def main() -> None:
                         taskRun.parameters["maxDocumentSize"]
                     )
 
-            for backgroundSample in getRandomSamples(backgroundDataset, imagesPerDocument):
-                backgroundSample.unzip()
-                backgroundData = backgroundSample.load()
-
-                future.add_done_callback(functools.partial(didGenerateSample, outputDataset.id))
+                    future.add_done_callback(functools.partial(didGenerateSample, outputDataset.id))
 
     taskRun.submitOutput("outputDataset", outputDataset)
 

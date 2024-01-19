@@ -9,13 +9,13 @@ param_groups:
   - name: dataset
     description: Dataset containing the annotations which will be used for synthetically
       generating more data
-    value: 19654
+    value: null
     data_type: dataset
     required: true
   - name: backgroundDataset
     description: Dataset containing background images on which the annotations from
       the "dataset" parameter will be pasted on
-    value: 16901
+    value: null
     data_type: dataset
     required: true
 - name: outputs
