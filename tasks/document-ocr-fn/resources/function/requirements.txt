@@ -13,9 +13,7 @@ seaborn>=0.11.0
 coremltools==6.3.0
 tensorflow==2.8
 tensorflowjs>=3.9.0
+transformers==4.36.2
+ultralytics==8.0.226
 thop
 coretex
-pytesseract
-easyocr
-transformers
-ultralytics
