@@ -42,7 +42,11 @@ def generateSample(
 ) -> tuple[Path, CoretexImageAnnotation]:
 
     data = sample.load()
-    documentImage, transformedAnnotation = document_extractor.extractDocumentData(data, classes)
+
+    try:
+        documentImage, transformedAnnotation = document_extractor.extractDocumentData(data, classes)
+    except ValueError as e:
+        raise ValueError(f"Could not generate image for sample \"{sample.name}\". Reason: {e}")
 
     pBackgroundImage = Image.fromarray(backgroundImage)
     pDocumentImage = Image.fromarray(documentImage)

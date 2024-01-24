@@ -27,7 +27,7 @@ def extractDocumentData(data: AnnotatedImageSampleData, classes: ImageDatasetCla
 
     documentClass = classes.classByLabel("document")
     if documentClass is None:
-        raise ValueError("Missing document class")
+        raise ValueError("Missing class: \"document\"")
 
     transformedInstances.append(CoretexSegmentationInstance.create(
         documentClass.classIds[0],
