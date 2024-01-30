@@ -1,10 +1,10 @@
 from pathlib import Path
-from concurrent.futures import ProcessPoolExecutor, Future
+from contextlib import ExitStack
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, Future
 
 import random
 import logging
 import os
-import functools
 
 from coretex import currentTaskRun, TaskRun, ComputerVisionDataset, ComputerVisionSample, CoretexImageAnnotation, createDataset
 
@@ -21,25 +21,20 @@ def getRandomSamples(dataset: ComputerVisionDataset, count: int) -> list[Compute
 
 
 def didGenerateSample(datasetId: int, future: Future[tuple[Path, CoretexImageAnnotation]]) -> None:
-    exception = future.exception()
-    if exception is not None:
+    try:
+        imagePath, annotation = future.result()
+
+        generatedSample = ComputerVisionSample.createComputerVisionSample(datasetId, imagePath)
+        if generatedSample is not None:
+            if not generatedSample.saveAnnotation(annotation):
+                logging.error(f">> [SyntheticDocumentGenerator] Failed to save annotation for generated sample \"{generatedSample.name}\"")
+            else:
+                logging.info(f">> [SyntheticDocumentGenerator] Generated sample \"{generatedSample.name}\"")
+        else:
+            logging.error(f">> [SyntheticDocumentGenerator] Failed to create sample from \"{imagePath}\"")
+    except BaseException as exception:
         logging.error(f">> [SyntheticDocumentGenerator] Failed to generate sample. Reason: {exception}")
         logging.debug(exception, exc_info = exception)
-        return
-
-    imagePath, annotation = future.result()
-
-    generatedSample = ComputerVisionSample.createComputerVisionSample(datasetId, imagePath)
-    if generatedSample is not None:
-        generatedSample.download()
-        generatedSample.unzip()
-
-        if not generatedSample.saveAnnotation(annotation):
-            logging.error(f">> [SyntheticDocumentGenerator] Failed to save annotation for generated sample \"{generatedSample.name}\"")
-        else:
-            logging.info(f">> [SyntheticDocumentGenerator] Generated sample \"{generatedSample.name}\"")
-    else:
-        logging.error(f">> [SyntheticDocumentGenerator] Failed to create sample from \"{imagePath}\"")
 
 
 def main() -> None:
@@ -65,23 +60,28 @@ def main() -> None:
     with createDataset(ComputerVisionDataset, outputDatasetName, taskRun.projectId) as outputDataset:
         outputDataset.saveClasses(taskRun.dataset.classes)
 
-        with ProcessPoolExecutor(max_workers = os.cpu_count()) as executor:
+        with ExitStack() as stack:
+            executor = ProcessPoolExecutor(max_workers = os.cpu_count())
+            stack.enter_context(executor)
+
+            uploader = ThreadPoolExecutor(max_workers = 4)
+            stack.enter_context(uploader)
+
             for sample in taskRun.dataset.samples:
                 sample.unzip()
 
                 for backgroundSample in getRandomSamples(backgroundDataset, taskRun.parameters["imagesPerDocument"]):
                     backgroundSample.unzip()
-                    backgroundData = backgroundSample.load()
 
                     future = executor.submit(sample_generator.generateSample,
                         sample,
-                        backgroundData.image,
+                        backgroundSample.imagePath,
                         taskRun.dataset.classes,
                         taskRun.parameters["minDocumentSize"],
                         taskRun.parameters["maxDocumentSize"]
                     )
 
-                    future.add_done_callback(functools.partial(didGenerateSample, outputDataset.id))
+                    uploader.submit(didGenerateSample, outputDataset.id, future)
 
     taskRun.submitOutput("outputDataset", outputDataset)
 
