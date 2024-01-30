@@ -6,9 +6,6 @@ import uuid
 from coretex import ComputerVisionSample, CoretexImageAnnotation, CoretexSegmentationInstance, ImageDatasetClasses, folder_manager
 from PIL import Image
 
-import numpy as np
-import matplotlib.pyplot as plt
-
 from . import document_extractor, utils
 
 
@@ -35,7 +32,7 @@ def updateAnnotationPosition(
 
 def generateSample(
     sample: ComputerVisionSample,
-    backgroundImage: np.ndarray,
+    backgroundImagePath: Path,
     classes: ImageDatasetClasses,
     minDocumentSize: float,
     maxDocumentSize: float
@@ -48,7 +45,7 @@ def generateSample(
     except ValueError as e:
         raise ValueError(f"Could not generate image for sample \"{sample.name}\". Reason: {e}")
 
-    pBackgroundImage = Image.fromarray(backgroundImage)
+    pBackgroundImage = Image.open(backgroundImagePath)
     pDocumentImage = Image.fromarray(documentImage)
 
     # Resize document image
@@ -72,6 +69,7 @@ def generateSample(
         documentTopY
     )
 
+    # For debugging only
     # plt.imshow(pBackgroundImage)
     # for instance in updatedAnnotation.instances:
     #     for segmentation in instance.segmentations:
