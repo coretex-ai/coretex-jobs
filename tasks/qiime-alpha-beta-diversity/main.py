@@ -7,7 +7,7 @@ import logging
 
 from coretex import CustomDataset, CustomSample, TaskRun, folder_manager, currentTaskRun, createDataset
 from coretex.bioinformatics import ctx_qiime2
-from coretex.bioinformatics.utils import CommandException
+from coretex.utils import CommandException
 
 
 def columnNamePresent(metadataPath: Path, columnName: str) -> bool:
