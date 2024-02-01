@@ -1,4 +1,4 @@
-id: e0266aca-b44d-4da0-8f99-c199b769bd6f
+id: sequencing-read-quality-analysis
 name: Sequencing Read Quality Analysis
 description: This task creates a plot that showcases the average quality soceres per base pair index for the sequencing reads in the dataset.
 is_active: true

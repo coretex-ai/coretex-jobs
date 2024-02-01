@@ -1,4 +1,4 @@
-id: 19110f48-c05d-42cc-8ae2-5454e7788418
+id: microbiome-forensics-body-site-prediction-lspin
 name: Microbiome Forensics -> Body Site Prediction - LSPIN
 description: "Bodysite Classifier - LSPIN task template uses a neural network architecture\n\
   based on the paper \"Locally Sparse Neural Networks for Tabular Biomedical Data\u201D\

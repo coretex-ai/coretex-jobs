@@ -1,4 +1,4 @@
-id: 348092ce-cdb9-412c-a777-69154bb5f160
+id: microbiome-forensics-body-site-prediction-xgb
 name: Microbiome Forensics -> Body Site Prediction - XGBoost
 description: "Body site prediction task template is based on XGBoost (gradient\r\n\
   boosting) algorithm.\r\n\r\nThis template takes BioInformatics sequence taxonomic\

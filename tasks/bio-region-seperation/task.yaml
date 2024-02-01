@@ -1,4 +1,4 @@
-id: 9c2cd862-ca76-4a93-ac1d-906c6e78a869
+id: microbiome-forensics-region-separation
 name: Microbiome Forensics -> Region Separation
 description: Task template for separating short sequence read files based on the hypervariable
   regions they cover

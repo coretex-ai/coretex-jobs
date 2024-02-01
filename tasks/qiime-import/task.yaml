@@ -1,4 +1,4 @@
-id: 41198e45-7e21-44f4-9c90-ff98c2c8196b
+id: qiime2-import
 name: 'Qiime2 -> Step 1: Import'
 description: 'This task imports sequencing reads into a Qiime2 format so that, later
   downstream, they

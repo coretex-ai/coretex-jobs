@@ -1,4 +1,4 @@
-id: 0b2b27f3-2df0-4d61-a902-15e54cc1a81d
+id: qiime2-taxonomic-analysis
 name: 'Qiime2 -> Step 5: Taxonomic Analysis'
 description: "Taxonomic analysis is used to extract taxonomy (taxonomic composition)\
   \ of\nthe samples. It achieves this by using a ML model for this process.\n\nThe\

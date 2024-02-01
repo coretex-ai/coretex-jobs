@@ -1,4 +1,4 @@
-id: a83d192d-c6ad-475c-bba5-82c05076eb8a
+id: microbiome-forensics-primer-removal
 name: Microbiome Forensics -> Primer Removal
 description: This template uses cutadapt to remove primers while making the resulting
   files compatible with the rest of the Coretex bioinformatics templates

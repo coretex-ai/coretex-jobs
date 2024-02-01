@@ -1,4 +1,4 @@
-id: 72fee3bd-33d9-42fa-a5da-e41fefc0ab2d
+id: qiime2-demultiplexing-sequences
 name: 'Qiime2 -> Step 2: Demultiplexing sequences'
 description: 'Multiple samples can be pooled into a single sequencing run. This reduces
   the time and

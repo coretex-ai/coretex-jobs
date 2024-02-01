@@ -1,4 +1,4 @@
-id: 80ea7a48-6e23-4337-8adf-c2da7cbce5dc
+id: qiime2-alpha-beta-diversity-analysis
 name: 'Qiime2 -> Step 7: Alpha & Beta Diversity Analysis'
 description: "Downstream analysis provides most information about the sequences.\n\
   There are two kinds of downstream analysis:\n    - Alpha diversity\n    - Beta diversity\n\
