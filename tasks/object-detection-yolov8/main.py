@@ -118,6 +118,13 @@ def generateDatasetYaml(
     return configurationPath
 
 
+def calculateF1(precision: float, recall: float) -> float:
+    if precision + recall == 0:
+        return 0
+
+    return 2 * ((precision * recall) / (precision + recall))
+
+
 def main() -> None:
     taskRun: TaskRun[ComputerVisionDataset] = currentTaskRun()
 
@@ -158,7 +165,7 @@ def main() -> None:
 
     precision = results.results_dict["metrics/precision(B)"]
     recall = results.results_dict["metrics/recall(B)"]
-    f1 = 2 * ((precision * recall) / (precision + recall))
+    f1 = calculateF1(precision, recall)
 
     ctxModel = Model.createModel(taskRun.name, taskRun.id, f1, {})
     ctxModel.upload(Path(".", "results", "train", "weights"))
