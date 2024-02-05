@@ -1,45 +1,16 @@
 from typing import Any, Optional
-from pathlib import Path
-from dataclasses import dataclass
 
 import logging
-import csv
 
 from coretex import currentTaskRun, folder_manager, ComputerVisionDataset, TaskRun, BBox, ComputerVisionSample
-from coretex.utils import mathematicalRound
 from ultralytics import YOLO
 
-from src import detect_document, document_extractor, model
+from src import detect_document, document_extractor, model, validation
+from src.validation import SampleAccuracyResult, DatasetAccuracyResult
 from src.image_segmentation import processMask, segmentDetections
 from src.ocr import performOCR
 from src.utils import savePlot, saveDocumentWithDetections
 from src.object_detection import runObjectDetection
-
-
-@dataclass
-class SampleAccuracyResult:
-
-    id: int
-    name: str
-    labelAccuracies: dict[str, float]
-
-    @property
-    def accuracy(self) -> float:
-        return mathematicalRound(sum(self.labelAccuracies.values()) / len(self.labelAccuracies), 2)
-
-
-def calculateAccuracy(sample: ComputerVisionSample, groundtruth: dict[str, BBox], prediction: dict[str, BBox]) -> SampleAccuracyResult:
-    labelAccuracies: dict[str, float] = {}
-
-    for label, groundtruthBBox in groundtruth.items():
-        predictionBBox = prediction.get(label)
-
-        if predictionBBox is None:
-            labelAccuracies[label] = 0.0
-        else:
-            labelAccuracies[label] = mathematicalRound(groundtruthBBox.iou(predictionBBox) * 100, 2)
-
-    return SampleAccuracyResult(sample.id, sample.name, labelAccuracies)
 
 
 def processSample(
@@ -87,33 +58,17 @@ def processSample(
 
             groundtruth[class_.label] = instance.bbox
 
-        sampleResult = calculateAccuracy(sample, groundtruth, prediction)
+        sampleResult = validation.calculateAccuracy(sample, groundtruth, prediction, taskRun.parameters.get("iouThreshold"))
 
-        logging.info(f"\tTotal accuracy: {sampleResult.accuracy}")
+        logging.info(f"\tSample accuracy: {sampleResult.getAccuracy():.2f}")
         logging.info(f"\tAccuracy per label:")
 
-        for label, accuracy in sampleResult.labelAccuracies.items():
-            logging.info(f"\t- {label}: {accuracy}")
+        for labelResult in sampleResult.labelResults:
+            logging.info(f"\t- {labelResult.name}: {labelResult.accuracy:.2f}")
 
         return sampleResult
 
     return None
-
-
-def generateResultsCsv(sampleResults: list[SampleAccuracyResult], destination: Path) -> None:
-    with destination.open("w") as file:
-        writer = csv.DictWriter(file, ["id", "name", "first_name", "last_name", "date_of_birth", "gender", "total"])
-        writer.writeheader()
-        for result in sampleResults:
-            writer.writerow({
-                "id": result.id,
-                "name": result.name,
-                "first_name": result.labelAccuracies.get("first_name", "-"),
-                "last_name": result.labelAccuracies.get("last_name", "-"),
-                "date_of_birth": result.labelAccuracies.get("date_of_birth", "-"),
-                "gender": result.labelAccuracies.get("gender", "-"),
-                "total": result.accuracy
-            })
 
 
 def main() -> None:
@@ -123,34 +78,32 @@ def main() -> None:
     segmentationModel = model.loadSegmentationModel(taskRun.parameters["segmentationModel"])
     detectionModel = model.loadDetectionModel(taskRun.parameters["objectDetectionModel"])
 
-    sampleResults: list[SampleAccuracyResult] = []
+    validationResult = DatasetAccuracyResult(taskRun.dataset.id, taskRun.dataset.name, [])
 
     for i, sample in enumerate(taskRun.dataset.samples):
         logging.info(f">> [Document OCR] Performing segmentation on sample \"{sample.name}\" ({i + 1}/{taskRun.dataset.count})")
 
         sampleResult = processSample(taskRun, sample, segmentationModel, detectionModel)
         if sampleResult is not None:
-            sampleResults.append(sampleResult)
+            validationResult.sampleResults.append(sampleResult)
 
-    datasetResult: dict[str, float] = {}
+    logging.info(f">> [Document OCR] Dataset accuracy: {validationResult.getAccuracy():.2f}")
 
-    for sampleResult in sampleResults:
-        for label, accuracy in sampleResult.labelAccuracies.items():
-            totalAccuracy = datasetResult.get(label, 0)
-            datasetResult[label] = totalAccuracy + accuracy
+    # Create sample results artifact
+    sampleResultsPath = folder_manager.temp / "results.csv"
+    validationResult.writeSampleResults(sampleResultsPath)
 
-    for key, value in datasetResult.items():
-        datasetResult[key] = value / len(sampleResults)
+    sampleResultsArtifact = taskRun.createArtifact(sampleResultsPath, "sample_results.csv")
+    if sampleResultsArtifact is None:
+        logging.error(">> [Document OCR] Failed to create Sample results artifact")
 
-    datasetAccuracy = sum(datasetResult.values()) / len(datasetResult)
-    logging.info(f">> [Document OCR] Dataset accuracy: {datasetAccuracy}")
+    # Create dataset result artifact
+    datasetResultPath = folder_manager.temp / "dataset.csv"
+    validationResult.writeDatasetResult(datasetResultPath)
 
-    resultsPath = folder_manager.temp / "results.csv"
-    generateResultsCsv(sampleResults, resultsPath)
-
-    resultsArtifact = taskRun.createArtifact(resultsPath, "results.csv")
-    if resultsArtifact is None:
-        logging.error(">> [Document OCR] Failed to create results artifact")
+    datasetResultArtifact = taskRun.createArtifact(datasetResultPath, "dataset_result.csv")
+    if datasetResultArtifact is None:
+        logging.error(">> [Document OCR] Failed to create Dataset result artifact")
 
 
 if __name__ == "__main__":

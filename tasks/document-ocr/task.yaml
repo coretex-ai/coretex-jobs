@@ -1,6 +1,6 @@
 id: 413dd10f-4d4f-4f6d-aa91-662c58768546
 name: Document OCR
-description: This task template performs original character recognition (OCR) on documents
+description: This task template performs optical character recognition (OCR) on documents
 is_active: true
 project_type: 1
 param_groups:
@@ -21,3 +21,11 @@ param_groups:
     value: null
     data_type: model
     required: true
+  - name: iouThreshold
+    description: IoU (Intersection over union) threshold. Range 0 - 1. When calculating
+      accuracy - IOU values under the threshold will be treated as 0% accuracy whilst those
+      equal or above the threshold will be treated as 100% accuracy. If no value is passed then
+      IoU value will be used as accuracy.
+    value: null
+    data_type: float
+    required: false
