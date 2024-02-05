@@ -16,7 +16,7 @@ def calculateLabelAccuracy(
     if threshold is None:
         return iou * 100
 
-    if iou > threshold:
+    if iou >= threshold:
         return 100
 
     return 0
