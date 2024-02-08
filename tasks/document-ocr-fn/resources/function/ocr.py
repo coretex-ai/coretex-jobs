@@ -1,4 +1,6 @@
+from typing import Optional
 from dateutil import parser
+from datetime import datetime
 
 from PIL import Image
 from transformers import TrOCRProcessor, VisionEncoderDecoderModel
@@ -15,6 +17,34 @@ def trOCR(image: Image.Image) -> str:
     return processor.batch_decode(generatedIds, skip_special_tokens = True)[0]  # type: ignore
 
 
+def parseDate(inputDate: str) -> dict[str, Optional[int]]:
+    # "DD MM YY" -> "DD MM YYYY" [old Danish passorts]
+    if len(inputDate.split(" ", 3)[2]) == 2:
+        day, month, year = inputDate.split(" ", 3)
+
+        yearPrefix = "19" if int(year) > int(str(datetime.now().year)[2:]) else "20"
+        return parseDate(" ".join([day, month, yearPrefix + year]))
+
+    try:
+        dateTime = parser.parse(inputDate)
+        return {
+            "year": dateTime.year,
+            "month": dateTime.month,
+            "day": dateTime.day
+        }
+    except ValueError as e:
+        # date time strings with alternate month spelling (assuming the alternate spelling is on the left of the "\") [Dutch IDs]
+        if "/" in inputDate:
+            prefix, rest = inputDate.split(" ", 1)
+            return parseDate(prefix + " " + rest.split("/", 1)[1])
+
+        return {
+            "year": None,
+            "month": None,
+            "day": None
+        }
+
+
 def performOCR(images: list[Image.Image], classes: list[str]) -> dict[str, str]:
     detections: dict[str, str] = {}
     for i, image in enumerate(images):
@@ -22,22 +52,7 @@ def performOCR(images: list[Image.Image], classes: list[str]) -> dict[str, str]:
 
         if classes[i] == "date_of_birth":
             detections["date_of_birth_raw"] = trOcrOutput
-
-            try:
-                trOcrDateTime = parser.parse(trOcrOutput)
-                trOcrOutputJson = {
-                    "year": trOcrDateTime.year,
-                    "month": trOcrDateTime.month,
-                    "day": trOcrDateTime.day
-                }
-            except ValueError as e:
-                trOcrOutputJson = {
-                    "year": None,
-                    "month": None,
-                    "day": None
-                }
-
-            trOcrOutput = trOcrOutputJson
+            trOcrOutput = parseDate(trOcrOutput)
 
         detections[classes[i]] = trOcrOutput
 
