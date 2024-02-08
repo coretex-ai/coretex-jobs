@@ -18,6 +18,9 @@ def trOCR(image: Image.Image) -> str:
 
 
 def parseDate(inputDate: str) -> dict[str, Optional[int]]:
+    # Replace all periods with spaces
+    inputDate = inputDate.replace(".", " ")
+
     # "DD MM YY" -> "DD MM YYYY" [old Danish passorts]
     if len(inputDate.split(" ", 3)[2]) == 2:
         day, month, year = inputDate.split(" ", 3)
