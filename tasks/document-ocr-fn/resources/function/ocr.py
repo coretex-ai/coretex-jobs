@@ -85,6 +85,3 @@ def performOCR(images: list[Image.Image], classes: list[str]) -> dict[str, str]:
         detections[classes[i]] = trOcrOutput
 
     return detections
-
-
-print(parseDate("xd xd dddd"))
