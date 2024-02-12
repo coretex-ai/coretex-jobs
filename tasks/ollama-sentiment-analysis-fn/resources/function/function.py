@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 import time
 import logging
@@ -24,18 +24,18 @@ SYSTEM_PROMPT = [
     },
     {
         "role": "user",
-        "content": f"{TEXT_PROMPT_PREFIX}\"I hate everything on this website. It's designed like trash\""
+        "content": f"{TEXT_PROMPT_PREFIX}\"Absolutely in love with this new product! The quality is unbelievable, and it's so advanced. Highly recommend to any humans out there!\""
     },
     {
         "role": "assistant",
-        "content": "Sentiment: very negative"
+        "content": "Sentiment: very positive"
     }
 ]
 
 
 def isOllamaInstalled() -> bool:
     try:
-        subprocess.run(["ollama", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run(["ollama", "--version"], check = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         return True
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False
@@ -43,19 +43,16 @@ def isOllamaInstalled() -> bool:
 
 def installOllama() -> None:
     try:
-        subprocess.run("curl https://ollama.ai/install.sh | sh", shell=True, check=True)
+        subprocess.run("curl https://ollama.ai/install.sh | sh", shell = True, check = True)
         logging.info(">> [OSentimentAnalysis] Ollama installation was successful")
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f">> [OSentimentAnalysis] An error occurred during Ollama installation: {e}")
 
 
-def checkOllamaServer() -> bool:
+def checkOllamaServer() -> Optional[bool]:
     try:
         response = requests.get(OLLAMA_SERVER_URL)
-        if response.status_code == 200:
-            return True
-        else:
-            return False
+        return response.status_code == 200
     except requests.ConnectionError:
         return False
 
@@ -111,5 +108,5 @@ def response(requestData: dict[str, Any]) -> dict[str, Any]:
     return functions.success({"sentiment": sentiment})
 
 
-serverProcess = launchOllamaServer()
+launchOllamaServer()
 pullModel()
