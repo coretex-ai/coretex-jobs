@@ -17,35 +17,46 @@ def trOCR(image: Image.Image) -> str:
     return processor.batch_decode(generatedIds, skip_special_tokens = True)[0]  # type: ignore
 
 
-def parseDate(inputDate: str) -> dict[str, Optional[int]]:
+def parseDate(inputDate: str) -> tuple[str, dict[str, Optional[int]]]:
     # Replace all periods with spaces
     inputDate = inputDate.replace(".", " ")
 
-    # "DD MM YY" -> "DD MM YYYY" [old Danish passorts]
-    if len(inputDate.split(" ", 3)[2]) == 2:
-        day, month, year = inputDate.split(" ", 3)
+    day, month, year = inputDate.split(" ", 3)
 
+    # If month has two spellings (e.g. MAA/MAR), but the slash was not detected, add slash in middle
+    if len(month) == 6:
+        month = month[:3] + "/" + month[3:]
+        inputDate = " ".join([day, month, year])
+
+    # "DD MM YY" -> "DD MM YYYY" [old Danish passorts]
+    if len(year) == 2:
         yearPrefix = "19" if int(year) > int(str(datetime.now().year)[2:]) else "20"
         return parseDate(" ".join([day, month, yearPrefix + year]))
 
     try:
         dateTime = parser.parse(inputDate)
-        return {
-            "year": dateTime.year,
-            "month": dateTime.month,
-            "day": dateTime.day
-        }
+        return (
+            inputDate,
+            {
+                "year": dateTime.year,
+                "month": dateTime.month,
+                "day": dateTime.day
+            }
+        )
     except ValueError as e:
         # date time strings with alternate month spelling (assuming the alternate spelling is on the left of the "\") [Dutch IDs]
         if "/" in inputDate:
             prefix, rest = inputDate.split(" ", 1)
             return parseDate(prefix + " " + rest.split("/", 1)[1])
 
-        return {
-            "year": None,
-            "month": None,
-            "day": None
-        }
+        return (
+            inputDate,
+            {
+                "year": None,
+                "month": None,
+                "day": None
+            }
+        )
 
 
 def performOCR(images: list[Image.Image], classes: list[str]) -> dict[str, str]:
@@ -54,8 +65,8 @@ def performOCR(images: list[Image.Image], classes: list[str]) -> dict[str, str]:
         trOcrOutput = trOCR(image)
 
         if classes[i] == "date_of_birth":
-            detections["date_of_birth_raw"] = trOcrOutput
-            trOcrOutput = parseDate(trOcrOutput)
+            dateOfBirthRaw, trOcrOutput = parseDate(trOcrOutput)
+            detections["date_of_birth_raw"] = dateOfBirthRaw
 
         detections[classes[i]] = trOcrOutput
 
