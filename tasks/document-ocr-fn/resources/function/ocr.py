@@ -2,6 +2,8 @@ from typing import Optional
 from dateutil import parser
 from datetime import datetime
 
+import logging
+
 from PIL import Image
 from transformers import TrOCRProcessor, VisionEncoderDecoderModel
 
@@ -21,7 +23,18 @@ def parseDate(inputDate: str) -> tuple[str, dict[str, Optional[int]]]:
     # Replace all periods with spaces
     inputDate = inputDate.replace(".", " ")
 
-    day, month, year = inputDate.split(" ", 3)
+    try:
+        day, month, year = inputDate.split(" ", 3)
+    except ValueError as e:
+        logging.debug(f">> [DocumentOCR] \"{inputDate}\" could not be separated into dat/month/year, returning None for DOB fields. Error: {e}")
+        return (
+            inputDate,
+            {
+                "year": None,
+                "month": None,
+                "day": None
+            }
+        )
 
     # If month has two spellings (e.g. MAA/MAR), but the slash was not detected, add slash in middle
     if len(month) == 6:
@@ -44,6 +57,7 @@ def parseDate(inputDate: str) -> tuple[str, dict[str, Optional[int]]]:
             }
         )
     except ValueError as e:
+        logging.debug(f">> [DocumentOCR] \"{inputDate}\" could not be parsed as date-time, performing additional preprocessing. Error: {e}")
         # date time strings with alternate month spelling (assuming the alternate spelling is on the left of the "\") [Dutch IDs]
         if "/" in inputDate:
             prefix, rest = inputDate.split(" ", 1)
