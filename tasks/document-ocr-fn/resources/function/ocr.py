@@ -57,7 +57,7 @@ def parseDate(inputDate: str) -> tuple[str, dict[str, Optional[int]]]:
             }
         )
     except ValueError as e:
-        logging.debug(f">> [DocumentOCR] \"{inputDate}\" could not be parsed as date-time, performing additional preprocessing. Error: {e}")
+        logging.debug(f">> [DocumentOCR] \"{inputDate}\" could not be parsed as date-time, performing additional preprocessing. Error: {e}", exc_info = e)
         # date time strings with alternate month spelling (assuming the alternate spelling is on the left of the "\") [Dutch IDs]
         if "/" in inputDate:
             prefix, rest = inputDate.split(" ", 1)
@@ -85,3 +85,6 @@ def performOCR(images: list[Image.Image], classes: list[str]) -> dict[str, str]:
         detections[classes[i]] = trOcrOutput
 
     return detections
+
+
+print(parseDate("xd xd dddd"))
