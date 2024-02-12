@@ -1,4 +1,4 @@
-id: c3256ce2-700e-40a8-9a61-4dfa407de078
+id: object-detection-yolov5
 name: Object Detection (YoloV5)
 description: "Object Detection task template is based on YoloV5 model (https://github.com/ultralytics/yolov5).\r\
   \nYoloV5 is a state of the art (SOTA) model for running Object Detection on images.\r\

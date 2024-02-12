@@ -1,4 +1,4 @@
-id: c18cabc7-4098-487e-acb3-449177f33e53
+id: qiime2-otu-clustering
 name: 'Qiime2 -> Step 4: OTU Clustering'
 description: 'This task uses vsearch to perform OTU clustering with the de novo method.
 

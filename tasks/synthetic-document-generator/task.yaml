@@ -1,4 +1,4 @@
-id: fc6add9d-4477-4510-ae1f-785fa8b67742
+id: synthetic-document-generator
 name: Synthetic Document Generator
 description: Generates document images and annotations using provided parameters
 is_active: true

@@ -1,4 +1,4 @@
-id: 5a132273-d895-44cd-ad1f-665a98dd35b1
+id: qiime2-dada2-denoising
 name: 'Qiime2 -> Step 3: DADA2 Denoising'
 description: 'This task uses DADA2 to perform donoising, error correction and other
   DADA2

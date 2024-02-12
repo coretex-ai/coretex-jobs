@@ -1,4 +1,4 @@
-id: c4043fa9-d4b9-41e9-b29e-9d576d94e7ea
+id: r-example-task-template
 name: R -> Example task template
 description: Plots a normal distribution with provided parameters
 is_active: true

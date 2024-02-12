@@ -1,4 +1,4 @@
-id: ff3d05d5-81e9-408e-8dfd-a1de2509739d
+id: phyloseq-full-workflow
 name: Phyloseq -> Full Workflow
 description: Workflow for cleaning the data using DADA2 and generating phylogenetic
   tree based on the cleaned data then running Alpha & Beta diversity analyses.
