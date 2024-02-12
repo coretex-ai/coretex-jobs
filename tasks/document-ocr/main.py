@@ -87,7 +87,7 @@ def main() -> None:
         if sampleResult is not None:
             validationResult.sampleResults.append(sampleResult)
 
-    logging.info(f">> [Document OCR] Dataset accuracy: {validationResult.getAccuracy():.2f}")
+    logging.info(f">> [Document OCR] Dataset accuracy: {validationResult.displayValue()}")
 
     # Create sample results artifact
     sampleResultsPath = folder_manager.temp / "results.csv"

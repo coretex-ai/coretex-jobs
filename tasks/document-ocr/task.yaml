@@ -26,6 +26,6 @@ param_groups:
       accuracy - IOU values under the threshold will be treated as 0% accuracy whilst those
       equal or above the threshold will be treated as 100% accuracy. If no value is passed then
       IoU value will be used as accuracy.
-    value: null
+    value: 0.5
     data_type: float
     required: false

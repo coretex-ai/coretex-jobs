@@ -4,7 +4,12 @@ from pathlib import Path
 
 import csv
 
-from coretex.utils import mathematicalRound
+
+def avg(values: list[float]) -> float:
+    if len(values) == 0:
+        return 0
+
+    return sum(values) / len(values)
 
 
 @dataclass
@@ -12,6 +17,10 @@ class LabelAccuracyResult:
 
     name: str
     accuracy: float
+    iou: float
+
+    def displayValue(self) -> str:
+        return f"{self.accuracy:.2f} ({self.iou:.2f})"
 
 
 @dataclass
@@ -21,15 +30,28 @@ class SampleAccuracyResult:
     name: str
     labelResults: list[LabelAccuracyResult]
 
-    def getLabelAccuracy(self, label: str) -> Optional[float]:
+    def getLabel(self, label: str) -> Optional[LabelAccuracyResult]:
         for labelResult in self.labelResults:
             if labelResult.name == label:
-                return labelResult.accuracy
+                return labelResult
+
+        return None
+
+    def getLabelDisplayValue(self, label: str) -> Optional[str]:
+        for labelResult in self.labelResults:
+            if labelResult.name == label:
+                return labelResult.displayValue()
 
         return None
 
     def getAccuracy(self) -> float:
-        return sum(result.accuracy for result in self.labelResults) / len(self.labelResults)
+        return avg([result.accuracy for result in self.labelResults])
+
+    def getIoU(self) -> float:
+        return avg([result.iou for result in self.labelResults])
+
+    def displayValue(self) -> str:
+        return f"{self.getAccuracy():.2f} ({self.getIoU():.2f})"
 
 
 @dataclass
@@ -39,24 +61,25 @@ class DatasetAccuracyResult:
     name: str
     sampleResults: list[SampleAccuracyResult]
 
-    def getLabelAccuracy(self, label: str) -> Optional[float]:
-        data: list[float] = []
+    def getLabelDisplayValue(self, name: str) -> Optional[str]:
+        accuracy: list[float] = []
+        iou: list[float] = []
 
         for sampleResult in self.sampleResults:
-            labelAccuracy = sampleResult.getLabelAccuracy(label)
-            if labelAccuracy is None:
+            label = sampleResult.getLabel(name)
+            if label is None:
                 continue
 
-            data.append(labelAccuracy)
+            accuracy.append(label.accuracy)
+            iou.append(label.iou)
 
-        # Dataset doesn't have annotation for that label
-        if len(data) == 0:
-            return None
+        return f"{avg(accuracy):.2f} ({avg(iou):.2f})"
 
-        return sum(data) / len(data)
+    def displayValue(self) -> str:
+        accuracy = sum(result.getAccuracy() for result in self.sampleResults) / len(self.sampleResults)
+        iou = sum(result.getIoU() for result in self.sampleResults) / len(self.sampleResults)
 
-    def getAccuracy(self) -> float:
-        return sum(result.getAccuracy() for result in self.sampleResults) / len(self.sampleResults)
+        return f"{accuracy:.2f} ({iou:.2f})"
 
     def writeSampleResults(self, path: Path) -> None:
         with path.open("w") as file:
@@ -64,19 +87,19 @@ class DatasetAccuracyResult:
             writer.writeheader()
 
             for sampleResult in self.sampleResults:
-                firstName = sampleResult.getLabelAccuracy("first_name")
-                lastName = sampleResult.getLabelAccuracy("last_name")
-                birthDate = sampleResult.getLabelAccuracy("date_of_birth")
-                gender = sampleResult.getLabelAccuracy("gender")
+                firstName = sampleResult.getLabelDisplayValue("first_name")
+                lastName = sampleResult.getLabelDisplayValue("last_name")
+                birthDate = sampleResult.getLabelDisplayValue("date_of_birth")
+                gender = sampleResult.getLabelDisplayValue("gender")
 
                 row = {
                     "id": sampleResult.id,
                     "name": sampleResult.name,
-                    "first_name": mathematicalRound(firstName, 2) if firstName is not None else "-",
-                    "last_name": mathematicalRound(lastName, 2) if lastName is not None else "-",
-                    "date_of_birth": mathematicalRound(birthDate, 2) if birthDate is not None else "-",
-                    "gender": mathematicalRound(gender, 2) if gender is not None else "-",
-                    "total": mathematicalRound(sampleResult.getAccuracy(), 2)
+                    "first_name": firstName if firstName is not None else "-",
+                    "last_name": lastName if lastName is not None else "-",
+                    "date_of_birth": birthDate if birthDate is not None else "-",
+                    "gender": gender if gender is not None else "-",
+                    "total": sampleResult.displayValue()
                 }
 
                 writer.writerow(row)
@@ -86,19 +109,19 @@ class DatasetAccuracyResult:
             writer = csv.DictWriter(file, ["id", "name", "first_name", "last_name", "date_of_birth", "gender", "total"])
             writer.writeheader()
 
-            firstName = self.getLabelAccuracy("first_name")
-            lastName = self.getLabelAccuracy("last_name")
-            birthDate = self.getLabelAccuracy("date_of_birth")
-            gender = self.getLabelAccuracy("gender")
+            firstName = self.getLabelDisplayValue("first_name")
+            lastName = self.getLabelDisplayValue("last_name")
+            birthDate = self.getLabelDisplayValue("date_of_birth")
+            gender = self.getLabelDisplayValue("gender")
 
             row = {
                 "id": self.id,
                 "name": self.name,
-                "first_name": mathematicalRound(firstName, 2) if firstName is not None else "-",
-                "last_name": mathematicalRound(lastName, 2) if lastName is not None else "-",
-                "date_of_birth": mathematicalRound(birthDate, 2) if birthDate is not None else "-",
-                "gender": mathematicalRound(gender, 2) if gender is not None else "-",
-                "total": mathematicalRound(self.getAccuracy(), 2)
+                "first_name": firstName if firstName is not None else "-",
+                "last_name": lastName if lastName is not None else "-",
+                "date_of_birth": birthDate if birthDate is not None else "-",
+                "gender": gender if gender is not None else "-",
+                "total": self.displayValue()
             }
 
             writer.writerow(row)
