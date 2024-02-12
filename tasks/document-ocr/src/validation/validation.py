@@ -9,17 +9,16 @@ def calculateLabelAccuracy(
     groundtruth: BBox,
     prediction: BBox,
     threshold: Optional[float]
-) -> float:
+) -> tuple[float, float]:
 
     iou = groundtruth.iou(prediction)
 
     if threshold is None:
-        return iou * 100
+        accuracy = iou * 100
+    else:
+        accuracy = 100 if iou >= threshold else 0
 
-    if iou >= threshold:
-        return 100
-
-    return 0
+    return accuracy, iou
 
 
 def calculateAccuracy(
@@ -35,10 +34,10 @@ def calculateAccuracy(
         predictionBBox = prediction.get(label)
 
         if predictionBBox is None:
-            accuracy = 0.0
+            accuracy, iou = 0.0, 0.0
         else:
-            accuracy = calculateLabelAccuracy(groundtruthBBox, predictionBBox, threshold)
+            accuracy, iou = calculateLabelAccuracy(groundtruthBBox, predictionBBox, threshold)
 
-        labelAccuracies.append(LabelAccuracyResult(label, accuracy))
+        labelAccuracies.append(LabelAccuracyResult(label, accuracy, iou))
 
     return SampleAccuracyResult(sample.id, sample.name, labelAccuracies)
