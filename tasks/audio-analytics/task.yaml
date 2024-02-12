@@ -1,4 +1,4 @@
-id: adf92e59-35a6-47b9-b526-0d6615d74b4e
+id: nlp-named-entity-recognition
 name: NLP -> Named Entity Recognition
 description: Searches text for provided keywords
 is_active: false

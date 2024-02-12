@@ -1,4 +1,4 @@
-id: 17a31b89-d00b-465d-a829-8939ce44794f
+id: qiime2-full-workflow
 name: Qiime2 -> Full Workflow
 description: Workflow from raw multiplexed or demultiplexed sequence reads to feature
   table generation, OTU clustering, taxonomic analysis, phylogenetic tree generation

@@ -1,4 +1,4 @@
-id: dfc8bcfc-bea9-4e24-9fc6-227d09747d85
+id: qiime2-dada2-workflow
 name: Qiime2 -> DADA2 Workflow
 description: Workflow from raw multiplexed or demultiplexed sequence reads to DADA2 denoising
 project_type: 11

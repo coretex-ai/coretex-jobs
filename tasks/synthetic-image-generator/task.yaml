@@ -1,4 +1,4 @@
-id: 76662245-ea93-4267-b8c6-f09911959a22
+id: synthetic-image-generator
 name: Synthetic Image Generator
 description: This task stitches images onto background images in random locations,
   while applying rotation and scaling.
