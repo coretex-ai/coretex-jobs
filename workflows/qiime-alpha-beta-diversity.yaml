@@ -6,16 +6,16 @@ project_type: 11
 is_active: true
 jobs:
   step-4-otu-clustering:
-    template_id: c18cabc7-4098-487e-acb3-449177f33e53
+    template_id: qiime2-otu-clustering
 
   step-5-taxonomic-analysis:
-    template_id: 0b2b27f3-2df0-4d61-a902-15e54cc1a81d
+    template_id: qiime2-taxonomic-analysis
 
   step-6-phylogenetic-diversity-analysis:
-    template_id: 6428f2eb-4b43-4c31-bb51-dbe18e7c809e
+    template_id: qiime2-phylogenetic-diversity-analysis
 
   step-7-alpha-and-beta-diversity-analysis:
-    template_id: 80ea7a48-6e23-4337-8adf-c2da7cbce5dc
+    template_id: qiime2-alpha-beta-diversity-analysis
     param_groups:
       inputs:
         dataset: step-6-phylogenetic-diversity-analysis.outputDataset

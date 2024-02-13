@@ -7,41 +7,41 @@ project_type: 11
 is_active: true
 jobs:
   step-1-import:
-    template_id: 41198e45-7e21-44f4-9c90-ff98c2c8196b
+    template_id: qiime2-import
 
   step-2-demultiplexing-sequences:
-    template_id: 72fee3bd-33d9-42fa-a5da-e41fefc0ab2d
+    template_id: qiime2-demultiplexing-sequences
     param_groups:
       inputs:
         dataset: step-1-import.outputDataset
 
   step-3-dada2-denoising:
-    template_id: 5a132273-d895-44cd-ad1f-665a98dd35b1
+    template_id: qiime2-dada2-denoising
     param_groups:
       inputs:
         dataset: step-2-demultiplexing-sequences.outputDataset
 
   step-4-otu-clustering:
-    template_id: c18cabc7-4098-487e-acb3-449177f33e53
+    template_id: qiime2-otu-clustering
     param_groups:
       inputs:
         dataset: step-3-dada2-denoising.outputDataset
 
   step-5-taxonomic-analysis:
-    template_id: 0b2b27f3-2df0-4d61-a902-15e54cc1a81d
+    template_id: qiime2-taxonomic-analysis
     param_groups:
       inputs:
         dataset: step-3-dada2-denoising.outputDataset
         importedDataset: step-2-demultiplexing-sequences.outputDataset
 
   step-6-phylogenetic-diversity-analysis:
-    template_id: 6428f2eb-4b43-4c31-bb51-dbe18e7c809e
+    template_id: qiime2-phylogenetic-diversity-analysis
     param_groups:
       inputs:
         dataset: step-3-dada2-denoising.outputDataset
 
   step-7-alpha-and-beta-diversity-analysis:
-    template_id: 80ea7a48-6e23-4337-8adf-c2da7cbce5dc
+    template_id: qiime2-alpha-beta-diversity-analysis
     param_groups:
       inputs:
         dataset: step-6-phylogenetic-diversity-analysis.outputDataset
