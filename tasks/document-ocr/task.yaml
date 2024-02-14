@@ -8,17 +8,17 @@ param_groups:
   params:
   - name: dataset
     description: Dataset with document images.
-    value: null
+    value: 26859
     data_type: dataset
     required: true
   - name: segmentationModel
     description: Image segmentation model.
-    value: null
+    value: 3875
     data_type: model
     required: true
   - name: objectDetectionModel
     description: Object detection model.
-    value: null
+    value: 3903
     data_type: model
     required: true
   - name: iouThreshold
