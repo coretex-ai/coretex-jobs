@@ -1,6 +1,7 @@
 from typing import Optional
 from pathlib import Path
 
+import math
 import logging
 
 from PIL import Image, ImageDraw
@@ -10,6 +11,23 @@ import cv2
 import numpy as np
 
 from coretex import BBox
+
+
+def calculateDistance(centroid: tuple[int,int], point: tuple[int,int]) -> float:
+    return math.sqrt(math.pow(centroid[0] - point[0], 2) + math.pow(centroid[1] - point[1], 2))
+
+
+def reducePolygonTo4Points(points: list[tuple[int,int]]) -> list[tuple[int,int]]:
+    xSum = sum([point[0] for point in points])
+    ySum = sum([point[1] for point in points])
+
+    centroid = (xSum / len(points), ySum / len(points))
+
+    distances = [(point, calculateDistance(centroid, point)) for point in points]
+    distances.sort(key = lambda x: x[1], reverse = True)
+
+    # Return the four points furthest away from the centroid
+    return [point for point, distance in distances[:4]]
 
 
 def findRectangle(mask: np.ndarray) -> Optional[np.ndarray]:
@@ -24,17 +42,16 @@ def findRectangle(mask: np.ndarray) -> Optional[np.ndarray]:
         epsilon = 0.02 * cv2.arcLength(contour, True)
         rectangle = cv2.approxPolyDP(contour, epsilon, True)
 
-        if rectangle.shape[0] < 4:
+        points: list[tuple[int, int]] = []
+        for point in rectangle:
+            points.append((point[0][0], point[0][1]))
+
+        if len(points) < 4:
             logging.error("Failed to find document")
             return None
 
-        if rectangle.shape[0] > 4:
-            rectangle = cv2.minAreaRect(contour)
-            return cv2.boxPoints(rectangle)
-
-        points: list[list[int]] = []
-        for point in rectangle:
-            points.append([point[0][0], point[0][1]])
+        if len(points) > 4:
+            points = reducePolygonTo4Points(points)
 
         xSorted = sorted(points, key = lambda point: point[0])
 
