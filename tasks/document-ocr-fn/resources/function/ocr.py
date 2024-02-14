@@ -26,7 +26,7 @@ def parseDate(inputDate: str) -> tuple[str, dict[str, Optional[int]]]:
     try:
         day, month, year = inputDate.split(" ", 3)
     except ValueError as e:
-        logging.debug(f">> [DocumentOCR] \"{inputDate}\" could not be separated into dat/month/year, returning None for DOB fields. Error: {e}")
+        logging.debug(f">> [DocumentOCR] \"{inputDate}\" could not be separated into dat/month/year, returning None for DOB fields. Error: {e}", exc_info = e)
         return (
             inputDate,
             {
