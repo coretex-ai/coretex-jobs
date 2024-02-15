@@ -1,0 +1,9 @@
+transformers
+datasets
+peft
+trl
+torch
+numpy
+bitsandbytes
+accelerate
+coretex
