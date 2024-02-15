@@ -57,7 +57,7 @@ def checkOllamaServer() -> Optional[bool]:
         return False
 
 
-def launchOllamaServer() -> subprocess.Popen[bytes]:
+def launchOllamaServer() -> Optional[subprocess.Popen[bytes]]:
     if not isOllamaInstalled():
         installOllama()
 
@@ -68,14 +68,20 @@ def launchOllamaServer() -> subprocess.Popen[bytes]:
     return subprocess.Popen(["ollama", "serve"])
 
 
-def pullModel() -> None:
+def pullModel(attempt: Optional[int] = None) -> None:
+    if attempt is None:
+        attempt = 1
+
+    if attempt > 10:
+        raise RuntimeError(">> [OSentimentAnalysis] Failed to contact ollama server")
+
     # Sleep for 1 second to give the server time to start
     time.sleep(1)
 
     try:
         ollama.pull("llama2")
     except ResponseError:
-        pullModel()
+        pullModel(attempt + 1)
 
 
 # Available roles: user, assistant
