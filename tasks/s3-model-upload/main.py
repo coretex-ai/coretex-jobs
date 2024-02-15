@@ -21,6 +21,7 @@ def main() -> None:
 
     secretName = taskRun.parameters["secret"]
     secret = AWSSecret.fetchByName(secretName)
+    secret = secret.decrypted()
 
     resource = boto3.resource(
         service_name = "s3",
