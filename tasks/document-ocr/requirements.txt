@@ -1,9 +1,0 @@
-matplotlib>=3.2.2
-numpy==1.23.1
-opencv-python>=4.1.2
-Pillow>=7.1.2
-scipy>=1.4.1
-tensorflow==2.8
-coretex
-transformers
-ultralytics
