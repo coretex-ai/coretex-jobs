@@ -82,3 +82,9 @@ param_groups:
       value: []
       data_type: list[str]
       required: false
+    - name: earlyStopping
+      description: Enable/disable early stopping of Run if loss hasn't decreased after
+        multiple epochs
+      value: true
+      data_type: bool
+      required: true

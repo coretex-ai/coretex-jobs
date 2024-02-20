@@ -125,6 +125,19 @@ def calculateF1(precision: float, recall: float) -> float:
     return 2 * ((precision * recall) / (precision + recall))
 
 
+def getPatience(taskRun: TaskRun) -> int:
+    epochs = taskRun.parameters["epochs"]
+    earlyStopping = taskRun.parameters["earlyStopping"]
+
+    if earlyStopping:
+        # 10% of epochs or 10, whichever is higher
+        return max(int(epochs * 0.1), 10)
+
+    # To disable early stopping we have to set patience to a very high value
+    # https://github.com/ultralytics/ultralytics/issues/7609
+    return 2 ** 64
+
+
 def main() -> None:
     taskRun: TaskRun[ComputerVisionDataset] = currentTaskRun()
 
@@ -160,7 +173,8 @@ def main() -> None:
         data = configurationPath,
         epochs = taskRun.parameters["epochs"],
         batch = taskRun.parameters["batchSize"],
-        imgsz = taskRun.parameters["imageSize"]
+        imgsz = taskRun.parameters["imageSize"],
+        patience = getPatience(taskRun)
     )
 
     precision = results.results_dict["metrics/precision(B)"]
