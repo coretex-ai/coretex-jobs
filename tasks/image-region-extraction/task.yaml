@@ -20,6 +20,11 @@ param_groups:
     required: false
 - name: parameters
   params:
+  - name: parentClass
+    description: Annotated regions from other classes will be perspective transforme based on this one
+    value: null
+    data_type: str
+    required: true
   - name: excludedClasses
     description: Annotation classes that will not be extracted
     value: null
