@@ -4,7 +4,7 @@ from typing import Any
 
 import logging
 
-from datasets import load_dataset, Dataset
+from datasets import load_dataset
 from trl import SFTTrainer
 from transformers import pipeline
 from coretex import currentTaskRun, CustomDataset
@@ -14,6 +14,7 @@ from src.configurations import getQuantizationConfig, getPeftParameters, getTrai
 
 
 def loadDataFromCoretex(dataset: CustomDataset) -> Any:
+    dataset.download()
     for sample in dataset.samples:
         sample.unzip()
 
@@ -21,17 +22,11 @@ def loadDataFromCoretex(dataset: CustomDataset) -> Any:
         # Load data and perform preprocessing as necessary #
         ######                                        ######
 
-    raise NotImplementedError("Loading from Coretex dataset")
+        # Example for loading parquet files from a single sample
+        dataFiles = list(sample.path.glob("*.parquet"))
+        trainingData = load_dataset("parquet", data_files = [str(filePath)for filePath in dataFiles])["train"]
 
-
-def loadDataFromHuggingFace(datasetName: str) -> Dataset:
-    trainingData = load_dataset(datasetName, split = "train")
-
-    ######                    ######
-    # Preprocess data as necessary #
-    ######                    ######
-
-    return trainingData
+        return trainingData
 
 
 def runInference(model, tokenizer, prompt: str) -> str:
@@ -42,16 +37,8 @@ def runInference(model, tokenizer, prompt: str) -> str:
 
 def main() -> None:
     taskRun = currentTaskRun()
-
-    huggingFaceDataset = taskRun.parameters["huggingFaceDataset"]
-    if huggingFaceDataset is not None:
-        logging.info(f">> [Llama2Lora] Loading dataset from Hugging Face {huggingFaceDataset}")
-        trainingData = loadDataFromHuggingFace(huggingFaceDataset)
-    elif taskRun.parameters["dataset"] is not None:
-        logging.info(">> [Llama2Lora] Loading dataset from coretex")
-        trainingData = loadDataFromCoretex(taskRun.dataset)
-    else:
-        raise ValueError(f">> [Llama2Lora] One of the following parameters must not be empty: dataset, huggingFaceDataset")
+    logging.info(">> [Llama2Lora] Loading dataset from coretex")
+    trainingData = loadDataFromCoretex(taskRun.dataset)
 
     modelName = getModelName(taskRun.parameters["modelVersion"])
 
@@ -96,7 +83,7 @@ def main() -> None:
 
     ######                                 ######
     # Implement automatic evaluation as desired #
-    accuracy = 1.01                             #
+    accuracy = 1.0                              #
     ######                                 ######
 
     logging.info(">> [Llama2Lora] Uploading LoRA parameters to Coretex. You will need to load them together with the base model to perfrom inference")
