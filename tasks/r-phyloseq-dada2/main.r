@@ -181,6 +181,26 @@ loadMetadata <- function(metadataSample) {
     return(metadata)
 }
 
+valiateSamplesAndMetadata <- function(sample_names, metadata) {
+    metadata$sampleId <- as.character(metadata$sampleId)
+
+    ids_not_in_metadata <- setdiff(sample_names, metadata$sampleId)
+    ids_not_in_sample_ids <- setdiff(metadata$sampleId, sample_names)
+
+    if(length(ids_not_in_metadata) > 0 || length(ids_not_in_sample_ids) > 0) {
+        error_message <- "Sample files in dataset do not match metadata:"
+
+        if(length(ids_not_in_metadata) > 0) {
+            error_message <- paste0(error_message, "\nSamples in dataset not in metadata: ", paste(ids_not_in_metadata, collapse=", "))
+        }
+
+        if(length(ids_not_in_sample_ids) > 0) {
+            error_message <- paste0(error_message, "\nSamples in metadata not in dataset: ", paste(ids_not_in_sample_ids, collapse=", "))
+        }
+        stop(error_message)
+    }
+}
+
 trackPctColumns <- function(names, track_matrix) {
     for (name in names) {
         percentage = cbind(round(track_matrix[, name] / track_matrix[, "input"] * 100, digits = 2))
@@ -325,6 +345,9 @@ main <- function(taskRun) {
     for (sample_id in sample_ids) {
         sample_names <- c(sample_names, grep(sample_id, metadata$sampleId, value = TRUE))
     }
+
+    # Check if samples in the dataset and in the metadata match
+    valiateSamplesAndMetadata(sample_names, metadata)
 
     print("Sample names")
     print(sample_names)
