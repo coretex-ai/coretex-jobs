@@ -49,7 +49,7 @@ def extractRectangle(mask: np.ndarray) -> Rect:
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     if len(contours) != 1:
-        raise ValueError("Found more than one contour")
+        raise ValueError(">> [RegionExtraction] Found more than one contour")
 
     epsilon = 0.02 * cv2.arcLength(contours[0], True)
     rectangle = cv2.approxPolyDP(contours[0], epsilon, True)
@@ -59,7 +59,7 @@ def extractRectangle(mask: np.ndarray) -> Rect:
         points.append(Point2D(int(point[0][0]), int(point[0][1])))
 
     if len(points) < 4:
-        raise ValueError(f"Approximated polygon to less than four points ({len(points)})")
+        raise ValueError(f">> [RegionExtraction] Approximated polygon to less than four points ({len(points)})")
 
     if len(points) > 4:
         points = reducePolygonTo4Points(points)
@@ -88,13 +88,13 @@ def warpPerspectivePoly(transformMatrix: np.ndarray, points: list[int]) -> list[
 def getParentInstance(annotation: CoretexImageAnnotation, classes: ImageDatasetClasses, parentClassName: str) -> CoretexSegmentationInstance:
     parentClass = classes.classByLabel(parentClassName)
     if parentClass is None:
-        raise ValueError(f"Missing {parentClassName} class")
+        raise ValueError(f">> [RegionExtraction] Missing {parentClassName} class")
 
     for instance in annotation.instances:
         if instance.classId in parentClass.classIds:
             return instance
 
-    raise ValueError(f"Failed to find {parentClassName} annotation")
+    raise ValueError(f">> [RegionExtraction] Failed to find {parentClassName} annotation")
 
 
 def extractParent(
@@ -102,8 +102,8 @@ def extractParent(
     mask: np.ndarray,
     parentClassName: str,
     classes: ImageDatasetClasses,
-    annotation: Optional[CoretexImageAnnotation]
-) -> tuple[np.ndarray, Optional[CoretexImageAnnotation]]:
+    annotation: CoretexImageAnnotation
+) -> tuple[np.ndarray, CoretexImageAnnotation]:
 
     rect = extractRectangle(mask)
 
@@ -114,37 +114,34 @@ def extractParent(
 
     transformedInstances: list[CoretexSegmentationInstance] = []
 
-    if annotation is not None:
-        parentClass = classes.classByLabel(parentClassName)
-        if parentClass is None:
-            raise ValueError(f"Missing {parentClassName} class")
+    parentClass = classes.classByLabel(parentClassName)
+    if parentClass is None:
+        raise ValueError(f">> [RegionExtraction] Missing {parentClassName} class")
+
+    transformedInstances.append(CoretexSegmentationInstance.create(
+        parentClass.classIds[0],
+        BBox.fromPoly(parentSegmentation),
+        [parentSegmentation]
+    ))
+
+    for instance in annotation.instances:
+        if instance.classId in parentClass.classIds:
+            continue
+
+        transformedSegmentations = [
+            warpPerspectivePoly(transformMatrix, segmentation)
+            for segmentation in instance.segmentations
+        ]
+        flattenedSegmentations = [e for segmentation in transformedSegmentations for e in segmentation]
 
         transformedInstances.append(CoretexSegmentationInstance.create(
-            parentClass.classIds[0],
-            BBox.fromPoly(parentSegmentation),
-            [parentSegmentation]
+            instance.classId,
+            BBox.fromPoly(flattenedSegmentations),
+            transformedSegmentations
         ))
 
-        for instance in annotation.instances:
-            if instance.classId in parentClass.classIds:
-                continue
-
-            transformedSegmentations = [
-                warpPerspectivePoly(transformMatrix, segmentation)
-                for segmentation in instance.segmentations
-            ]
-            flattenedSegmentations = [e for segmentation in transformedSegmentations for e in segmentation]
-
-            transformedInstances.append(CoretexSegmentationInstance.create(
-                instance.classId,
-                BBox.fromPoly(flattenedSegmentations),
-                transformedSegmentations
-            ))
-
-        transformedAnnotation = CoretexImageAnnotation.create(annotation.name, rect.width, rect.height, transformedInstances)
-        return parentImage, transformedAnnotation
-
-    return parentImage, None
+    transformedAnnotation = CoretexImageAnnotation.create(annotation.name, rect.width, rect.height, transformedInstances)
+    return parentImage, transformedAnnotation
 
 
 def extractRegion(
