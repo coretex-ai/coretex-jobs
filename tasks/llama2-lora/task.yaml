@@ -19,13 +19,13 @@ param_groups:
     value: 31106
     data_type: dataset
     required: true
-  - name: outputs
-    params:
-    - name: outputModel
-      description: The fine-tuned model trained by this task.
-      value: null
-      data_type: model
-      required: false
+- name: outputs
+  params:
+  - name: outputModel
+    description: The fine-tuned model trained by this task.
+    value: null
+    data_type: model
+    required: false
 - name: parameters
   params:
   - name: modelVersion
