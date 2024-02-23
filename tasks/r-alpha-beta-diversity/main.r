@@ -572,10 +572,27 @@ meltPseqObject <- function(taskRun, pseq, suffix, output_path) {
 }
 
 betaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path) {
+    operationSuccessful <- TRUE
+
     #Calculate distances
-    DistUF = phyloseq::distance(pseq_bac_normal, method = "unifrac")
-    DistwUF = phyloseq::distance(pseq_bac_normal, method = "wunifrac")
-    DistBr = phyloseq::distance(pseq_bac_normal, method = "bray")
+    tryCatch({
+        DistUF = phyloseq::distance(pseq_bac_normal, method = "unifrac")
+        DistwUF = phyloseq::distance(pseq_bac_normal, method = "wunifrac")
+        DistBr = phyloseq::distance(pseq_bac_normal, method = "bray")
+    }, error = function(e) {
+        if (e$message == "phy_tree slot is empty.") {
+            print(paste("Could not calculate UniFrac distance because phylogenetic tree is not present in phyloseq object. If sample count is very small, phylogenetic tree may have not been created because of low sample diversity. If this is the case, conisder increasing the dataset. Error:", e$message))
+        } else if (condition) {
+            print(paste("Could not calculate distance because the number of samples is less then the number of features. Consider using a larger dataset. Error:", e$message))
+        } else {
+            print(paste("An error occured during distance calculation. Error:", e$message))
+        }
+        operationSuccessful <<- FALSE
+    })
+
+    if (!operationSuccessful) {
+        return(NULL)
+    }
 
     #Ordinate
     ordUF = ordinate(pseq_bac_normal, method = "PCoA", distance = DistUF)
@@ -608,42 +625,54 @@ betaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path)
     plot_scree(ordBr, "Scree Plot: Bray Curtis ctrl")
     plot_scree(ordwUF, "Scree Plot: Weighted Unifrac ctrl")
 
-    taget_column_values = sample_data(pseq_bac_normal)[["target"]]
+    target_column_values = sample_data(pseq_bac_normal)[["target"]]
 
     #Plot for unweighted Unifrac
-    PoC_Uni <- plot_ordination(pseq_bac_normal, ordUF, color = "target", shape = "Extraction_protocol") + ggtitle("Unweighted UniFrac") + geom_text(aes(label = taget_column_values), nudge_y = -0.01, size = 3) + geom_point(size = 2)
-    PoC_Uni_path = file.path(output_path, "unweighted_Unifrac_plot.pdf")
-    ggsave(filename = PoC_Uni_path, plot = PoC_Uni, width = 297, height = 210, units = "mm")
-    taskRun$createArtifact(PoC_Uni_path, paste0("beta_diversity/", basename(PoC_Uni_path)))
+    tryCatch({
+        PoC_Uni <- plot_ordination(pseq_bac_normal, ordUF, color = "target", shape = "Extraction_protocol") + ggtitle("Unweighted UniFrac") + geom_text(aes(label = target_column_values), nudge_y = -0.01, size = 3) + geom_point(size = 2)
+        PoC_Uni_path = file.path(output_path, "unweighted_Unifrac_plot.pdf")
+        ggsave(filename = PoC_Uni_path, plot = PoC_Uni, width = 297, height = 210, units = "mm")
+        taskRun$createArtifact(PoC_Uni_path, paste0("beta_diversity/", basename(PoC_Uni_path)))
+    }, error = function(e) {
+        print(paste("Failed to create plot for unweighted Unifrac. Error:", e$message))
+    })
 
     #Plot for Bray Curtis
-    PoC_Br_PCA <- plot_ordination(pseq_bac_normal, ordBr, color = "target", shape = "Extraction_protocol", axes = c(1,2)) + geom_point(size = 2) + geom_text(aes(label = taget_column_values), nudge_y = -0.01, size = 3)
-    PoC_Br_PCA_path <- file.path(output_path, "Bray_curtis_plot.pdf")
-    ggsave(filename = PoC_Br_PCA_path, plot = PoC_Br_PCA, width = 297, height = 210, units ="mm")
-    taskRun$createArtifact(PoC_Br_PCA_path, paste0("beta_diversity/", basename(PoC_Br_PCA_path)))
+    tryCatch({
+        PoC_Br_PCA <- plot_ordination(pseq_bac_normal, ordBr, color = "target", shape = "Extraction_protocol", axes = c(1,2)) + geom_point(size = 2) + geom_text(aes(label = target_column_values), nudge_y = -0.01, size = 3)
+        PoC_Br_PCA_path <- file.path(output_path, "Bray_curtis_plot.pdf")
+        ggsave(filename = PoC_Br_PCA_path, plot = PoC_Br_PCA, width = 297, height = 210, units ="mm")
+        taskRun$createArtifact(PoC_Br_PCA_path, paste0("beta_diversity/", basename(PoC_Br_PCA_path)))
 
-    PoC_Br_PCA_1 <- PoC_Br_PCA + theme_bw() +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-    labs(title = "PCoA Bray Curtis", x = "PCo2 (19.3%)", y = "PCo3 (11.2%)")
+        PoC_Br_PCA_1 <- PoC_Br_PCA + theme_bw() +
+        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+        labs(title = "PCoA Bray Curtis", x = "PCo2 (19.3%)", y = "PCo3 (11.2%)")
 
-    PoC_Br_PCA_1_path <- file.path(output_path, "PoC_Br_PCA1.pdf")
-    ggsave(filename = PoC_Br_PCA_1_path, plot = PoC_Br_PCA_1, width = 297, height = 210, units = "mm")
-    taskRun$createArtifact(PoC_Br_PCA_1_path, paste0("beta_diversity/", basename(PoC_Br_PCA_1_path)))
+        PoC_Br_PCA_1_path <- file.path(output_path, "PoC_Br_PCA1.pdf")
+        ggsave(filename = PoC_Br_PCA_1_path, plot = PoC_Br_PCA_1, width = 297, height = 210, units = "mm")
+        taskRun$createArtifact(PoC_Br_PCA_1_path, paste0("beta_diversity/", basename(PoC_Br_PCA_1_path)))
+    }, error = function(e) {
+        print(paste("Failed to create plot for Bray Curtis. Error:", e$message))
+    })
 
     #Plot for weighted Unifrac
-    PoC_wUF <- plot_ordination(pseq_bac_normal, ordwUF, color = "target", shape = "sex", label = "sample_ID", axes = c(1,2)) + geom_point(size = 2)
-    PoC_wUF_1 <- PoC_wUF + theme_bw() +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-    labs(title="PCoA weighted Unifrac" ,x = "PCo3 (8.3%)", y = "PCo4 (4.7%)")
-    PoC_wUF_1_path = file.path(output_path, "Plot_PCoA_wUnifrac.pdf")
-    ggsave(
-        filename = PoC_wUF_1_path,
-        plot = PoC_wUF_1,
-        width = 297,
-        height = 210,
-        units = "mm"
-    )
-    taskRun$createArtifact(PoC_wUF_1_path, paste0("beta_diversity/", basename(PoC_wUF_1_path)))
+    tryCatch({
+        PoC_wUF <- plot_ordination(pseq_bac_normal, ordwUF, color = "target", shape = "sex", label = "sample_ID", axes = c(1,2)) + geom_point(size = 2)
+        PoC_wUF_1 <- PoC_wUF + theme_bw() +
+        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+        labs(title="PCoA weighted Unifrac" ,x = "PCo3 (8.3%)", y = "PCo4 (4.7%)")
+        PoC_wUF_1_path = file.path(output_path, "Plot_PCoA_wUnifrac.pdf")
+        ggsave(
+            filename = PoC_wUF_1_path,
+            plot = PoC_wUF_1,
+            width = 297,
+            height = 210,
+            units = "mm"
+        )
+        taskRun$createArtifact(PoC_wUF_1_path, paste0("beta_diversity/", basename(PoC_wUF_1_path)))
+    }, error = function(e) {
+        print(paste("Failed to create plot for Bray Curtis. Error:", e$message))
+    })
 
     # Significance test: test significance with permanova analyses
     #First we generate a dataframe with the metadata
@@ -667,21 +696,21 @@ betaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path)
     meltPseqObject(taskRun, pseq_bac_normal, "all", output_path)
 
     # Use all remaining samples as control
-    taget_column_values <- lapply(taskRun$parameters[["targetColumnValues"]], trimws)
+    target_column_values <- lapply(taskRun$parameters[["targetColumnValues"]], trimws)
 
     pseq_control <- pseq_bac_normal
     metadata <- data.frame(sample_data(pseq_bac_normal))
 
-    if (!all_target_column_values_listed(metadata, taget_column_values)){
+    if (!all_target_column_values_listed(metadata, target_column_values)){
         # This part is skipped in case all body sites from the metadata file have
         # been entered in the targetColumnValues parameter, because this part performes
         # analysis on all the other body sites that were not entered
 
-        sample_data(pseq_control) <- subset(metadata, !metadata$target %in% taget_column_values)
+        sample_data(pseq_control) <- subset(metadata, !metadata$target %in% target_column_values)
         meltPseqObject(taskRun, pseq_control, "control", output_path)
     }
 
-    for (target_column_value in taget_column_values) {
+    for (target_column_value in target_column_values) {
         target_column_value_pseq = subset_samples_custom(pseq_bac_normal, target_column_value)
         meltPseqObject(taskRun, target_column_value_pseq, target_column_value, output_path)
     }
