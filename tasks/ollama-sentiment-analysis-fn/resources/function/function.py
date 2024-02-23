@@ -5,12 +5,12 @@ import logging
 import subprocess
 
 from coretex import functions
-from ollama import ResponseError
 
 import ollama
 import requests
 
 
+MODEL = "llama2"
 OLLAMA_SERVER_URL = "http://127.0.0.1:11434"
 TEXT_PROMPT_PREFIX = "Grade the sentiment of the following text: "
 SYSTEM_PROMPT = [
@@ -33,6 +33,16 @@ SYSTEM_PROMPT = [
 ]
 
 
+def warmup() -> None:
+    ollama.chat(
+    model = MODEL,
+    messages = [{
+        "role": "user",
+        "content": f"This is a test and a warmup. Respond with \"OK\"."
+    }]
+)
+
+
 def isOllamaInstalled() -> bool:
     try:
         subprocess.run(["ollama", "--version"], check = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
@@ -52,9 +62,11 @@ def installOllama() -> None:
 def checkOllamaServer() -> Optional[bool]:
     try:
         response = requests.get(OLLAMA_SERVER_URL)
-        return response.status_code == 200
+        if response.status_code == 200:
+            return True
     except requests.ConnectionError:
-        return False
+        pass
+    return False
 
 
 def launchOllamaServer() -> Optional[subprocess.Popen[bytes]]:
@@ -68,20 +80,18 @@ def launchOllamaServer() -> Optional[subprocess.Popen[bytes]]:
     return subprocess.Popen(["ollama", "serve"])
 
 
-def pullModel(attempt: Optional[int] = None) -> None:
-    if attempt is None:
-        attempt = 1
+def pullModel(timeout: int = 60) -> None:
+    serverOnline = checkOllamaServer()
 
-    if attempt > 10:
+    startTime = time.time()
+    while not serverOnline and (time.time() - startTime) < timeout:
+        time.sleep(1)
+        serverOnline = checkOllamaServer()
+
+    if not serverOnline:
         raise RuntimeError(">> [OSentimentAnalysis] Failed to contact ollama server")
 
-    # Sleep for 1 second to give the server time to start
-    time.sleep(1)
-
-    try:
-        ollama.pull("llama2")
-    except ResponseError:
-        pullModel(attempt + 1)
+    ollama.pull(MODEL)
 
 
 # Available roles: user, assistant
@@ -92,7 +102,7 @@ def response(requestData: dict[str, Any]) -> dict[str, Any]:
 
     logging.info("Running inference")
     response = ollama.chat(
-        model = "llama2",
+        model = MODEL,
         messages = SYSTEM_PROMPT + [{
             "role": "user",
             "content": f"{TEXT_PROMPT_PREFIX}\"{text}\""
@@ -116,3 +126,4 @@ def response(requestData: dict[str, Any]) -> dict[str, Any]:
 
 launchOllamaServer()
 pullModel()
+warmup()
