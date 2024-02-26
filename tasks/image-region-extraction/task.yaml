@@ -1,0 +1,32 @@
+id: image-region-extraction
+name: Region Extraction
+description: This task template extracts annotated regions from image samples as images
+is_active: true
+project_type: 1
+param_groups:
+- name: inputs
+  params:
+  - name: dataset
+    description: Image dataset with annotated samples
+    value: null
+    data_type: dataset
+    required: true
+- name: outputs
+  params:
+  - name: outputDataset
+    description: Image dataset with annotations from input dataset extracted into images
+    value: null
+    data_type: dataset
+    required: false
+- name: parameters
+  params:
+  - name: parentClass
+    description: Annotated regions from other classes will be perspective transformed based on this one
+    value: null
+    data_type: str
+    required: false
+  - name: excludedClasses
+    description: Annotation classes that will not be extracted
+    value: null
+    data_type: list[str]
+    required: false
