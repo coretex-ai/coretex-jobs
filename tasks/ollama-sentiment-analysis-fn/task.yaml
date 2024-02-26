@@ -1,0 +1,5 @@
+id: ollama-llama2-sentiment-analysis-fn
+name: "Ollama: Llama2 Sentiment Analysis - Function"
+description: This template uploads a function for sentiment analysis with llama2 (through ollama)
+is_active: true
+project_type: 10
