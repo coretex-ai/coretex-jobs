@@ -1,19 +1,18 @@
 # Template is based on https://deci.ai/blog/fine-tune-llama-2-with-lora-for-question-answering/
 
-from typing import Any
-
 import logging
 
 from datasets import load_dataset
 from trl import SFTTrainer
-from transformers import pipeline
+from transformers import pipeline, AutoTokenizer
+from datasets import Dataset
 from coretex import currentTaskRun, CustomDataset
 
 from src.model import getModelName, loadModel, loadTokenizer, uploadModel
 from src.configurations import getQuantizationConfig, getPeftParameters, getTrainingParameters
 
 
-def loadDataFromCoretex(dataset: CustomDataset) -> Any:
+def loadData(dataset: CustomDataset) -> Dataset:
     dataset.download()
     for sample in dataset.samples:
         sample.unzip()
@@ -29,8 +28,8 @@ def loadDataFromCoretex(dataset: CustomDataset) -> Any:
         return trainingData
 
 
-def runInference(model, tokenizer, prompt: str) -> str:
-    textGenerator = pipeline(task = "text-generation", model = model, tokenizer = tokenizer, max_length = 200)
+def runInference(trainer: SFTTrainer, tokenizer: AutoTokenizer, prompt: str) -> str:
+    textGenerator = pipeline(task = "text-generation", model = trainer.model, tokenizer = tokenizer, max_length = 200)
     output = textGenerator(f"<s>[INST] {prompt} [/INST]")
     return output[0]['generated_text']
 
@@ -90,7 +89,7 @@ def main() -> None:
     uploadModel(taskRun, trainer, accuracy)
 
     if taskRun.parameters["testPrompt"] is not None:
-        response = runInference(model, tokenizer, taskRun.parameters["testPrompt"])
+        response = runInference(trainer, tokenizer, taskRun.parameters["testPrompt"])
         logging.info(f">> [Llama2Lora] Test response: {response}")
 
 
