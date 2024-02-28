@@ -138,8 +138,19 @@ def getPatience(taskRun: TaskRun) -> int:
     return 2 ** 64
 
 
+def verifySplitValid(validationSplit: float, datasetSize: int) -> None:
+    if not 0 <= validationSplit < 1:
+        raise ValueError(f">> [ObjectDetection] validationSplit parameter ({validationSplit}) must be between 0 and 1")
+
+    minSamplesForSplit = int(1 / min(validationSplit, 1 - validationSplit))
+    if datasetSize < minSamplesForSplit:
+        raise ValueError(f">> [ObjectDetection] Dataset is too small ({datasetSize}) for validationSplit parameter ({validationSplit}). Minimum number of samples is {minSamplesForSplit}")
+
+
 def main() -> None:
     taskRun: TaskRun[ComputerVisionDataset] = currentTaskRun()
+
+    verifySplitValid(taskRun.parameters["validationSplit"], taskRun.dataset.count)
 
     taskRun.dataset.download()
     taskRun.dataset.classes.exclude(taskRun.parameters["excludedClasses"])
