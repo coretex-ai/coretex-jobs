@@ -37,7 +37,7 @@ def runInference(trainer: SFTTrainer, tokenizer: AutoTokenizer, prompt: str) -> 
 def main() -> None:
     taskRun = currentTaskRun()
     logging.info(">> [Llama2Lora] Loading dataset from coretex")
-    trainingData = loadDataFromCoretex(taskRun.dataset)
+    trainingData = loadData(taskRun.dataset)
 
     modelName = getModelName(taskRun.parameters["modelVersion"])
 
