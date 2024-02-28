@@ -16,7 +16,7 @@ param_groups:
   params:
   - name: dataset
     description: Coretex dataset holding the training data
-    value: 31106
+    value: null
     data_type: dataset
     required: true
 - name: outputs
