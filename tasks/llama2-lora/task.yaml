@@ -1,0 +1,113 @@
+id: llama2-lora
+name: Llama2 LoRA
+description: "This task template fine-tunes a Llama2 model with Low Rank Adaptation (LoRA).
+  Low Rank Adaptation (LoRA) is a method designed for the efficient adaptation of large language models.
+  It addresses the challenge of fine-tuning such models, which traditionally involves adjusting
+  all the model parameters, becoming impractical as model sizes grow (e.g., GPT-3 with 175 billion parameters).
+  LoRA proposes a solution by freezing the pre-trained model weights and introducing trainable
+  rank decomposition matrices into each layer of the Transformer architecture. This approach significantly
+  reduces the number of parameters that need to be trained for task-specific or domain-specific adaptations,
+  making it more feasible to deploy and fine-tune large models for various applications without the
+  need for extensive computational resources."
+is_active: true
+project_type: 10
+param_groups:
+- name: inputs
+  params:
+  - name: dataset
+    description: Coretex dataset holding the training data
+    value: null
+    data_type: dataset
+    required: true
+- name: outputs
+  params:
+  - name: outputModel
+    description: The fine-tuned model trained by this task.
+    value: null
+    data_type: model
+    required: false
+- name: parameters
+  params:
+  - name: modelVersion
+    description: Choose the base Llama2 model. (7, 13 or 70 billion pararmeter chat models)
+    value:
+      selected: 0
+      options:
+      - 7b-chat
+      - 13b-chat
+      - 70b-chat
+    data_type: enum
+    required: true
+  - name: device
+    description: Choose the device on which to load and fine-tune the model
+    value:
+      selected: 0
+      options:
+      - cpu
+      - cuda
+    data_type: enum
+    required: true
+  - name: epochs
+    description: The number of epochs the model will be trained on the dataset
+    value: 1
+    data_type: int
+    required: true
+  - name: batchSize
+    description: The batch size for both training
+    value: 64
+    data_type: int
+    required: true
+  - name: learningRate
+    description: Initial learning rate modifier for the optimizer function
+    value: 0.0002
+    data_type: float
+    required: true
+  - name: weightDecay
+    description: "Weight decay or L2 regularization is used to prevent overfitting by penalizing
+      large parameter values in the model's weights during training. It adds a penalty term to
+      the loss function proportional to the magnitude of the weights, encouraging smaller weights
+      and thus reducing model complexity."
+    value: 0.001
+    data_type: float
+    required: true
+  - name: loraAlpha
+    description: "A scaling factor applied to the updates of the low-rank matrices during adaptation.
+      It controls the magnitude of the updates to the pretrained weights, acting as a balance between
+      the original pretrained parameters and the new updates introduced by LoRA. Essentially,
+      alpha adjusts how strongly the low-rank adapted parameters influence the final model behavior,
+      allowing for fine-tuning of the adaptation's impact on model performance."
+    value: 16
+    data_type: float
+    required: true
+  - name: loraDropout
+    description: "Dropout randomly disables a fraction of neurons during each training iteration,
+      which helps prevent overfitting by reducing reliance on specific neurons and encourages the
+      network to learn more robust features. Adjusting this parameter affects the level of
+      regularization applied, influencing the model's generalization ability.
+      Range: [0 - 1]"
+    value: 0.1
+    data_type: float
+    required: true
+  - name: loraRank
+    description: "Determines the dimensionality of the trainable rank decomposition matrices that
+      are injected into each layer of a Transformer architecture"
+    value: 8
+    data_type: int
+    required: true
+  - name: context
+    description: "The maximum number of tokens that will be fed into the model at once.
+      This may reduce memory consumption, but can also hurt performance"
+    value: null
+    data_type: int
+    required: false
+  - name: float16
+    description: "Whether to use float16 if cuda device is selected.
+      Otherwise float32 will be used, i.e. model will not be quantized"
+    value: true
+    data_type: bool
+    required: true
+  - name: testPrompt
+    description: A prompt that will be passed to the model after fine-tuning
+    value: "What is the capital of Paris?"
+    data_type: str
+    required: false
