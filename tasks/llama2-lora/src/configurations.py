@@ -44,6 +44,7 @@ def getTrainingParameters(device: str, epochs: int, batchSize: int, learningRate
     except Exception as e:
         raise Exception(f">> [Llama2Lora] Failed to instantiate training arguments. Error: {e}")
 
+
 def getQuantizationConfig(float16: bool) -> BitsAndBytesConfig:
     dtype = torch.float16 if float16 else torch.float32
 
