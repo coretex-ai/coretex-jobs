@@ -10,7 +10,7 @@ description: "This task template fine-tunes a Llama2 model with Low Rank Adaptat
   making it more feasible to deploy and fine-tune large models for various applications without the
   need for extensive computational resources."
 is_active: true
-project_type: 10
+project_type: 8
 param_groups:
 - name: inputs
   params:
