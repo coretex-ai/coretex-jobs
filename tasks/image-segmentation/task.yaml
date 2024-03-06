@@ -11,6 +11,13 @@ param_groups:
     value: null
     data_type: dataset
     required: true
+- name: outputs
+  params:
+  - name: model
+    description: Model trained by this Task
+    value: null
+    data_type: model
+    required: false
 - name: parameters
   params:
   - name: epochs
