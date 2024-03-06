@@ -117,8 +117,7 @@ def main() -> None:
     coretexModel = Model.createModel(
         taskRun.name,
         taskRun.id,
-        history.history["val_accuracy"][-1],  # gets the validation accuracy after last epoch
-        {}
+        history.history["val_accuracy"][-1]  # gets the validation accuracy after last epoch
     )
 
     logging.info(f">> [Image Segmentation] Model accuracy is: {coretexModel.accuracy}")
@@ -139,6 +138,7 @@ def main() -> None:
     saveModelDescriptor(model, taskRun, coretexModel, modelDirPath)
 
     coretexModel.upload(folder_manager.temp / "model")
+    taskRun.submitOutput("model", coretexModel)
 
 
 if __name__ == "__main__":
