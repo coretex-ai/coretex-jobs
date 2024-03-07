@@ -18,7 +18,7 @@ def uploadSample(path: Path, datasetId: int) -> None:
 
     generatedSample = ComputerVisionSample.createComputerVisionSample(datasetId, imagePath)
     if generatedSample is None:
-        logging.error(f">> [SyntheticDocumentGenerator] Failed to create sample from \"{imagePath}\"")
+        logging.error(f">> [ImageExtractor] Failed to create sample from \"{imagePath}\"")
         return
 
     annotationPath = path / "annotation.json"
@@ -27,9 +27,9 @@ def uploadSample(path: Path, datasetId: int) -> None:
             annotation = CoretexImageAnnotation.decode(json.load(file))
 
         if not generatedSample.saveAnnotation(annotation):
-            logging.error(f">> [SyntheticDocumentGenerator] Failed to save annotation for generated sample \"{generatedSample.name}\"")
+            logging.error(f">> [ImageExtractor] Failed to save annotation for generated sample \"{generatedSample.name}\"")
 
-    logging.info(f">> [SyntheticDocumentGenerator] Generated sample \"{generatedSample.name}\"")
+    logging.info(f">> [ImageExtractor] Generated sample \"{generatedSample.name}\"")
 
 
 def didGenerateSample(datasetId: int, future: Future[list[Path]]) -> None:
@@ -37,7 +37,7 @@ def didGenerateSample(datasetId: int, future: Future[list[Path]]) -> None:
         for samplePath in future.result():
             uploadSample(samplePath, datasetId)
     except BaseException as exception:
-        logging.error(f">> [SyntheticDocumentGenerator] Failed to generate sample. Reason: {exception}")
+        logging.error(f">> [ImageExtractor] Failed to generate sample. Reason: {exception}")
         logging.debug(exception, exc_info = exception)
 
 
