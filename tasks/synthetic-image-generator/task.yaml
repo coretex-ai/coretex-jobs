@@ -13,15 +13,15 @@ param_groups:
     data_type: dataset
     required: true
   - name: backgroundDataset
-    description: Images which will serve as the background for images from the other
-      dataset.
+    description: Dataset containing background images on which the annotations from
+      the "dataset" parameter will be stiched on
     value: null
     data_type: dataset
     required: true
 - name: outputs
   params:
   - name: outputDataset
-    description: The output image dataset with the generated images.
+    description: Dataset which is generated as a result of executing this Task
     value: null
     data_type: dataset
     required: false
@@ -32,30 +32,29 @@ param_groups:
     value: 5
     data_type: int
     required: true
-  - name: rotation
-    description: Images will be rotated between 0 and this value degrees before stitching.
-    value: 45
+  - name: seed
+    description: Seed parameter. Added for reproducibility
+    value: 42
     data_type: int
     required: true
-  - name: scaling
-    description: Images will be scaled by this amount before stitching.
-    value: 1.0
+  - name: minImageSize
+    description: Minimum image size compared to background image
+    value: 0.2
     data_type: float
     required: true
-  - name: unwarp
-    description: If you have used polygons for annotating an image at an angle, this
-      will perspective shift the image and annotation to a rectangle. Polygon needs
-      to be selected 1. top left, 2. top right, 3. bottom right, 4. bottom left.
-    value: true
-    data_type: bool
+  - name: maxImageSize
+    description: Maximum image size compared to background image
+    value: 0.8
+    data_type: float
+    required: true
+  - name: maxRotationAngle
+    description: Maximum rotation angle which will be applied to image
+      before stiching it to a background
+    value: 3
+    data_type: float
     required: true
   - name: excludedClasses
     description: These classes will be ignored.
     value: null
     data_type: list[str]
     required: false
-  - name: useCache
-    description: Whether to use cache in case it is found.
-    value: false
-    data_type: bool
-    required: true

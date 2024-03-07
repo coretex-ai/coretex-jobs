@@ -1,3 +1,5 @@
 coretex
+opencv-python
 pillow
 matplotlib
+numpy

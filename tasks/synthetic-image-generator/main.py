@@ -1,77 +1,92 @@
-from typing import Optional
+from pathlib import Path
+from contextlib import ExitStack
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, Future
 
+import random
 import logging
 
-from coretex import currentTaskRun, ImageDataset, TaskRun, createDataset
-from coretex.utils import hashCacheName
+from coretex import currentTaskRun, TaskRun, ComputerVisionDataset, ComputerVisionSample, CoretexImageAnnotation, createDataset
 
-from src.generator import augmentSample
-
-
-def getOutputDatasetName(taskRun: TaskRun):
-    relevantParams: list[str] = []
-
-    relevantParams.append(str(taskRun.parameters["dataset"].id))
-    relevantParams.append(str(taskRun.parameters["backgroundDataset"].id))
-    relevantParams.append(str(taskRun.parameters["augmentationsPerImage"]))
-    relevantParams.append(str(taskRun.parameters["rotation"]))
-    relevantParams.append(str(taskRun.parameters["scaling"]))
-
-    return hashCacheName(f"{taskRun.id}-SynthImg", ".".join(relevantParams))
+from src import sample_generator
 
 
-def getCache(cacheName: str, sampleCount: int) -> Optional[ImageDataset]:
-    caches = ImageDataset.fetchAll(name = cacheName, include_sessions = 1)
-    for cache in caches:
-        if cache.count == sampleCount:
-            logging.info(">> [Image Augmentation] Cache found!")
-            return cache
+def getRandomSamples(dataset: ComputerVisionDataset, count: int) -> list[ComputerVisionSample]:
+    indexes: set[int] = set()
 
-    return None
+    while len(indexes) != count:
+        indexes.add(random.randint(0, dataset.count - 1))
+
+    return [dataset.samples[i] for i in indexes]
+
+
+def didGenerateSample(datasetId: int, future: Future[tuple[Path, CoretexImageAnnotation]]) -> None:
+    try:
+        imagePath, annotation = future.result()
+
+        generatedSample = ComputerVisionSample.createComputerVisionSample(datasetId, imagePath)
+        if generatedSample is None:
+            logging.error(f">> [SyntheticImageGenerator] Failed to create sample from \"{imagePath}\"")
+            return
+
+        if not generatedSample.saveAnnotation(annotation):
+            logging.error(f">> [SyntheticImageGenerator] Failed to save annotation for generated sample \"{generatedSample.name}\"")
+        else:
+            logging.info(f">> [SyntheticImageGenerator] Generated sample \"{generatedSample.name}\"")
+    except BaseException as exception:
+        logging.error(f">> [SyntheticImageGenerator] Failed to generate sample. Reason: {exception}")
+        logging.debug(exception, exc_info = exception)
 
 
 def main() -> None:
-    taskRun = currentTaskRun()
-    augmentationsPerImage = taskRun.parameters["augmentationsPerImage"]
+    taskRun: TaskRun[ComputerVisionDataset] = currentTaskRun()
+    taskRun.dataset.download()
 
-    outputDatasetName = getOutputDatasetName(taskRun)
-
-    if taskRun.parameters["useCache"]:
-        cache = getCache(
-            outputDatasetName.split("-")[1],
-            taskRun.dataset.count * augmentationsPerImage
-        )
-
-        if cache is not None:
-            taskRun.submitOutput("outputDataset", cache)
-            return
-
-    imagesDataset = taskRun.dataset
-    imagesDataset: ImageDataset
-    imagesDataset.download()
-
-    backgroundDataset = taskRun.parameters["backgroundDataset"]
-    backgroundDataset: ImageDataset
+    backgroundDataset: ComputerVisionDataset = taskRun.parameters["backgroundDataset"]
     backgroundDataset.download()
 
-    with createDataset(ImageDataset, outputDatasetName, taskRun.projectId) as outputDataset:
-        outputDataset.saveClasses(imagesDataset.classes)
+    augmentationsPerImage = taskRun.parameters["augmentationsPerImage"]
+    maxRotationAngle = taskRun.parameters["maxRotationAngle"]
 
-        for imageSample in imagesDataset.samples:
-            imageSample.unzip()
+    if augmentationsPerImage > backgroundDataset.count:
+        logging.warning(
+            ">> [SyntheticImageGenerator] \"augmentationsPerImage\" value: "
+            f"{augmentationsPerImage} is higher than \"backgroundDataset\" "
+            f"count: {backgroundDataset.count}. Limiting value to: {backgroundDataset.count}"
+        )
+        augmentationsPerImage = backgroundDataset.count
 
-            logging.info(f">> [Image Stitching] Generating augmented images for {imageSample.name}")
-            augmentSample(
-                imageSample,
-                backgroundDataset,
-                augmentationsPerImage,
-                taskRun.parameters["rotation"],
-                taskRun.parameters["scaling"],
-                imagesDataset.classes,
-                taskRun.parameters["unwarp"],
-                taskRun.parameters["excludedClasses"],
-                outputDataset
-            )
+    # Seed used for multiple operations - needed for reproducibility
+    random.seed(taskRun.parameters["seed"])
+
+    with ExitStack() as stack:
+        outputDatasetName = f"{taskRun.id} - {taskRun.dataset.name}"
+        outputDataset = stack.enter_context(createDataset(ComputerVisionDataset, outputDatasetName, taskRun.projectId))
+        outputDataset.saveClasses(taskRun.dataset.classes)
+
+        executor = ProcessPoolExecutor(max_workers = 1)
+        stack.enter_context(executor)
+
+        uploader = ThreadPoolExecutor(max_workers = 4)
+        stack.enter_context(uploader)
+
+        for sample in taskRun.dataset.samples:
+            for backgroundSample in getRandomSamples(backgroundDataset, augmentationsPerImage):
+                backgroundSample.unzip()
+
+                if maxRotationAngle > 0:
+                    rotationAngle = random.randint(0, maxRotationAngle)
+                else:
+                    rotationAngle = 0
+
+                future = executor.submit(sample_generator.generateSample,
+                    sample,
+                    backgroundSample.imagePath,
+                    taskRun.parameters["minImageSize"],
+                    taskRun.parameters["maxImageSize"],
+                    rotationAngle
+                )
+
+                uploader.submit(didGenerateSample, outputDataset.id, future)
 
     taskRun.submitOutput("outputDataset", outputDataset)
 
