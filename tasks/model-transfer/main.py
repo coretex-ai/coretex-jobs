@@ -26,28 +26,30 @@ def currentUser(username: str, password: str) -> Iterator[None]:
 def main() -> None:
     taskRun = currentTaskRun()
 
-    credentials = CredentialsSecret.fetchByName(taskRun.parameters["sourceCredentials"])
+    logging.info(">> [Coretex] Downloading Model")
+    model: Model = taskRun.parameters["model"]
+    model.download()
 
-    logging.info(">> [Coretex] Downloading source Model")
+    # Create model in the destination Project with the destination account
+    credentials = CredentialsSecret.fetchByName(taskRun.parameters["destinationAccount"])
+    credentials = credentials.decrypted()
 
-    # Download source model using provided credentials
     with currentUser(credentials.username, credentials.password):
-        sourceModel = Model.fetchById(taskRun.parameters["sourceModelId"])
-        sourceModel.download()
+        if taskRun.parameters.get("modelName") is not None:
+            modelName = taskRun.parameters["modelName"]
+        else:
+            modelName = model.name
 
-    if taskRun.parameters.get("modelName") is not None:
-        modelName = taskRun.parameters["modelName"]
-    else:
-        modelName = sourceModel.name
+        logging.info(">> [Coretex] Creating Model...")
+        destinationModel = Model.createProjectModel(
+            modelName,
+            taskRun.parameters["destinationProject"],
+            model.accuracy,
+            model.meta
+        )
+        destinationModel.upload(model.path)
 
-    logging.info(">> [Coretex] Transfering Model")
-    destinationModel = Model.createModel(
-        modelName,
-        taskRun.id,
-        sourceModel.accuracy,
-        sourceModel.meta
-    )
-    destinationModel.upload(sourceModel.path)
+    logging.info(">> [Coretex] Model created successfully!")
 
 
 if __name__ == "__main__":
