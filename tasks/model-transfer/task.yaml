@@ -4,17 +4,25 @@ description: Task template for transfering Model from one project to another one
 is_active: true
 project_type: 8
 param_groups:
+- name: inputs
+  params:
+  - name: model
+    description: Model which will be transfered
+    value: null
+    data_type: model
+    required: true
 - name: parameters
   params:
-  - name: sourceModelId
-    description: Model id of Model which will be transfered
-    value: null
-    data_type: int
-    required: true
-  - name: sourceCredentials
-    description: Coretex secret which contains credentials used for accessing the Model
+  - name: destinationAccount
+    description: Coretex secret which contains credentials which will
+      be used for uploading the Model
     value: null
     data_type: str
+    required: true
+  - name: destinationProject
+    description: ID of the Project in which the Model will be created
+    value: null
+    data_type: int
     required: true
   - name: modelName
     description: Name of the Model in destination project, if not provided source Model name will be used
