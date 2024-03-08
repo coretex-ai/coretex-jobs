@@ -1,12 +1,8 @@
-from typing import Optional
-from pathlib import Path
-
 import time
 import logging
 import subprocess
 
 from coretex import currentTaskRun, folder_manager, CustomDataset
-from ollama import ResponseError
 
 import requests
 import ollama
@@ -17,7 +13,7 @@ OLLAMA_SERVER_URL = "http://127.0.0.1:11434"
 
 def isOllamaInstalled() -> bool:
     try:
-        subprocess.run(["ollama", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run(["ollama", "--version"], check = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         return True
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False
@@ -25,7 +21,7 @@ def isOllamaInstalled() -> bool:
 
 def installOllama() -> None:
     try:
-        subprocess.run("curl https://ollama.ai/install.sh | sh", shell=True, check=True)
+        subprocess.run("curl https://ollama.ai/install.sh | sh", shell = True, check = True)
         logging.info(">> [LLMTextProcessing] Ollama installation was successful")
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f">> [LLMTextProcessing] An error occurred during Ollama installation: {e}")
@@ -113,12 +109,11 @@ def main() -> None:
         logging.info(f">> [LLMTextProcessing] Response: {responseContent}")
 
         responseTextPath = folder_manager.temp / "response.txt"
-        with open(responseTextPath, 'w', encoding='utf-8') as file:
+        with responseTextPath.open('w', encoding = 'utf-8') as file:
             file.write(responseContent)
 
         if taskRun.createArtifact(responseTextPath, responseTextPath.name) is None:
             raise ValueError(">> [LLMTextProcessing] Failed to upload response as artifact")
-
     except Exception as e:
         logging.error(f">> [LLMTextProcessing] Error: {e}")
     finally:
