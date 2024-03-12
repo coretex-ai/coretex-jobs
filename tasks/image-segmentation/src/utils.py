@@ -8,7 +8,15 @@ import tensorflow as tf
 import numpy as np
 import cv2
 
-from coretex import currentTaskRun, folder_manager, ImageDatasetClasses
+from coretex import currentTaskRun, folder_manager, ImageDatasetClasses, CoretexImageAnnotation
+
+
+def hasDotAnnotation(annotation: CoretexImageAnnotation) -> bool:
+    for instance in annotation.instances:
+        if any([len(segmentation) < 6 for segmentation in instance.segmentations]):
+            return True
+
+    return False
 
 
 def createMask(predictionMask: np.ndarray) -> tf.Tensor:

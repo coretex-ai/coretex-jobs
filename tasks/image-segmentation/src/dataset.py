@@ -1,11 +1,15 @@
 from typing import Generator
 
+import logging
+
 from keras.layers import RandomFlip
 
 import numpy as np
 import tensorflow as tf
 
 from coretex import TaskRun, TaskRunStatus, ImageSegmentationDataset, folder_manager
+
+from .utils import hasDotAnnotation
 
 
 class Augment(tf.keras.layers.Layer):
@@ -40,6 +44,10 @@ def loadDataset(coretexDataset: ImageSegmentationDataset, coretexTaskRun: TaskRu
             data = sample.load()
             if data.annotation is None:
                 raise ValueError
+
+            if hasDotAnnotation(data.annotation):
+                logging.warning(f">> [Image Segmentation] Sample \"{sample.name}\" (ID: {sample.id}) has invalid annotation (too few coordinates). Skipping Sample")
+                continue
 
             segmentationMask = data.annotation.extractSegmentationMask(coretexDataset.classes)
             segmentationMask = np.expand_dims(segmentationMask, axis=-1)
