@@ -7,6 +7,8 @@ from coretex.utils import resizeWithPadding
 import numpy as np
 import matplotlib.pyplot as plt
 
+from .utils import hasDotAnnotation
+
 
 def run(taskRun: TaskRun, model: KerasModel, dataset: ImageSegmentationDataset) -> None:
     imageSize: int = taskRun.parameters["imageSize"]
@@ -15,6 +17,10 @@ def run(taskRun: TaskRun, model: KerasModel, dataset: ImageSegmentationDataset) 
         logging.info(f">> [Image Segmentation] Running prediction on sample \"{sample.name}\"")
 
         sampleData = sample.load()
+
+        if hasDotAnnotation(sampleData.annotation):
+            logging.warning(f">> [Image Segmentation] Sample \"{sample.name}\" (ID: {sample.id}) has invalid annotation (too few coordinates). Skipping Sample")
+            continue
 
         resized, _, _ = resizeWithPadding(sampleData.image, imageSize, imageSize)
         normalized = resized / 255
