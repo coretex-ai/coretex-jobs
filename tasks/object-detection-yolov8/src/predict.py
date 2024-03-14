@@ -16,6 +16,8 @@ def classByLabelId(labelId: int, classes: ImageDatasetClasses) -> Optional[Image
 def run(model: YOLO, dataset: ComputerVisionDataset, resultPath: Path) -> None:
     for sample in dataset.samples:
         result: Results = model.predict(sample.imagePath, save = True, project = "./results")[0]
+
+        fig = plt.figure(num = 1, clear = True)
         plt.imshow(result.orig_img)
 
         if result.boxes is not None:
@@ -26,7 +28,7 @@ def run(model: YOLO, dataset: ComputerVisionDataset, resultPath: Path) -> None:
                 if clazz is None:
                     continue
 
-                plt.gca().add_patch(pth.Rectangle(
+                fig.gca().add_patch(pth.Rectangle(
                     (float(box.minX), float(box.minY)),
                     float(box.width),
                     float(box.height),
@@ -36,4 +38,3 @@ def run(model: YOLO, dataset: ComputerVisionDataset, resultPath: Path) -> None:
                 ))
 
         plt.savefig(resultPath / f"{sample.id}.png")
-        plt.close()
