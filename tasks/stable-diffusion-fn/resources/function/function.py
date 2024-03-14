@@ -26,36 +26,29 @@ def response(requestData: Dict[str, Any]) -> Dict[str, Any]:
     logging.debug(">> [StableDiffusion] Validating inputs")
 
     if not isinstance(prompt, str):
-        functions.badRequest("\"prompt\" has to be string")
+        return functions.badRequest("\"prompt\" has to be string")
 
     if negativePrompt is not None and not isinstance(negativePrompt, str):
-        functions.badRequest("\"negativePrompt\" has to be string or null")
+        return functions.badRequest("\"negativePrompt\" has to be string or null")
 
-    if isinstance(height, str) and height.isdecimal():
-        height = int(height)
-    elif height is None:
+    if not isinstance(height, int) and isinstance(width, int):
+        height = width
+    elif not isinstance(height, int):
         height = 768
-    else:
-        return functions.badRequest("\"height\" has to be an integer")
 
-    if isinstance(width, str) and width.isdecimal():
-        width = int(width)
-    elif width is None:
+    if not isinstance(width, int) and isinstance(height, int):
+        width = height
+    elif not isinstance(width, int):
         width = 768
-    else:
-        return functions.badRequest("\"width\" has to be an integer")
 
-    if isinstance(steps, str) and steps.isdecimal():
-        steps = int(steps)
-        if steps > 300:
-            return functions.badRequest("Step limit of 300 exceeded")
-    elif steps is None:
+    if not isinstance(steps, int):
         steps = 50
-    else:
-        return functions.badRequest("\"steps\" has to be an integer")
+
+    if steps > 300:
+        return functions.badRequest("Step limit of 300 exceeded")
 
     logging.debug(">> [StableDiffusion] Generating image")
-    image = pipe(prompt, negative_prompt = negativePrompt, num_inference_steps = steps, width = 512, height = 512).images[0]
+    image = pipe(prompt, negative_prompt = negativePrompt, num_inference_steps = steps, width = width, height = height).images[0]
 
     byteArray = io.BytesIO()
     image.save(byteArray, "PNG")
