@@ -19,9 +19,9 @@ pipe = pipe.to("cpu")
 def response(requestData: Dict[str, Any]) -> Dict[str, Any]:
     prompt = requestData.get("prompt")
     negativePrompt = requestData.get("negativePrompt")
-    height = requestData.get("height")
-    width = requestData.get("width")
-    steps = requestData.get("steps")
+    height = requestData.get("height", 768)
+    width = requestData.get("width", 768)
+    steps = requestData.get("steps", 50)
 
     logging.debug(">> [StableDiffusion] Validating inputs")
 
@@ -34,15 +34,15 @@ def response(requestData: Dict[str, Any]) -> Dict[str, Any]:
     if not isinstance(height, int) and isinstance(width, int):
         height = width
     elif not isinstance(height, int):
-        height = 768
+        return functions.badRequest("Height must be an integer")
 
     if not isinstance(width, int) and isinstance(height, int):
         width = height
     elif not isinstance(width, int):
-        width = 768
+        return functions.badRequest("Width must be an integer")
 
     if not isinstance(steps, int):
-        steps = 50
+        return functions.badRequest("Steps must be an integer")
 
     if steps > 300:
         return functions.badRequest("Step limit of 300 exceeded")
