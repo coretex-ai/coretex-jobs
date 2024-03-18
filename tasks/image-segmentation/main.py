@@ -101,16 +101,19 @@ def main() -> None:
 
     epochs: int = taskRun.parameters["epochs"]
 
-    history: History = model.fit(
-        trainBatches,
-        epochs = epochs,
-        steps_per_epoch = math.ceil(trainCount / taskRun.parameters["batchSize"]),
-        validation_steps = math.ceil(testCount / taskRun.parameters["batchSize"]),
-        validation_data = testBatches,
-        callbacks = [DisplayCallback(epochs)],
-        verbose = 0,
-        use_multiprocessing = True
-    )
+    try:
+        history: History = model.fit(
+            trainBatches,
+            epochs = epochs,
+            steps_per_epoch = math.ceil(trainCount / taskRun.parameters["batchSize"]),
+            validation_steps = math.ceil(testCount / taskRun.parameters["batchSize"]),
+            validation_data = testBatches,
+            callbacks = [DisplayCallback(epochs)],
+            verbose = 0,
+            use_multiprocessing = True
+        )
+    except tf.errors.ResourceExhaustedError:
+        raise MemoryError(">> [Image Segmentation] Ran out of memory")
 
     detect.run(taskRun, model, taskRun.dataset)
 
