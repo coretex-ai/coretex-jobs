@@ -13,28 +13,42 @@ def classByLabelId(labelId: int, classes: ImageDatasetClasses) -> Optional[Image
     return classes.classByLabel(classes.labels[labelId])
 
 
-def run(model: YOLO, dataset: ComputerVisionDataset, resultPath: Path) -> None:
-    for sample in dataset.samples:
-        result: Results = model.predict(sample.imagePath, save = True, project = "./results")[0]
+def processResult(result: Results, classes: list[ImageDatasetClasses], savePath: Path):
+    fig = plt.figure(num = 1, clear = True)
+    plt.imshow(result.orig_img)
 
-        fig = plt.figure(num = 1, clear = True)
-        plt.imshow(result.orig_img)
+    if result.boxes is not None:
+        for minX, minY, maxX, maxY, confidence, labelId in result.boxes.data:
+            box = BBox.create(minX, minY, maxX, maxY)
 
-        if result.boxes is not None:
-            for minX, minY, maxX, maxY, confidence, labelId in result.boxes.data:
-                box = BBox.create(minX, minY, maxX, maxY)
+            clazz = classByLabelId(int(labelId), classes)
+            if clazz is None:
+                continue
 
-                clazz = classByLabelId(int(labelId), dataset.classes)
-                if clazz is None:
-                    continue
+            fig.gca().add_patch(pth.Rectangle(
+                (float(box.minX), float(box.minY)),
+                float(box.width),
+                float(box.height),
+                linewidth = 3,
+                edgecolor = clazz.color,
+                facecolor = "none"
+            ))
 
-                fig.gca().add_patch(pth.Rectangle(
-                    (float(box.minX), float(box.minY)),
-                    float(box.width),
-                    float(box.height),
-                    linewidth = 3,
-                    edgecolor = clazz.color,
-                    facecolor = "none"
-                ))
+    plt.savefig(savePath)
 
-        plt.savefig(resultPath / f"{sample.id}.png")
+
+def run(model: YOLO, dataset: ComputerVisionDataset, resultPath: Path, batchSize: int = 1) -> None:
+    sampleBatch: list[Path] = []
+    for i, sample in enumerate(dataset.samples):
+        if any([len(segmentation) < 6 for instance in sample.load().annotation.instances
+                for segmentation in instance.segmentations]):
+            # Skip invalid annotations (composed of only one or two points)
+            continue
+
+        sampleBatch.append(sample.imagePath)
+        if (i + 1) % batchSize != 0:
+            continue
+
+        results: Results = model.predict(sampleBatch, save = True, project = "./results")
+        [processResult(result, dataset.classes, resultPath / f"{sample.id}.png") for result in results]
+        sampleBatch.clear()
