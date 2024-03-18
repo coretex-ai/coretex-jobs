@@ -202,7 +202,7 @@ def main() -> None:
 
     logging.info(">> [ObjectDetection] Running prediction on training dataset")
     predictPath = folder_manager.createTempFolder("predict")
-    predict.run(model, taskRun.dataset, predictPath)
+    predict.run(model, taskRun.dataset, predictPath, taskRun.parameters["batchSize"])
 
     for path in predictPath.iterdir():
         if not path.is_file():

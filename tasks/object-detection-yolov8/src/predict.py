@@ -37,7 +37,7 @@ def processResult(result: Results, classes: list[ImageDatasetClasses], savePath:
     plt.savefig(savePath)
 
 
-def run(model: YOLO, dataset: ComputerVisionDataset, resultPath: Path, batchSize: int = 1) -> None:
+def run(model: YOLO, dataset: ComputerVisionDataset, resultPath: Path, batchSize: int) -> None:
     sampleBatch: list[Path] = []
     for i, sample in enumerate(dataset.samples):
         if any([len(segmentation) < 6 for instance in sample.load().annotation.instances
