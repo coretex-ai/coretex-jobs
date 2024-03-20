@@ -1,7 +1,7 @@
 from typing import Optional
 from pathlib import Path
 
-from coretex import ComputerVisionDataset, ImageDatasetClasses, ImageDatasetClass, BBox
+from coretex import ComputerVisionDataset, ImageDatasetClasses, ImageDatasetClass, BBox, ComputerVisionSample
 from ultralytics import YOLO
 from ultralytics.engine.results import Results
 
@@ -37,18 +37,22 @@ def processResult(result: Results, classes: list[ImageDatasetClasses], savePath:
     plt.savefig(savePath)
 
 
+def isSampleValid(sample: ComputerVisionSample) -> bool:
+    for instance in sample.load().annotation.instances:
+        if any([len(segmentation) < 6 for segmentation in instance.segmentations]):
+            return False
+
+    return True
+
+
 def run(model: YOLO, dataset: ComputerVisionDataset, resultPath: Path, batchSize: int) -> None:
-    sampleBatch: list[Path] = []
-    for i, sample in enumerate(dataset.samples):
-        if any([len(segmentation) < 6 for instance in sample.load().annotation.instances
-                for segmentation in instance.segmentations]):
-            # Skip invalid annotations (composed of only one or two points)
-            continue
+    for i in range(0, len(dataset.samples), batchSize):
+        print(i)
+        print(dataset.count - i)
+        print(i + batchSize)
+        if (dataset.count - i) < batchSize:
+            batchSize = (dataset.count - i)
 
-        sampleBatch.append(sample.imagePath)
-        if (i + 1) % batchSize != 0:
-            continue
-
-        results: Results = model.predict(sampleBatch, save = True, project = "./results")
-        [processResult(result, dataset.classes, resultPath / f"{sample.id}.png") for result in results]
-        sampleBatch.clear()
+        batch = [dataset.samples[index].imagePath for index in range(i, i + batchSize) if isSampleValid(dataset.samples[index])]
+        results: Results = model.predict(batch, save = True, project = "./results")
+        [processResult(result, dataset.classes, resultPath / f"{dataset.samples[i + j].name}.png") for j, result in enumerate(results)]
