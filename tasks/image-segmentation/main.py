@@ -113,7 +113,7 @@ def main() -> None:
             use_multiprocessing = True
         )
     except tf.errors.ResourceExhaustedError:
-        raise MemoryError(">> [Image Segmentation] Ran out of memory")
+        raise MemoryError(">> [Image Segmentation] Ran out of memory. Potential solutions: reduce batch size and image size parameters; simplify model architecture")
 
     detect.run(taskRun, model, taskRun.dataset)
 
