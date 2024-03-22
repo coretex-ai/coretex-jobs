@@ -31,8 +31,6 @@ installPhyloseqExtended <- function(attempt = NULL) {
         {
             if (is.null(attempt)) attempt <- 1
             if (attempt > 3) stop("Failed to install phyloseq.extended package")
-
-            # I have no idea how to install this using conda
             if (!requireNamespace("phyloseq.extended", quietly = TRUE)) {
                 print("Installing \"phyloseq.extended\" package")
                 remotes::install_github(
@@ -48,6 +46,11 @@ installPhyloseqExtended <- function(attempt = NULL) {
         }
     )
 }
+
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager", repos = "http://cran.us.r-project.org")
+
+BiocManager::install("ggtree")
 
 installPhyloseqExtended()
 
