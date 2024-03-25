@@ -47,9 +47,6 @@ def isSampleValid(sample: ComputerVisionSample) -> bool:
 
 def run(model: YOLO, dataset: ComputerVisionDataset, resultPath: Path, batchSize: int) -> None:
     for i in range(0, len(dataset.samples), batchSize):
-        print(i)
-        print(dataset.count - i)
-        print(i + batchSize)
         if (dataset.count - i) < batchSize:
             batchSize = (dataset.count - i)
 
