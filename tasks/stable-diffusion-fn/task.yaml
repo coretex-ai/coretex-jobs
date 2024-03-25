@@ -1,0 +1,5 @@
+id: stable-diffusion-fn
+name: "Stable Diffusion - Endpoint"
+description: This template uploads an endpoint for Stable Diffusion
+is_active: true
+project_type: 1

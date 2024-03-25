@@ -1,0 +1,7 @@
+coretex
+diffusers
+torch
+transformers
+accelerate
+scipy
+safetensors

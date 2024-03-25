@@ -1,0 +1,17 @@
+import logging
+
+from coretex import currentTaskRun, Model
+
+
+def main():
+    taskRun = currentTaskRun()
+
+    logging.info(">> [StableDiffusion] Creating Coretex model")
+    model = Model.createModel(taskRun.name, taskRun.id, 1.0, {})
+
+    logging.info(">> [StableDiffusion] Uploading files")
+    model.upload("resources")
+
+
+if __name__ == "__main__":
+    main()
