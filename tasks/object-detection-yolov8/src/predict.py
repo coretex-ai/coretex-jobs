@@ -1,7 +1,7 @@
 from typing import Optional
 from pathlib import Path
 
-from coretex import ComputerVisionDataset, ImageDatasetClasses, ImageDatasetClass, BBox
+from coretex import ComputerVisionDataset, ImageDatasetClasses, ImageDatasetClass, BBox, ComputerVisionSample
 from ultralytics import YOLO
 from ultralytics.engine.results import Results
 
@@ -13,27 +13,49 @@ def classByLabelId(labelId: int, classes: ImageDatasetClasses) -> Optional[Image
     return classes.classByLabel(classes.labels[labelId])
 
 
-def run(model: YOLO, dataset: ComputerVisionDataset, resultPath: Path) -> None:
-    for sample in dataset.samples:
-        result: Results = model.predict(sample.imagePath, save = True, project = "./results")[0]
-        plt.imshow(result.orig_img)
+def processResult(result: Results, classes: list[ImageDatasetClasses], savePath: Path):
+    fig = plt.figure(num = 1, clear = True)
+    plt.imshow(result.orig_img)
 
-        if result.boxes is not None:
-            for minX, minY, maxX, maxY, confidence, labelId in result.boxes.data:
-                box = BBox.create(minX, minY, maxX, maxY)
+    if result.boxes is not None:
+        for minX, minY, maxX, maxY, confidence, labelId in result.boxes.data:
+            box = BBox.create(minX, minY, maxX, maxY)
 
-                clazz = classByLabelId(int(labelId), dataset.classes)
-                if clazz is None:
-                    continue
+            clazz = classByLabelId(int(labelId), classes)
+            if clazz is None:
+                continue
 
-                plt.gca().add_patch(pth.Rectangle(
-                    (float(box.minX), float(box.minY)),
-                    float(box.width),
-                    float(box.height),
-                    linewidth = 3,
-                    edgecolor = clazz.color,
-                    facecolor = "none"
-                ))
+            fig.gca().add_patch(pth.Rectangle(
+                (float(box.minX), float(box.minY)),
+                float(box.width),
+                float(box.height),
+                linewidth = 3,
+                edgecolor = clazz.color,
+                facecolor = "none"
+            ))
 
-        plt.savefig(resultPath / f"{sample.id}.png")
-        plt.close()
+    plt.savefig(savePath)
+
+
+def isSampleValid(sample: ComputerVisionSample) -> bool:
+    for instance in sample.load().annotation.instances:
+        if any([len(segmentation) < 6 for segmentation in instance.segmentations]):
+            return False
+
+    return True
+
+
+def predictBatch(model: YOLO, dataset: ComputerVisionDataset, startIdx: int, endIdx: int, resultPath: Path):
+    batch = [sample for sample in dataset.samples[startIdx:endIdx] if isSampleValid(sample)]
+
+    results: Results = model.predict([sample.imagePath for sample in batch], save = True, project = "./results")
+    for sample, result in zip(batch, results):
+        processResult(result, dataset.classes, resultPath / f"{sample.name}.png")
+
+
+def run(model: YOLO, dataset: ComputerVisionDataset, resultPath: Path, batchSize: int) -> None:
+    for i in range(0, dataset.count - (dataset.count % batchSize), batchSize):
+        predictBatch(model, dataset, i, i + batchSize, resultPath)
+
+    # Remainder
+    predictBatch(model, dataset, dataset.count - (dataset.count % batchSize), dataset.count, resultPath)
