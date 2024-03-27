@@ -45,11 +45,17 @@ def isSampleValid(sample: ComputerVisionSample) -> bool:
     return True
 
 
-def run(model: YOLO, dataset: ComputerVisionDataset, resultPath: Path, batchSize: int) -> None:
-    for i in range(0, len(dataset.samples), batchSize):
-        if (dataset.count - i) < batchSize:
-            batchSize = (dataset.count - i)
+def predictBatch(model: YOLO, dataset: ComputerVisionDataset, startIdx: int, endIdx: int, resultPath: Path):
+    batch = [sample for sample in dataset.samples[startIdx:endIdx] if isSampleValid(sample)]
 
-        batch = [dataset.samples[index].imagePath for index in range(i, i + batchSize) if isSampleValid(dataset.samples[index])]
-        results: Results = model.predict(batch, save = True, project = "./results")
-        [processResult(result, dataset.classes, resultPath / f"{dataset.samples[i + j].name}.png") for j, result in enumerate(results)]
+    results: Results = model.predict([sample.imagePath for sample in batch], save = True, project = "./results")
+    for sample, result in zip(dataset.samples[startIdx:endIdx], results):
+        processResult(result, dataset.classes, resultPath / f"{sample.name}.png")
+
+
+def run(model: YOLO, dataset: ComputerVisionDataset, resultPath: Path, batchSize: int) -> None:
+    for i in range(0, dataset.count - (dataset.count % batchSize), batchSize):
+        predictBatch(model, dataset, i, i + batchSize, resultPath)
+
+    # Remainder
+    predictBatch(model, dataset, dataset.count - (dataset.count % batchSize), dataset.count, resultPath)
