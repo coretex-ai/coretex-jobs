@@ -47,11 +47,6 @@ installPhyloseqExtended <- function(attempt = NULL) {
     )
 }
 
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager", repos = "http://cran.us.r-project.org")
-
-BiocManager::install("ggtree")
-
 installPhyloseqExtended()
 
 library("devtools")

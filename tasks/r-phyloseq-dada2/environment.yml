@@ -3,7 +3,7 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - python
+  - python==3.8.15
   - pip
   - r-base
   - r-reticulate
@@ -13,6 +13,7 @@ dependencies:
   - r-readr
   - r-remotes
   - bioconductor-dada2
+  - bioconductor-ggtree
   - bioconductor-phyloseq
   - bioconductor-decipher
   - mafft
