@@ -49,7 +49,7 @@ def predictBatch(model: YOLO, dataset: ComputerVisionDataset, startIdx: int, end
     batch = [sample for sample in dataset.samples[startIdx:endIdx] if isSampleValid(sample)]
 
     results: Results = model.predict([sample.imagePath for sample in batch], save = True, project = "./results")
-    for sample, result in zip(dataset.samples[startIdx:endIdx], results):
+    for sample, result in zip(batch, results):
         processResult(result, dataset.classes, resultPath / f"{sample.name}.png")
 
 
