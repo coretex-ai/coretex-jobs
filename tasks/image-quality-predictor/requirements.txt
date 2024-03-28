@@ -1,0 +1,5 @@
+coretex
+torch
+torchvision
+numpy
+Pillow
