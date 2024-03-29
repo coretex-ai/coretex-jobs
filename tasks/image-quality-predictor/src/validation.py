@@ -13,7 +13,10 @@ from .model import CNNModel
 
 
 def calculateAccuracy(prediction: float, groundtruth: float) -> float:
-    accuracy = prediction / groundtruth
+    if groundtruth == 0:
+        accuracy = 1 - prediction
+    else:
+        accuracy = prediction / groundtruth
 
     if accuracy > 1:
         accuracy = max(1 - (accuracy - 1), 0)
@@ -36,6 +39,9 @@ def run(modelPath: Path, dataset: list[tuple[ComputerVisionSample, float]], tran
         for sample, quality in dataset:
             logging.info(f">> [ImageQuality] Validating sample \"{sample.name}\"...")
             image = Image.open(sample.imagePath).convert("RGB")
+
+            if quality == 0:
+                logging.warning("\tSample has quality == 0")
 
             output = model(transform(image).unsqueeze(0)).squeeze(0).item()
             accuracy = calculateAccuracy(output, quality)

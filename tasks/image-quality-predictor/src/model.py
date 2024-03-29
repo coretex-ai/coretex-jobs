@@ -11,7 +11,6 @@ class CNNModel(nn.Module):
         super().__init__()
 
         self.features = models.resnet18(pretrained = True)
-        self.features.fc
         self.features.fc = nn.Linear(512, 1)
 
         # Adding sigmoid activation

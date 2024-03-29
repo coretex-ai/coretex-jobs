@@ -3,7 +3,7 @@ from pathlib import Path
 
 import logging
 
-from coretex import TaskRun, Metric, MetricType
+from coretex import TaskRun, Metric, MetricType, Model
 from torch.utils.data import DataLoader
 
 import torch
@@ -14,12 +14,15 @@ from .model import CNNModel
 from .utils import EarlyStopping
 
 
-def trainEpoch(trainLoader: DataLoader, model: CNNModel, optimizer: optim.Adam, criterion: nn.MSELoss) -> torch.Tensor:
+def trainEpoch(trainLoader: DataLoader, model: CNNModel, optimizer: optim.Adam, criterion: nn.MSELoss, device: torch.device) -> torch.Tensor:
     model.train()
 
-    runningLoss = torch.tensor(0, dtype = torch.float)
+    runningLoss = torch.tensor(0, dtype = torch.float, device = device)
 
     for batch, (images, labels) in enumerate(trainLoader):
+        images = images.to(device)
+        labels = labels.to(device)
+
         optimizer.zero_grad()
         outputs = model(images)
         batchLoss = criterion(outputs, labels.float())
@@ -31,13 +34,16 @@ def trainEpoch(trainLoader: DataLoader, model: CNNModel, optimizer: optim.Adam, 
     return runningLoss / len(trainLoader)
 
 
-def computeValLoss(validLoader: DataLoader, model: CNNModel, criterion: nn.MSELoss) -> torch.Tensor:
+def computeValLoss(validLoader: DataLoader, model: CNNModel, criterion: nn.MSELoss, device: torch.device) -> torch.Tensor:
     model.eval()
 
     with torch.no_grad():
-        totalValidLoss = torch.tensor(0, dtype = torch.float)
+        totalValidLoss = torch.tensor(0, dtype = torch.float, device = device)
 
         for images, labels in validLoader:
+            images = images.to(device)
+            labels = labels.to(device)
+
             outputs = model(images)
             loss = criterion(outputs, labels.float())
             totalValidLoss += loss
@@ -53,7 +59,8 @@ def run(
     optimizer: optim.Adam,
     criterion: nn.MSELoss,
     epochs: int,
-    modelPath: Path
+    modelPath: Path,
+    device: torch.device
 ) -> None:
 
     taskRun.createMetrics([
@@ -68,8 +75,8 @@ def run(
     for epoch in range(epochs):
         logging.info(f">> [ImageQuality] Started epoch {epoch + 1}/{epochs}")
 
-        trainLoss = trainEpoch(trainLoader, model, optimizer, criterion)
-        validLoss = computeValLoss(validLoader, model, criterion)
+        trainLoss = trainEpoch(trainLoader, model, optimizer, criterion, device)
+        validLoss = computeValLoss(validLoader, model, criterion, device)
 
         taskRun.submitMetrics({
             "trainLoss": (epoch + 1, trainLoss.item()),
