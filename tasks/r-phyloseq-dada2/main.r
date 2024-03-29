@@ -643,8 +643,9 @@ main <- function(taskRun) {
         # Raise to 10 minutes
         options(timeout = 600)
         download.file(
-            url = "http://www2.decipher.codes/Classification/TrainingSets/SILVA_SSU_r138_2019.RData",
-            destfile = silva_v138_reference_path
+            url = "https://figshare.com/ndownloader/files/23739737",
+            destfile = silva_v138_reference_path,
+            method = "auto"
         )
         # Reset to 60 seconds
         options(timeout = 60)
