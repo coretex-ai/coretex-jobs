@@ -15,8 +15,10 @@ from .model import CNNModel
 def calculateAccuracy(prediction: float, groundtruth: float) -> float:
     if groundtruth == 0:
         accuracy = 1 - prediction
-    else:
+    elif prediction < groundtruth:
         accuracy = prediction / groundtruth
+    else:
+        accuracy = groundtruth / prediction
 
     if accuracy > 1:
         accuracy = max(1 - (accuracy - 1), 0)

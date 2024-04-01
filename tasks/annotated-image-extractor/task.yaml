@@ -1,0 +1,23 @@
+id: annotated-image-extractor
+name: annotated-image-extractor
+description: Creates a new Image Dataset using only annotated images
+  from the input Dataset.
+is_active: true
+project_type: 1
+
+param_groups:
+  - name: inputs
+    params:
+      - name: dataset
+        description: Image Dataset which will be used for splitting
+        data_type: dataset
+        value: null
+        required: true
+  - name: outputs
+    params:
+      - name: annotatedDataset
+        description: Dataset containing all annotated Samples from the
+          input Dataset
+        data_type: dataset
+        value: null
+        required: false
