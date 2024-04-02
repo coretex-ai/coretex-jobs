@@ -68,3 +68,9 @@ param_groups:
     value: true
     data_type: bool
     required: true
+  - name: keepOriginalImages
+    description: Set to true if you want the untransformed images from the input
+      dataset to be included in the output dataset alongside transformed images.
+    value: false
+    data_byte: bool
+    required: true

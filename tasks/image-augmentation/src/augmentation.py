@@ -5,7 +5,7 @@ import numpy as np
 import imgaug.augmenters as iaa
 import imageio.v3 as imageio
 
-from coretex import ImageDataset, ImageSample, CoretexSegmentationInstance, BBox, CoretexImageAnnotation, AnnotatedImageSampleData
+from coretex import ComputerVisionDataset, ComputerVisionSample, CoretexSegmentationInstance, BBox, CoretexImageAnnotation, AnnotatedImageSampleData
 
 from .utils import uploadAugmentedImage
 
@@ -57,9 +57,9 @@ def transformAnnotationInstances(sampleData: AnnotatedImageSampleData, pipeline:
 def augmentImage(
     firstPipeline: iaa.Sequential,
     secondPipeline: iaa.Sequential,
-    sample: ImageSample,
+    sample: ComputerVisionSample,
     numOfImages: int,
-    outputDataset: ImageDataset
+    outputDataset: ComputerVisionDataset
 ) -> None:
 
     sample.unzip()
