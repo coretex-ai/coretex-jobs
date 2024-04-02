@@ -2,11 +2,13 @@ from typing import Optional
 
 import logging
 
-import imgaug.augmenters as iaa
-from coretex import TaskRun, ImageDataset, currentTaskRun, createDataset
+from coretex import TaskRun, ComputerVisionDataset, currentTaskRun, createDataset
 from coretex.utils import hashCacheName
 
+import imgaug.augmenters as iaa
+
 from src.augmentation import augmentImage
+from src.utils import copySample
 
 
 def getOutputDatasetName(taskRun: TaskRun) -> str:
@@ -18,8 +20,8 @@ def getOutputDatasetName(taskRun: TaskRun) -> str:
     return hashCacheName(f"{taskRun.id}-AugImg", ".".join(str(relevantParams.values())))
 
 
-def getCache(cacheName: str, expectedSize: int) -> Optional[ImageDataset]:
-    caches = ImageDataset.fetchAll(name = cacheName, include_sessions = 1)
+def getCache(cacheName: str, expectedSize: int) -> Optional[ComputerVisionDataset]:
+    caches = ComputerVisionDataset.fetchAll(name = cacheName, include_sessions = 1)
     for cache in caches:
         if cache.count == expectedSize:
             logging.info(">> [Image Augmentation] Cache found!")
@@ -29,7 +31,7 @@ def getCache(cacheName: str, expectedSize: int) -> Optional[ImageDataset]:
 
 
 def main() -> None:
-    taskRun: TaskRun[ImageDataset] = currentTaskRun()
+    taskRun: TaskRun[ComputerVisionDataset] = currentTaskRun()
 
     outputDatasetName = getOutputDatasetName(taskRun)
 
@@ -41,7 +43,7 @@ def main() -> None:
     dataset = taskRun.dataset
     dataset.download()
 
-    with createDataset(ImageDataset, outputDatasetName, taskRun.projectId) as outputDataset:
+    with createDataset(ComputerVisionDataset, outputDatasetName, taskRun.projectId) as outputDataset:
         outputDataset.saveClasses(dataset.classes)
 
         flipH = taskRun.parameters["flipHorizontalPrc"]
@@ -50,6 +52,7 @@ def main() -> None:
         blur = taskRun.parameters["blurPercentage"]
         crop = taskRun.parameters["crop"]
         contrast = taskRun.parameters["contrast"]
+        keepOriginalImages = taskRun.parameters["keepOriginalImages"]
 
         firstAugmenters: list[iaa.Augmenter] = []
 
@@ -84,8 +87,8 @@ def main() -> None:
         firstPipeline = iaa.Sequential(firstAugmenters)
         secondPipeline = iaa.Sequential(secondAugmenters)
 
-        for sample in dataset.samples:
-            logging.info(f">> [Image Augmentation] Performing augmentation on image {sample.name}")
+        for index, sample in enumerate(dataset.samples):
+            logging.info(f">> [Image Augmentation] Augmenting Sample \"{sample.name}\" - {index + 1}/{dataset.count}...")
 
             augmentImage(
                 firstPipeline,
@@ -94,6 +97,10 @@ def main() -> None:
                 taskRun.parameters["numOfImages"],
                 outputDataset
             )
+
+            if keepOriginalImages:
+                logging.info("\tCopying original image...")
+                copySample(sample, outputDataset)
 
     taskRun.submitOutput("outputDataset", outputDataset)
 
