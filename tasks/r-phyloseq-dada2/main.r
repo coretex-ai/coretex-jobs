@@ -643,7 +643,7 @@ main <- function(taskRun) {
         # Raise to 10 minutes
         options(timeout = 600)
         download.file(
-            url = "https://figshare.com/ndownloader/files/23739737",
+            url = "https://raven.biomech.us:25691/index.php/s/Xriywm4TfT2qmRc/download/SILVA_SSU_r138_2019.binder.RData",
             destfile = silva_v138_reference_path,
             method = "auto"
         )
