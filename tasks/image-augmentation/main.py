@@ -49,7 +49,7 @@ def main() -> None:
         flipH = taskRun.parameters["flipHorizontalPrc"]
         affine = taskRun.parameters["affine"]
         noise = taskRun.parameters["noise"]
-        blurPrc = taskRun.parameters["blurPercentage"]
+        blurPct = taskRun.parameters["blurPercentage"]
         blurSigma = taskRun.parameters["blurSigma"]
         crop = taskRun.parameters["crop"]
         contrast = taskRun.parameters["contrast"]
@@ -62,24 +62,24 @@ def main() -> None:
 
         if affine:
             firstAugmenters.append(iaa.Affine(
-                scale={"x": (0.8, 1.2), "y": (0.8, 1.2)},
-                translate_percent={"x": (-0.2, 0.2), "y": (-0.2, 0.2)},
-                rotate=(-25, 25),
-                shear=(-8, 8)
+                scale = {"x": (0.8, 1.2), "y": (0.8, 1.2)},
+                translate_percent = {"x": (-0.2, 0.2), "y": (-0.2, 0.2)},
+                rotate = (-25, 25),
+                shear = (-8, 8)
             ))
 
         if crop is not None:
-            firstAugmenters.append(iaa.Crop(percent=(0, crop)))
+            firstAugmenters.append(iaa.Crop(percent = (0, crop)))
 
         secondAugmenters: list[iaa.Augmenter] = []
 
         if noise is not None:
-            secondAugmenters.append(iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, noise*255), per_channel=0.5))
+            secondAugmenters.append(iaa.AdditiveGaussianNoise(loc = 0, scale = (0.0, noise*255), per_channel = 0.5))
 
-        if blurPrc is not None:
+        if blurPct is not None:
             secondAugmenters.append(iaa.Sometimes(
-                blurPrc,
-                iaa.GaussianBlur(sigma=(max(0, blurSigma - 5), blurSigma + 5))
+                blurPct,
+                iaa.GaussianBlur(sigma = (max(0, blurSigma - 5), blurSigma + 5))
             ))
 
         if contrast:
