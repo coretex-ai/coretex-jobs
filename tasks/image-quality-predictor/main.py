@@ -66,7 +66,7 @@ def main() -> None:
     modelPath = folder_manager.createTempFolder("model")
     training.run(taskRun, trainLoader, validLoader, model, optimizer, criterion, epochs, modelPath, device)
 
-    Model.saveModelDescriptor(modelPath / Model.modelDescriptorFileName(), {
+    Model.saveModelDescriptor(modelPath, {
         "taskRunId": taskRun.id,
         "modelName": taskRun.name,
         "spaceName": taskRun.projectName,
