@@ -63,6 +63,11 @@ param_groups:
     value: 0.5
     data_type: float
     required: false
+  - name: blurSigma
+    description: 'Intensity of the blur which will be applied to the blurred images'
+    value: 5
+    data_type: float
+    required: false
   - name: contrast
     description: Determines if image contrast will be altered.
     value: true

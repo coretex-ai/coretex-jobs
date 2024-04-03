@@ -49,7 +49,8 @@ def main() -> None:
         flipH = taskRun.parameters["flipHorizontalPrc"]
         affine = taskRun.parameters["affine"]
         noise = taskRun.parameters["noise"]
-        blur = taskRun.parameters["blurPercentage"]
+        blurPrc = taskRun.parameters["blurPercentage"]
+        blurSigma = taskRun.parameters["blurSigma"]
         crop = taskRun.parameters["crop"]
         contrast = taskRun.parameters["contrast"]
         keepOriginalImages = taskRun.parameters["keepOriginalImages"]
@@ -75,10 +76,10 @@ def main() -> None:
         if noise is not None:
             secondAugmenters.append(iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, noise*255), per_channel=0.5))
 
-        if blur is not None:
+        if blurPrc is not None:
             secondAugmenters.append(iaa.Sometimes(
-                blur,
-                iaa.GaussianBlur(sigma=(0, 0.5))
+                blurPrc,
+                iaa.GaussianBlur(sigma=(max(0, blurSigma - 5), blurSigma + 5))
             ))
 
         if contrast:
