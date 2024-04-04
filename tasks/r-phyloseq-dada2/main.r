@@ -888,8 +888,7 @@ main <- function(taskRun) {
     pseq_archive$write(pseq_path, basename(pseq_path))
     pseq_archive$close()
 
-    pseq_sample <- ctx$CustomSample$createCustomSample("phyloseq-object", output_dataset$id, pseq_archive_path)
-
+    pseq_sample <- output_dataset$add(pseq_archive_path)
     output_dataset$finalize()
 
     taskRun$submitOutput("outputDataset", output_dataset)
