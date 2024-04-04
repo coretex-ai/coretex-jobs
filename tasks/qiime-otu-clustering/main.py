@@ -67,17 +67,15 @@ def importReferenceDataset(dataset: CustomDataset, outputDir: Path, taskRun: Tas
         ctx_qiime2.toolsImport("FeatureData[Sequence]", str(fastaPath), str(qzaPath))
 
         try:
-            with CustomDataset.createDataset(referenceCacheName, taskRun.projectId) as referenceCache:
+            with createDataset(CustomDataset, referenceCacheName, taskRun.projectId) as referenceCache:
                 outputPath = outputDir / "reference-sequences"
                 with ZipFile(outputPath, "w") as outputFile:
                     outputFile.write(qzaPath, qzaPath.name)
 
-                if CustomSample.createCustomSample("reference-sequences", referenceCache.id, outputPath) is None:
-                    logging.error(">> [Qiime: Clustering] Failed to upload imported reference sequences cache")
-
+                referenceCache.add(outputPath)
                 return qzaPath
-        except:
-            logging.error(">> [Qiime: Clustering] Failed to create imported reference sequences cache")
+        except BaseException as ex:
+            logging.error(f">> [Qiime: Clustering] Failed to create imported reference sequences cache - \"{ex}\"")
             return qzaPath
 
     if qzaPath is not None and len(fastaPaths) == 0:
@@ -211,7 +209,7 @@ def processSample(
     else:
         raise ValueError(">> [Qiime: Clustering] referenceDataset parameter must not be empty in case of closed or open reference clustering")
 
-    ctx_qiime2.createSample(f"{index}-otu-clusters", outputDataset.id, otuPath, taskRun, "Step 4: OTU clustering")
+    ctx_qiime2.createSample(f"{index}-otu-clusters", outputDataset, otuPath, taskRun, "Step 4: OTU clustering")
 
 
 def main() -> None:

@@ -6,7 +6,7 @@ import logging
 
 import requests
 
-from coretex import TaskRun, CustomDataset, CustomSample, folder_manager, createDataset
+from coretex import TaskRun, CustomDataset, folder_manager, createDataset
 from coretex.utils.file import isGzip, gzipDecompress
 from coretex.utils.hash import hashCacheName
 from coretex.bioinformatics import sequence_alignment as sa
@@ -27,10 +27,7 @@ def saveCache(cacheName: str, temp: Path, genomeIndexDir: Path, projectId: int) 
                 archive.write(filePath, filePath.name)
 
         logging.info(">> [Sequence Alignment] Uploading indexed reference genome to coretex for later reuse")
-
-        if CustomSample.createCustomSample(zipPath.name, genomeDataset.id, zipPath) is None:
-            raise RuntimeError(">> [Sequence Alignment] Failed to upload indexed genome")
-
+        genomeDataset.add(zipPath)
         logging.info(">> [Sequence Alignment] Indexed reference genome has been successfuly uploaded to coretex")
 
 

@@ -49,7 +49,7 @@ def processSample(
     # Phylogenetic diversity analysis
     logging.info(">> [Qiime: Phylogenetic Diversity] Generating phylogenetic tree")
     treePath = phylogenyAlignToTreeMafftFasttreeSample(sample, sampleOutputDir)
-    ctx_qiime2.createSample(f"{index}-phylogenetic-tree", outputDataset.id, treePath, taskRun, "Step 6: Phylogenetic tree")
+    ctx_qiime2.createSample(f"{index}-phylogenetic-tree", outputDataset, treePath, taskRun, "Step 6: Phylogenetic tree")
 
 
 def main() -> None:

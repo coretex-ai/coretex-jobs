@@ -2,7 +2,7 @@ from typing import Optional
 
 import logging
 
-from coretex import TaskRun, ComputerVisionDataset, currentTaskRun, createDataset
+from coretex import TaskRun, ImageDataset, currentTaskRun, createDataset
 from coretex.utils import hashCacheName
 
 import imgaug.augmenters as iaa
@@ -20,8 +20,8 @@ def getOutputDatasetName(taskRun: TaskRun) -> str:
     return hashCacheName(f"{taskRun.id}-AugImg", ".".join(str(relevantParams.values())))
 
 
-def getCache(cacheName: str, expectedSize: int) -> Optional[ComputerVisionDataset]:
-    caches = ComputerVisionDataset.fetchAll(name = cacheName, include_sessions = 1)
+def getCache(cacheName: str, expectedSize: int) -> Optional[ImageDataset]:
+    caches = ImageDataset.fetchAll(name = cacheName, include_sessions = 1)
     for cache in caches:
         if cache.count == expectedSize:
             logging.info(">> [Image Augmentation] Cache found!")
@@ -31,7 +31,7 @@ def getCache(cacheName: str, expectedSize: int) -> Optional[ComputerVisionDatase
 
 
 def main() -> None:
-    taskRun: TaskRun[ComputerVisionDataset] = currentTaskRun()
+    taskRun: TaskRun[ImageDataset] = currentTaskRun()
 
     outputDatasetName = getOutputDatasetName(taskRun)
 
@@ -43,7 +43,7 @@ def main() -> None:
     dataset = taskRun.dataset
     dataset.download()
 
-    with createDataset(ComputerVisionDataset, outputDatasetName, taskRun.projectId) as outputDataset:
+    with createDataset(ImageDataset, outputDatasetName, taskRun.projectId) as outputDataset:
         outputDataset.saveClasses(dataset.classes)
 
         flipH = taskRun.parameters["flipHorizontalPrc"]
@@ -78,7 +78,7 @@ def main() -> None:
         if blur is not None:
             secondAugmenters.append(iaa.Sometimes(
                 blur,
-                iaa.GaussianBlur(sigma=(0, 0.5))
+                iaa.GaussianBlur(sigma=(1, 5))
             ))
 
         if contrast:

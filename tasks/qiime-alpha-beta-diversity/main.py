@@ -49,7 +49,7 @@ def diversityAlphaGroupSignificance(
     alphaDiversityPath: Path,
     metadataPath: Path,
     sampleIndex: int,
-    outputDatasetId: int,
+    outputDataset: CustomDataset,
     outputPath: Path,
     taskRun: TaskRun
 ):
@@ -62,7 +62,7 @@ def diversityAlphaGroupSignificance(
 
     ctx_qiime2.createSample(
         f"{sampleIndex}-{outputPath.stem}",
-        outputDatasetId,
+        outputDataset,
         outputPath,
         taskRun,
         "Step 7: Alpha & Beta diversity analysis"
@@ -74,7 +74,7 @@ def diversityBetaGroupSignificance(
     metadataPath: Path,
     metadataColumn: str,
     sampleIndex: int,
-    outputDatasetId: int,
+    outputDataset: CustomDataset,
     outputPath: Path,
     taskRun: TaskRun
 ):
@@ -89,7 +89,7 @@ def diversityBetaGroupSignificance(
 
     ctx_qiime2.createSample(
         f"{sampleIndex}-{outputPath.stem}",
-        outputDatasetId,
+        outputDataset,
         outputPath,
         taskRun,
         "Step 7: Alpha & Beta diversity analysis"
@@ -100,7 +100,7 @@ def emperorPlot(
     pcoaPath: Path,
     metadataPath: Path,
     sampleIndex: int,
-    outputDatasetId: int,
+    outputDataset: CustomDataset,
     outputPath: Path,
     taskRun: TaskRun
 ):
@@ -114,7 +114,7 @@ def emperorPlot(
 
     ctx_qiime2.createSample(
         f"{sampleIndex}-{outputPath.stem}",
-        outputDatasetId,
+        outputDataset,
         outputPath,
         taskRun,
         "Step 7: Alpha & Beta diversity analysis"
@@ -127,7 +127,7 @@ def diversityAlphaRarefaction(
     maxDepth: int,
     metadataPath: Path,
     sampleIndex: int,
-    outputDatasetId: int,
+    outputDataset: CustomDataset,
     outputPath: Path,
     taskRun: TaskRun
 ):
@@ -141,7 +141,7 @@ def diversityAlphaRarefaction(
 
     ctx_qiime2.createSample(
         f"{sampleIndex}-{outputPath.stem}",
-        outputDatasetId,
+        outputDataset,
         outputPath,
         taskRun,
         "Step 7: Alpha & Beta diversity analysis"
@@ -189,7 +189,7 @@ def processSample(
 
         coreMetricsSample = ctx_qiime2.createSample(
             f"{index}-core-metrics-phylogenetic",
-            outputDataset.id,
+            outputDataset,
             coreMetricsPath,
             taskRun,
             "Step 7: Alpha & Beta diversity analysis"
@@ -208,7 +208,7 @@ def processSample(
             coreMetricsSample.joinPath("faith_pd_vector.qza"),
             metadataPath,
             index,
-            outputDataset.id,
+            outputDataset,
             sampleOutputDir / "faith-pd-group-significance.qzv",
             taskRun
         )
@@ -221,7 +221,7 @@ def processSample(
             coreMetricsSample.joinPath("evenness_vector.qza"),
             metadataPath,
             index,
-            outputDataset.id,
+            outputDataset,
             sampleOutputDir / "evenness-group-significance.qzv",
             taskRun
         )
@@ -241,7 +241,7 @@ def processSample(
             metadataPath,
             targetTypeColumn,
             index,
-            outputDataset.id,
+            outputDataset,
             sampleOutputDir / "unweighted-unifrac-body-site-significance.qzv",
             taskRun
         )
@@ -254,7 +254,7 @@ def processSample(
             metadataPath,
             targetTypeColumn,
             index,
-            outputDataset.id,
+            outputDataset,
             sampleOutputDir / "unweighted-unifrac-subject-group-significance.qzv",
             taskRun
         )
@@ -269,7 +269,7 @@ def processSample(
             coreMetricsSample.joinPath("unweighted_unifrac_pcoa_results.qza"),
             metadataPath,
             index,
-            outputDataset.id,
+            outputDataset,
             sampleOutputDir / "unweighted-unifrac-emperor-days-since-experiment-start.qzv",
             taskRun
         )
@@ -282,7 +282,7 @@ def processSample(
             coreMetricsSample.joinPath("bray_curtis_pcoa_results.qza"),
             metadataPath,
             index,
-            outputDataset.id,
+            outputDataset,
             sampleOutputDir / "bray-curtis-emperor-days-since-experiment-start.qzv",
             taskRun
         )
@@ -300,7 +300,7 @@ def processSample(
             taskRun.parameters["maxDepth"],
             metadataPath,
             index,
-            outputDataset.id,
+            outputDataset,
             sampleOutputDir / "alpha-rarefaction.qzv",
             taskRun
         )

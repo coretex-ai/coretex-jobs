@@ -7,7 +7,7 @@ from keras.layers import RandomFlip
 import numpy as np
 import tensorflow as tf
 
-from coretex import TaskRun, TaskRunStatus, ImageSegmentationDataset, folder_manager
+from coretex import TaskRun, TaskRunStatus, ImageDataset, folder_manager
 
 from .utils import hasDotAnnotation
 
@@ -34,7 +34,7 @@ class Augment(tf.keras.layers.Layer):
         return inputs, labels
 
 
-def loadDataset(coretexDataset: ImageSegmentationDataset, coretexTaskRun: TaskRun) -> tuple[int, tf.data.Dataset]:
+def loadDataset(coretexDataset: ImageDataset, coretexTaskRun: TaskRun) -> tuple[int, tf.data.Dataset]:
     coretexTaskRun.updateStatus(TaskRunStatus.inProgress, "Created the TF dataset.")
 
     def datasetElementProvider() -> Generator:

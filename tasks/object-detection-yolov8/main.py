@@ -5,7 +5,7 @@ import json
 import random
 import logging
 
-from coretex import currentTaskRun, TaskRun, ComputerVisionDataset, ComputerVisionSample,\
+from coretex import currentTaskRun, TaskRun, ImageDataset, ImageSample,\
     folder_manager, ImageDatasetClasses, CoretexImageAnnotation, Model
 from ultralytics import YOLO
 from ultralytics.utils.metrics import DetMetrics
@@ -15,7 +15,7 @@ import yaml
 from src import callback as cb, predict
 
 
-def loadAnnotation(sample: ComputerVisionSample) -> Optional[CoretexImageAnnotation]:
+def loadAnnotation(sample: ImageSample) -> Optional[CoretexImageAnnotation]:
     if not sample.annotationPath.exists():
         return None
 
@@ -23,7 +23,7 @@ def loadAnnotation(sample: ComputerVisionSample) -> Optional[CoretexImageAnnotat
         return CoretexImageAnnotation.decode(json.load(file))
 
 
-def prepareSample(sample: ComputerVisionSample, classes: ImageDatasetClasses, destination: Path) -> None:
+def prepareSample(sample: ImageSample, classes: ImageDatasetClasses, destination: Path) -> None:
     sample.unzip()
 
     # Create a hard link of image instead of copy
@@ -61,7 +61,7 @@ def prepareSample(sample: ComputerVisionSample, classes: ImageDatasetClasses, de
                 file.write(f"{labelId} {centerX} {centerY} {width} {height}\n")
 
 
-def prepareDataset(dataset: ComputerVisionDataset, destination: Path, validationPct: float) -> tuple[Path, Path]:
+def prepareDataset(dataset: ImageDataset, destination: Path, validationPct: float) -> tuple[Path, Path]:
     validCount = int(dataset.count * validationPct)
     trainCount = dataset.count - validCount
 
@@ -152,7 +152,7 @@ def isValidationSplitValid(validationSplit: float, datasetSize: int) -> bool:
 
 
 def main() -> None:
-    taskRun: TaskRun[ComputerVisionDataset] = currentTaskRun()
+    taskRun: TaskRun[ImageDataset] = currentTaskRun()
 
     if not isValidationSplitValid(taskRun.parameters["validationSplit"], taskRun.dataset.count):
         raise ValueError(f">> [ObjectDetection] validationSplit parameter is invalid")

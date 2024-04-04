@@ -64,9 +64,7 @@ def cacheDataset(
                 archive.write(path, path.name)
 
         for path in cachePath.iterdir():
-            customSample = CustomSample.createCustomSample(path.name[:-4], cacheDataset.id, path)
-            if customSample is None:
-                raise RuntimeError(">> [MicrobiomeForensics] Failed to upload cache")
+            cacheDataset.add(path)
 
         logging.info(">> [MicrobiomeForensics] Successfuly cached assembled dataset")
 
