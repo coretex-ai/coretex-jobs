@@ -1,11 +1,11 @@
 id: image-augmentation
 name: Image Augmentation
-description: 'Task template for performing image augmentation on image datasets.
+description: Task template for performing image augmentation on image datasets.
   Input to the task is an image dataset, while the output is an image dataset
   with augmented images generated from the input dataset.
   Each of the images in the input dataset get passed through an image augmenter
   pipeline which transforms the image in various ways based on the parameters
-  of this task.'
+  of this task.
 is_active: true
 project_type: 1
 param_groups:
@@ -31,8 +31,8 @@ param_groups:
     data_type: int
     required: true
   - name: flipHorizontalPrc
-    description: 'Percent of images which will be flipped horizontally.
-      If empty, augmentation will not be performed.'
+    description: Percent of images which will be flipped horizontally.
+      If empty, augmentation will not be performed.
     value: 0.5
     data_type: float
     required: false
@@ -46,21 +46,26 @@ param_groups:
     data_type: bool
     required: true
   - name: crop
-    description: 'The image will be randomly cropped between 0 and this value.
-      If empty, augmentation will not be performed.'
+    description: The image will be randomly cropped between 0 and this value.
+      If empty, augmentation will not be performed.
     value: 0.3
     data_type: float
     required: false
   - name: noise
-    description: 'The amount of gaussian noise that will be applied to the images.
-      If empty, augmentation will not be performed.'
+    description: The amount of gaussian noise that will be applied to the images.
+      If empty, augmentation will not be performed.
     value: 0.05
     data_type: float
     required: false
   - name: blurPercentage
-    description: 'Percent of images which will be blurred.
-      If empty, augmentation will not be performed.'
+    description: Percent of images which will be blurred.
+      If empty, augmentation will not be performed.
     value: 0.5
+    data_type: float
+    required: false
+  - name: blurSigma
+    description: Intensity of the blur which will be applied to the blurred images
+    value: 5
     data_type: float
     required: false
   - name: contrast
