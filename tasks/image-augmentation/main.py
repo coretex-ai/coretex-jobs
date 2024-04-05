@@ -35,10 +35,10 @@ def main() -> None:
 
     outputDatasetName = getOutputDatasetName(taskRun)
 
-    cache = getCache(outputDatasetName.split("-")[1], taskRun.dataset.count * taskRun.parameters["numOfImages"])
-    if cache is not None:
-        taskRun.submitOutput("outputDataset", cache)
-        return
+    # cache = getCache(outputDatasetName.split("-")[1], taskRun.dataset.count * taskRun.parameters["numOfImages"])
+    # if cache is not None:
+    #     taskRun.submitOutput("outputDataset", cache)
+    #     return
 
     dataset = taskRun.dataset
     dataset.download()
