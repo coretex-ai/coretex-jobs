@@ -1,6 +1,6 @@
 id: phyloseq-step-2-phylogenetic-tree
 name: 'Phyloseq -> Step 2: Phylogenetic Tree'
-description: Task template generating phylogenetic tree using DADA2 output
+description: Task template generating phylogenetic tree using DADA2 output.
 is_active: true
 project_type: 11
 param_groups:

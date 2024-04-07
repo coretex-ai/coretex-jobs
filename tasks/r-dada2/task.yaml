@@ -1,7 +1,6 @@
 id: phyloseq-step-1-dada2-denoising
 name: 'Phyloseq -> Step 1: DADA2 Denoising'
-description: Task template for cleaning the data using DADA2 and generating phylogenetic
-  tree based on the cleaned data
+description: Task template for cleaning the data using DADA2.
 is_active: true
 project_type: 11
 param_groups:
