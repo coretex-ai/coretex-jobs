@@ -3,7 +3,6 @@ from contextlib import ExitStack
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, Future
 
 import logging
-import os
 import json
 
 from coretex import currentTaskRun, TaskRun, ImageDataset, ImageSample, CoretexImageAnnotation, createDataset
@@ -17,7 +16,7 @@ def uploadSample(path: Path, dataset: ImageDataset) -> None:
         raise RuntimeError("Image not found")
 
     try:
-        generatedSample = dataset.add(path)
+        generatedSample = dataset.add(imagePath)
     except BaseException as ex:
         logging.error(f">> [ImageExtractor] Failed to create sample from \"{imagePath}\" - \"{ex}\"")
         return
