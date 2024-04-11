@@ -1,8 +1,11 @@
 from typing import Optional
 from pathlib import Path
 
+<<<<<<< HEAD
 import logging
 
+=======
+>>>>>>> develop
 from coretex import ImageDataset, ImageDatasetClasses, ImageDatasetClass, BBox, ImageSample
 from ultralytics import YOLO
 from ultralytics.engine.results import Results
@@ -40,6 +43,7 @@ def processResult(result: Results, classes: list[ImageDatasetClasses], savePath:
 
 
 def isSampleValid(sample: ImageSample) -> bool:
+<<<<<<< HEAD
     try:
         for instance in sample.load().annotation.instances:
             if any([len(segmentation) < 6 for segmentation in instance.segmentations]):
@@ -47,6 +51,11 @@ def isSampleValid(sample: ImageSample) -> bool:
     except Exception as e:
         logging.debug(f"Falied to load sample annotation data for {sample.name}, ID: {sample.id}. Error: {e}")
         return False
+=======
+    for instance in sample.load().annotation.instances:
+        if any([len(segmentation) < 6 for segmentation in instance.segmentations]):
+            return False
+>>>>>>> develop
 
     return True
 
