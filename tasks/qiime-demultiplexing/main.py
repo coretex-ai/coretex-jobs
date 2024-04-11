@@ -7,8 +7,8 @@ from coretex import CustomSample, CustomDataset, TaskRun, folder_manager, curren
 from coretex.bioinformatics import ctx_qiime2
 
 
-def forwardMetadata(sample: CustomSample, index: int,  outputDatasetId: int, taskRun: TaskRun) -> Path:
-    ctx_qiime2.createSample(f"{index}-metadata", outputDatasetId, sample.zipPath, taskRun, "Step 2: Demultiplexing")
+def forwardMetadata(sample: CustomSample, index: int,  outputDataset: CustomDataset, taskRun: TaskRun) -> Path:
+    ctx_qiime2.createSample(f"{index}-metadata", outputDataset, sample.zipPath, taskRun, "Step 2: Demultiplexing")
     return ctx_qiime2.getMetadata(sample)
 
 
@@ -83,7 +83,7 @@ def main() -> None:
             if metadataSample is None:
                 raise ValueError(f">> [Qiime: Demux] Metadata sample not found")
 
-            metadataPath = forwardMetadata(metadataSample, index, outputDataset.id, taskRun)
+            metadataPath = forwardMetadata(metadataSample, index, outputDataset, taskRun)
             demuxPath = demuxEmpSample(
                 sample,
                 metadataPath,
@@ -92,14 +92,14 @@ def main() -> None:
                 ctx_qiime2.isPairedEnd(sample)
             )
 
-            demuxSample = ctx_qiime2.createSample(f"{index}-demux", outputDataset.id, demuxPath, taskRun, "Step 2: Demultiplexing")
+            demuxSample = ctx_qiime2.createSample(f"{index}-demux", outputDataset, demuxPath, taskRun, "Step 2: Demultiplexing")
 
             demuxSample.download()
             demuxSample.unzip()
 
             logging.info(">> [Qiime: Demux] Creating summarization")
             visualizationPath = demuxSummarize(demuxSample, outputDir)
-            ctx_qiime2.createSample(f"{index}-summary", outputDataset.id, visualizationPath, taskRun, "Step 2: Demultiplexing")
+            ctx_qiime2.createSample(f"{index}-summary", outputDataset, visualizationPath, taskRun, "Step 2: Demultiplexing")
 
     taskRun.submitOutput("outputDataset", outputDataset)
 

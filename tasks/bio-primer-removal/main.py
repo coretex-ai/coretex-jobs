@@ -4,7 +4,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 import logging
 
-from coretex import TaskRun, CustomSample, folder_manager, SequenceDataset, SequenceSample, currentTaskRun
+from coretex import TaskRun, folder_manager, SequenceDataset, SequenceSample, currentTaskRun
 from coretex.bioinformatics import cutadaptTrim
 
 
@@ -15,8 +15,7 @@ def uploadTrimmedReads(sampleName: str, dataset: SequenceDataset, forwardFile: P
         if reverseFile:
             archive.write(reverseFile, reverseFile.name)
 
-    if CustomSample.createCustomSample(sampleName, dataset.id, zipPath) is None:
-        raise RuntimeError(">> [Microbiome analysis] Failed to upload trimmed reads")
+    dataset.add(zipPath)
 
 
 def trimSingleEnd(

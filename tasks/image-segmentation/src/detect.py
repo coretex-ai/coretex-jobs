@@ -1,7 +1,7 @@
 import logging
 
 from keras import Model as KerasModel
-from coretex import ImageSegmentationDataset, TaskRun, folder_manager
+from coretex import ImageDataset, TaskRun, folder_manager
 from coretex.utils import resizeWithPadding
 
 import numpy as np
@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from .utils import hasDotAnnotation
 
 
-def run(taskRun: TaskRun, model: KerasModel, dataset: ImageSegmentationDataset) -> None:
+def run(taskRun: TaskRun, model: KerasModel, dataset: ImageDataset) -> None:
     imageSize: int = taskRun.parameters["imageSize"]
 
     for sample in dataset.samples:

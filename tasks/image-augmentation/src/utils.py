@@ -14,12 +14,13 @@ def uploadAugmentedImage(
     outputDataset: ImageDataset
 ) -> None:
 
-    imagePath = folder_manager.temp / f"{imageName}.jpeg"
+    imagePath = folder_manager.temp / imageName
     imageio.imwrite(imagePath, augmentedImage)
 
-    augmentedSample = ImageSample.createImageSample(outputDataset.id, imagePath)
-    if augmentedSample is None:
-        logging.error(f">> [Image Augmentation] Failed to upload sample {imagePath}")
+    try:
+        augmentedSample = outputDataset.add(imagePath)
+    except BaseException as ex:
+        logging.error(f">> [Image Augmentation] Failed to upload sample {imagePath} - \"{ex}\"")
         return
 
     if not augmentedSample.saveAnnotation(annotation):
@@ -29,9 +30,10 @@ def uploadAugmentedImage(
 def copySample(sample: ImageSample, dataset: ImageDataset) -> None:
     sample.unzip()
 
-    copy = ImageSample.createImageSample(dataset.id, sample.imagePath)
-    if copy is None:
-        logging.error(f"\tFailed to copy sample \"{sample.name}\"")
+    try:
+        copy = dataset.add(sample.imagePath)
+    except BaseException as ex:
+        logging.error(f"\tFailed to copy sample \"{sample.name}\" - \"{ex}\"")
         return
 
     annotation = sample.load().annotation

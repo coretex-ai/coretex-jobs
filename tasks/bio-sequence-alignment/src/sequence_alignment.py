@@ -3,7 +3,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 import logging
 
-from coretex import TaskRun, CustomDataset, CustomSample, folder_manager, createDataset
+from coretex import TaskRun, CustomDataset, folder_manager, createDataset
 from coretex.bioinformatics import sequence_alignment as sa
 
 from .filepaths import BWA
@@ -32,9 +32,7 @@ def sequeneAlignment(taskRun: TaskRun[CustomDataset], genomePrefix: Path) -> Pat
             with ZipFile(zipSam , "w", ZIP_DEFLATED) as archive:
                 archive.write(outputPath, outputPath.name)
 
-            if CustomSample.createCustomSample(outputPath.name, samDataset.id, zipSam) is None:
-                raise RuntimeError(f">> [Sequence Alignment] Failed to upload {outputPath.name} to coretex")
-
+            samDataset.add(zipSam)
             logging.info(f">> [Sequence Alignment] {outputPath.name} succesfully created")
 
         logging.info(">> [Sequence Alignment] Sequence alignment finished")

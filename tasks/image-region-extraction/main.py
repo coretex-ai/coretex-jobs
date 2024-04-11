@@ -6,22 +6,17 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, Future
 import logging
 import os
 
-from PIL import Image
-from coretex import ImageDataset, ImageSample, ImageDatasetClasses, CoretexSegmentationInstance, \
-    folder_manager, currentTaskRun, createDataset
+from coretex import ImageDataset, ImageSample, ImageDatasetClasses, \
+    folder_manager, currentTaskRun, createDataset, TaskRun
 
 from src.extractor import extractParent, getParentInstance, extractRegion
 
 
-def didGenerateSample(datasetId: int, future: Future[list[Path]]) -> None:
+def didGenerateSample(dataset: ImageDataset, future: Future[list[Path]]) -> None:
     try:
         imagePaths = future.result()
         for imagePath in imagePaths:
-            generatedSample = ImageSample.createImageSample(datasetId, imagePath)
-            if generatedSample is not None:
-                logging.info(f">> [RegionExtraction] Generated sample \"{generatedSample.name}\"")
-            else:
-                logging.error(f">> [RegionExtraction] Failed to create sample from \"{imagePath}\"")
+            dataset.add(imagePath)
     except BaseException as exception:
         logging.error(f">> [RegionExtraction] Failed to generate sample. Reason: {exception}")
         logging.debug(exception, exc_info = exception)
@@ -69,14 +64,13 @@ def processSample(
 
 
 def main() -> None:
-    taskRun = currentTaskRun()
+    taskRun: TaskRun[ImageDataset] = currentTaskRun()
 
-    imagesDataset = taskRun.dataset
-    imagesDataset: ImageDataset
-    imagesDataset.download()
+    dataset = taskRun.dataset
+    dataset.download()
 
     with createDataset(ImageDataset, f"{taskRun.id}-ExtractedImages", taskRun.projectId) as outputDataset:
-        outputDataset.saveClasses(imagesDataset.classes)
+        outputDataset.saveClasses(dataset.classes)
 
         with ExitStack() as stack:
             executor = ProcessPoolExecutor(max_workers = os.cpu_count())
@@ -85,19 +79,19 @@ def main() -> None:
             uploader = ThreadPoolExecutor(max_workers = 4)
             stack.enter_context(uploader)
 
-            for imageSample in imagesDataset.samples:
+            for imageSample in dataset.samples:
                 imageSample.unzip()
 
                 logging.info(f">> [RegionExtraction] Extracting annotated regions for {imageSample.name}")
                 future = executor.submit(
                     processSample,
                     imageSample,
-                    imagesDataset.classes,
+                    dataset.classes,
                     taskRun.parameters["parentClass"],
                     taskRun.parameters["excludedClasses"]
                 )
 
-                uploader.submit(didGenerateSample, outputDataset.id, future)
+                uploader.submit(didGenerateSample, outputDataset, future)
 
         taskRun.submitOutput("outputDataset", outputDataset)
 

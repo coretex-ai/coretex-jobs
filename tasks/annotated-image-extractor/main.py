@@ -1,10 +1,10 @@
 import logging
 
-from coretex import ComputerVisionDataset, ComputerVisionSample, ImageDatasetClasses,\
+from coretex import ImageDataset, ImageSample, ImageDatasetClasses,\
     currentTaskRun, TaskRun, createDataset
 
 
-def isSampleAnnotated(sample: ComputerVisionSample, classes: ImageDatasetClasses) -> bool:
+def isSampleAnnotated(sample: ImageSample, classes: ImageDatasetClasses) -> bool:
     sample.unzip()
 
     annotation = sample.load().annotation
@@ -21,18 +21,15 @@ def isSampleAnnotated(sample: ComputerVisionSample, classes: ImageDatasetClasses
 
 
 def copySamples(
-    dataset: ComputerVisionDataset,
-    samples: list[ComputerVisionSample]
-) -> ComputerVisionDataset:
+    dataset: ImageDataset,
+    samples: list[ImageSample]
+) -> ImageDataset:
 
     for index, sample in enumerate(samples):
         logging.info(f">> [Coretex] Copying sample \"{sample.name}\" - {index + 1}/{len(samples)}")
         sample.unzip()
 
-        copy = ComputerVisionSample.createComputerVisionSample(dataset.id, sample.imagePath)
-        if copy is None:
-            logging.error(f"\tFailed to copy sample \"{sample.name}\"")
-            continue
+        copy = dataset.add(sample.imagePath)
 
         annotation = sample.load().annotation
         if annotation is not None:
@@ -46,7 +43,7 @@ def copySamples(
 
 
 def main() -> None:
-    taskRun: TaskRun[ComputerVisionDataset] = currentTaskRun()
+    taskRun: TaskRun[ImageDataset] = currentTaskRun()
 
     dataset = taskRun.dataset
     dataset.download()
@@ -56,7 +53,7 @@ def main() -> None:
     if len(annotatedSamples) == 0:
         raise RuntimeError(f"Provided dataset \"{dataset.name}\" has no annotated Samples")
 
-    with createDataset(ComputerVisionDataset, f"{taskRun.id}-{dataset.name}", taskRun.projectId) as annotatedDataset:
+    with createDataset(ImageDataset, f"{taskRun.id}-{dataset.name}", taskRun.projectId) as annotatedDataset:
         if not annotatedDataset.saveClasses(dataset.classes):
             raise RuntimeError("Failed to copy classes")
 

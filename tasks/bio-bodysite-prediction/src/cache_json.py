@@ -67,9 +67,10 @@ def cacheJson(
             archive.write(cachePath.joinpath(f"{item}.pkl"), f"{item}.pkl")
 
     with createDataset(CustomDataset, cacheName, projectId) as cacheDataset:
-        if CustomSample.createCustomSample("zipedCache", cacheDataset.id, zipPath):
+        try:
+            cacheDataset.add(zipPath)
             logging.info(">> [MicrobiomeForensics] Successfuly cached assembled dataset")
-        else:
+        except:
             logging.info(">> [MicrobiomeForensics] Failed to cache assembled dataset")
 
 

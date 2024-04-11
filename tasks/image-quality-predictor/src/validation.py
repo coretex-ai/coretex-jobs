@@ -3,7 +3,7 @@ from pathlib import Path
 import csv
 import logging
 
-from coretex import ComputerVisionSample, folder_manager
+from coretex import ImageSample, folder_manager
 from PIL import Image
 
 import torch
@@ -26,7 +26,7 @@ def calculateAccuracy(prediction: float, groundtruth: float) -> float:
     return accuracy * 100
 
 
-def run(modelPath: Path, dataset: list[tuple[ComputerVisionSample, float]], transform: transforms.Compose) -> tuple[Path, float]:
+def run(modelPath: Path, dataset: list[tuple[ImageSample, float]], transform: transforms.Compose) -> tuple[Path, float]:
     model = CNNModel()
     model.load_state_dict(torch.load(modelPath))
     model.eval()

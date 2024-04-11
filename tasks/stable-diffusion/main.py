@@ -7,7 +7,7 @@ import logging
 import uuid
 import time
 
-from coretex import currentTaskRun, TaskRun, ComputerVisionDataset, ComputerVisionSample, createDataset, folder_manager
+from coretex import currentTaskRun, TaskRun, ImageDataset, createDataset, folder_manager
 from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
 
 import torch
@@ -72,13 +72,10 @@ def generateImages(
     return imagePaths
 
 
-def uploadImage(taskRun: TaskRun, datasetId: int, imagePath: Path) -> None:
+def uploadImage(taskRun: TaskRun, dataset: ImageDataset, imagePath: Path) -> None:
     try:
-        sample = ComputerVisionSample.createComputerVisionSample(datasetId, imagePath)
-        if sample is None:
-            logging.error(f">> [StableDiffusion] Failed to upload image \"{imagePath.stem}\"")
-        else:
-            logging.info(f">> [StableDiffusion] Uploaded image \"{imagePath.stem}\"")
+        dataset.add(imagePath)
+        logging.info(f">> [StableDiffusion] Uploaded image \"{imagePath.stem}\"")
     except BaseException as ex:
         logging.error(f">> [StableDiffusion] Failed to upload image \"{imagePath.stem}\", reason: \"{ex}\"")
 
@@ -109,10 +106,10 @@ def main() -> None:
 
     with ExitStack() as stack:
         executor = stack.enter_context(ThreadPoolExecutor(max_workers = 8))
-        dataset = stack.enter_context(createDataset(ComputerVisionDataset, f"stable-diffusion-{int(time.time())}", taskRun.projectId))
+        dataset = stack.enter_context(createDataset(ImageDataset, f"stable-diffusion-{int(time.time())}", taskRun.projectId))
 
         for image in generateImages(prompts, negativePrompt, width, height, steps, imageCount, seed):
-            executor.submit(uploadImage, taskRun, dataset.id, image)
+            executor.submit(uploadImage, taskRun, dataset, image)
 
         taskRun.submitOutput("generatedDataset", dataset)
 
