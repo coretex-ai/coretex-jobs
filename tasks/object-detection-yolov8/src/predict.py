@@ -1,6 +1,8 @@
 from typing import Optional
 from pathlib import Path
 
+import logging
+
 from coretex import ComputerVisionDataset, ImageDatasetClasses, ImageDatasetClass, BBox, ComputerVisionSample
 from ultralytics import YOLO
 from ultralytics.engine.results import Results
@@ -38,9 +40,13 @@ def processResult(result: Results, classes: list[ImageDatasetClasses], savePath:
 
 
 def isSampleValid(sample: ComputerVisionSample) -> bool:
-    for instance in sample.load().annotation.instances:
-        if any([len(segmentation) < 6 for segmentation in instance.segmentations]):
-            return False
+    try:
+        for instance in sample.load().annotation.instances:
+            if any([len(segmentation) < 6 for segmentation in instance.segmentations]):
+                return False
+    except Exception as e:
+        logging.debug(f"Falied to load sample annotation data for {sample.name}, ID: {sample.id}. Error: {e}")
+        return False
 
     return True
 
