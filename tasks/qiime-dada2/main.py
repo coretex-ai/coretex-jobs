@@ -164,7 +164,7 @@ def processSample(
         truncLenR,
     )
 
-    denoisedSample = ctx_qiime2.createSample(f"{index}-denoise", outputDataset.id, denoiseOutput, taskRun, "Step 3: DADA2")
+    denoisedSample = ctx_qiime2.createSample(f"{index}-denoise", outputDataset, denoiseOutput, taskRun, "Step 3: DADA2")
 
     # Second step:
     # Generate visualization artifacts for the denoised data
@@ -173,7 +173,7 @@ def processSample(
     denoisedSample.unzip()
 
     visualizationPath = metadataTabulateSample(denoisedSample, sampleOutputDir)
-    ctx_qiime2.createSample(f"{index}-metadata-tabulate", outputDataset.id, visualizationPath, taskRun, "Step 3: DADA2")
+    ctx_qiime2.createSample(f"{index}-metadata-tabulate", outputDataset, visualizationPath, taskRun, "Step 3: DADA2")
 
     # Third step:
     # Summarize how many sequences are associated with each sample and with each feature,
@@ -182,14 +182,14 @@ def processSample(
     metadataPath = ctx_qiime2.getMetadata(metadataSample)
     featureTableSummaryPath = featureTableSummarizeSample(denoisedSample, metadataPath, sampleOutputDir)
 
-    ctx_qiime2.createSample(f"{index}-feature-table-summarize", outputDataset.id, featureTableSummaryPath, taskRun, "Step 3: DADA2")
+    ctx_qiime2.createSample(f"{index}-feature-table-summarize", outputDataset, featureTableSummaryPath, taskRun, "Step 3: DADA2")
 
     # Fourth step:
     # Provide a mapping of feature IDs to sequences,
     # and provide links to easily BLAST each sequence against the NCBI nt database
     logging.info(">> [Qiime: DADA2] Creating mapping file between feature IDs and sequences")
     featureTableMapPath = featureTableTabulateSeqsSample(denoisedSample, sampleOutputDir)
-    ctx_qiime2.createSample(f"{index}-feature-table-tabulate-seqs", outputDataset.id, featureTableMapPath, taskRun, "Step 3: DADA2")
+    ctx_qiime2.createSample(f"{index}-feature-table-tabulate-seqs", outputDataset, featureTableMapPath, taskRun, "Step 3: DADA2")
 
 
 def main() -> None:

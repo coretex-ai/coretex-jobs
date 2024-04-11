@@ -4,7 +4,7 @@ import random
 import uuid
 
 from PIL import Image
-from coretex import ComputerVisionSample, CoretexImageAnnotation, CoretexSegmentationInstance, folder_manager
+from coretex import ImageSample, CoretexImageAnnotation, CoretexSegmentationInstance, folder_manager
 from coretex.utils import cropToWidth
 
 # import matplotlib.pyplot as plt
@@ -34,7 +34,7 @@ def updateAnnotationPosition(
 
 
 def generateSample(
-    sample: ComputerVisionSample,
+    sample: ImageSample,
     backgroundImagePath: Path,
     minImageSize: float,
     maxImageSize: float,

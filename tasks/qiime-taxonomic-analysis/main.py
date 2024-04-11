@@ -56,7 +56,7 @@ def processSample(
         sampleOutputDir
     )
 
-    taxonomySample = ctx_qiime2.createSample(f"{index}-taxonomy", outputDataset.id, taxonomyPath, taskRun, "Step 5: Taxonomic Analysis")
+    taxonomySample = ctx_qiime2.createSample(f"{index}-taxonomy", outputDataset, taxonomyPath, taskRun, "Step 5: Taxonomic Analysis")
 
     # Second step:
     # Visualize the results
@@ -69,7 +69,7 @@ def processSample(
         str(visualizationPath)
     )
 
-    ctx_qiime2.createSample(f"{index}-taxonomy-visualization", outputDataset.id, visualizationPath, taskRun, "Step 5: Taxonomic Analysis")
+    ctx_qiime2.createSample(f"{index}-taxonomy-visualization", outputDataset, visualizationPath, taskRun, "Step 5: Taxonomic Analysis")
 
     # Third step:
     # View the taxonomic composition of our samples with interactive bar plots
@@ -82,7 +82,7 @@ def processSample(
         str(taxaBarBlotsPath)
     )
 
-    ctx_qiime2.createSample(f"{index}-taxonomy-bar-plots", outputDataset.id, taxaBarBlotsPath, taskRun, "Step 5: Taxonomic Analysis")
+    ctx_qiime2.createSample(f"{index}-taxonomy-bar-plots", outputDataset, taxaBarBlotsPath, taskRun, "Step 5: Taxonomic Analysis")
 
 
 def main() -> None:

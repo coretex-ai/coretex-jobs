@@ -10,7 +10,7 @@ import tensorflow as tf
 import tensorflowjs as tfjs
 import coremltools
 
-from coretex import TaskRunStatus, Model, ImageSegmentationDataset, TaskRun, Metric, MetricType, currentTaskRun, folder_manager
+from coretex import TaskRunStatus, Model, ImageDataset, TaskRun, Metric, MetricType, currentTaskRun, folder_manager
 
 from src import detect
 from src.model import UNetModel
@@ -40,7 +40,7 @@ def saveTFJSModel(modelPath: Path, path: Path) -> None:
 
 def saveModelDescriptor(
     model: KerasModel,
-    taskRun: TaskRun[ImageSegmentationDataset],
+    taskRun: TaskRun[ImageDataset],
     coretexModel: Model,
     path: Path
 ) -> None:
@@ -68,7 +68,7 @@ def saveModelDescriptor(
 
 
 def main() -> None:
-    taskRun: TaskRun[ImageSegmentationDataset] = currentTaskRun()
+    taskRun: TaskRun[ImageDataset] = currentTaskRun()
 
     taskRun.createMetrics([
         Metric.create("loss", "epoch", MetricType.int, "value", MetricType.float, [0, taskRun.parameters["epochs"]]),

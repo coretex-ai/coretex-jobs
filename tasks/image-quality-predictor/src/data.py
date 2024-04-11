@@ -5,7 +5,7 @@ import logging
 import csv
 
 from PIL import Image
-from coretex import ComputerVisionSample, Artifact
+from coretex import ImageSample, Artifact
 from torch.utils.data import Dataset
 
 import torchvision.transforms as transforms
@@ -30,8 +30,8 @@ def isValidationSplitValid(validationPct: float, datasetSize: int) -> bool:
 
 def split(
     validationPct: float,
-    dataset: list[tuple[ComputerVisionSample, float]]
-) -> tuple[list[tuple[ComputerVisionSample, float]], list[tuple[ComputerVisionSample, float]]]:
+    dataset: list[tuple[ImageSample, float]]
+) -> tuple[list[tuple[ImageSample, float]], list[tuple[ImageSample, float]]]:
 
     if not isValidationSplitValid(validationPct, len(dataset)):
         raise ValueError("Invalid \"validationPct\" value")
@@ -46,7 +46,7 @@ def split(
     return dataset[:trainCount], dataset[trainCount:]
 
 
-def loadDataset(artifact: Artifact) -> list[tuple[ComputerVisionSample, float]]:
+def loadDataset(artifact: Artifact) -> list[tuple[ImageSample, float]]:
     logging.info(">> [ImageQuality] Loading dataset...")
 
     artifact.localFilePath.parent.mkdir(exist_ok = True)
@@ -54,13 +54,13 @@ def loadDataset(artifact: Artifact) -> list[tuple[ComputerVisionSample, float]]:
         raise RuntimeError(f"Failed to download artifact {artifact.taskRunId} - {artifact.remoteFilePath}")
 
     with artifact.localFilePath.open("r") as file:
-        dataset: list[tuple[ComputerVisionSample, float]] = []
+        dataset: list[tuple[ImageSample, float]] = []
 
         for row in csv.DictReader(file):
             sampleId = int(row["id"])
             logging.info(f"\tLoading sample {sampleId}...")
 
-            sample = ComputerVisionSample.fetchById(sampleId)
+            sample = ImageSample.fetchById(sampleId)
             sample.download()
             sample.unzip()
 
@@ -74,7 +74,7 @@ class ImageQualityDataset(Dataset):
 
     def __init__(
         self,
-        data: list[tuple[ComputerVisionSample, float]],
+        data: list[tuple[ImageSample, float]],
         transform: Optional[transforms.Compose] = None
     ) -> None:
 

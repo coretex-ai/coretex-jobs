@@ -4,7 +4,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 import logging
 
-from coretex import CustomDataset, TaskRun, CustomSample, folder_manager, createDataset
+from coretex import CustomDataset, TaskRun, folder_manager, createDataset
 
 
 def loadIndexed(dataset: CustomDataset) -> list[Path]:
@@ -42,8 +42,7 @@ def uploadToCoretex(taskRun: TaskRun[CustomDataset], groups: list[Path]) -> None
                 for file in group.iterdir():
                     archive.write(file, file.name)
 
-            if CustomSample.createCustomSample(groupZip.name, dataset.id, groupZip) is None:
-                raise RuntimeError(">> [SequenceSeparation] Failed to upload sample")
+            dataset.add(groupZip)
 
     taskRun.submitOutput("separatedDataset", dataset)
 

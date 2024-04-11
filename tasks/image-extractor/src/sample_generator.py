@@ -4,13 +4,13 @@ from pathlib import Path
 import uuid
 import json
 
-from coretex import ComputerVisionSample, folder_manager, ImageDatasetClass
+from coretex import ImageSample, folder_manager, ImageDatasetClass
 from PIL import Image
 
 from . import image_extractor
 
 
-def generateSample(sample: ComputerVisionSample, parentClass: Optional[ImageDatasetClass]) -> list[Path]:
+def generateSample(sample: ImageSample, parentClass: Optional[ImageDatasetClass]) -> list[Path]:
     sample.unzip()
 
     data = sample.load()
