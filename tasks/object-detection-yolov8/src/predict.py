@@ -41,8 +41,12 @@ def processResult(result: Results, classes: list[ImageDatasetClasses], savePath:
 
 def isSampleValid(sample: ImageSample) -> bool:
     try:
-        for instance in sample.load().annotation.instances:
-            if any([len(segmentation) < 6 for segmentation in instance.segmentations]):
+        instances = sample.load().annotation.instances
+        if instances is None:
+            return False
+
+        for instance in instances:
+            if any(len(segmentation) < 6 for segmentation in instance.segmentations):
                 return False
     except Exception as e:
         logging.debug(f"Falied to load sample annotation data for {sample.name}, ID: {sample.id}. Error: {e}")
