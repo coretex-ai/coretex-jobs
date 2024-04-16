@@ -5,12 +5,12 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, Future
 import random
 import logging
 
-from coretex import currentTaskRun, TaskRun, ComputerVisionDataset, ComputerVisionSample, CoretexImageAnnotation, createDataset
+from coretex import currentTaskRun, TaskRun, ImageDataset, ImageSample, CoretexImageAnnotation, createDataset
 
 from src import sample_generator
 
 
-def getRandomSamples(dataset: ComputerVisionDataset, count: int) -> list[ComputerVisionSample]:
+def getRandomSamples(dataset: ImageDataset, count: int) -> list[ImageSample]:
     indexes: set[int] = set()
 
     while len(indexes) != count:
@@ -19,14 +19,10 @@ def getRandomSamples(dataset: ComputerVisionDataset, count: int) -> list[Compute
     return [dataset.samples[i] for i in indexes]
 
 
-def didGenerateSample(datasetId: int, future: Future[tuple[Path, CoretexImageAnnotation]]) -> None:
+def didGenerateSample(dataset: ImageDataset, future: Future[tuple[Path, CoretexImageAnnotation]]) -> None:
     try:
         imagePath, annotation = future.result()
-
-        generatedSample = ComputerVisionSample.createComputerVisionSample(datasetId, imagePath)
-        if generatedSample is None:
-            logging.error(f">> [SyntheticImageGenerator] Failed to create sample from \"{imagePath}\"")
-            return
+        generatedSample = dataset.add(imagePath)
 
         if not generatedSample.saveAnnotation(annotation):
             logging.error(f">> [SyntheticImageGenerator] Failed to save annotation for generated sample \"{generatedSample.name}\"")
@@ -38,10 +34,10 @@ def didGenerateSample(datasetId: int, future: Future[tuple[Path, CoretexImageAnn
 
 
 def main() -> None:
-    taskRun: TaskRun[ComputerVisionDataset] = currentTaskRun()
+    taskRun: TaskRun[ImageDataset] = currentTaskRun()
     taskRun.dataset.download()
 
-    backgroundDataset: ComputerVisionDataset = taskRun.parameters["backgroundDataset"]
+    backgroundDataset: ImageDataset = taskRun.parameters["backgroundDataset"]
     backgroundDataset.download()
 
     augmentationsPerImage = taskRun.parameters["augmentationsPerImage"]
@@ -60,7 +56,7 @@ def main() -> None:
 
     with ExitStack() as stack:
         outputDatasetName = f"{taskRun.id} - {taskRun.dataset.name}"
-        outputDataset = stack.enter_context(createDataset(ComputerVisionDataset, outputDatasetName, taskRun.projectId))
+        outputDataset = stack.enter_context(createDataset(ImageDataset, outputDatasetName, taskRun.projectId))
         outputDataset.saveClasses(taskRun.dataset.classes)
 
         executor = ProcessPoolExecutor(max_workers = 1)
@@ -86,7 +82,7 @@ def main() -> None:
                     rotationAngle
                 )
 
-                uploader.submit(didGenerateSample, outputDataset.id, future)
+                uploader.submit(didGenerateSample, outputDataset, future)
 
     taskRun.submitOutput("outputDataset", outputDataset)
 

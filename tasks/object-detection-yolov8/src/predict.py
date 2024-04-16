@@ -1,7 +1,7 @@
 from typing import Optional
 from pathlib import Path
 
-from coretex import ComputerVisionDataset, ImageDatasetClasses, ImageDatasetClass, BBox, ComputerVisionSample
+from coretex import ImageDataset, ImageDatasetClasses, ImageDatasetClass, BBox, ImageSample
 from ultralytics import YOLO
 from ultralytics.engine.results import Results
 
@@ -37,7 +37,7 @@ def processResult(result: Results, classes: list[ImageDatasetClasses], savePath:
     plt.savefig(savePath)
 
 
-def isSampleValid(sample: ComputerVisionSample) -> bool:
+def isSampleValid(sample: ImageSample) -> bool:
     for instance in sample.load().annotation.instances:
         if any([len(segmentation) < 6 for segmentation in instance.segmentations]):
             return False
@@ -45,7 +45,7 @@ def isSampleValid(sample: ComputerVisionSample) -> bool:
     return True
 
 
-def predictBatch(model: YOLO, dataset: ComputerVisionDataset, startIdx: int, endIdx: int, resultPath: Path):
+def predictBatch(model: YOLO, dataset: ImageDataset, startIdx: int, endIdx: int, resultPath: Path):
     batch = [sample for sample in dataset.samples[startIdx:endIdx] if isSampleValid(sample)]
 
     results: Results = model.predict([sample.imagePath for sample in batch], save = True, project = "./results")
@@ -53,7 +53,7 @@ def predictBatch(model: YOLO, dataset: ComputerVisionDataset, startIdx: int, end
         processResult(result, dataset.classes, resultPath / f"{sample.name}.png")
 
 
-def run(model: YOLO, dataset: ComputerVisionDataset, resultPath: Path, batchSize: int) -> None:
+def run(model: YOLO, dataset: ImageDataset, resultPath: Path, batchSize: int) -> None:
     for i in range(0, dataset.count - (dataset.count % batchSize), batchSize):
         predictBatch(model, dataset, i, i + batchSize, resultPath)
 

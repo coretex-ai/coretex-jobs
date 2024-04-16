@@ -88,9 +88,9 @@ def importMultiplexed(
             logging.info(">> [Qiime: Import] Importing sample")
             importedFilePath = importSample(sequenceFolderPath, sequenceType, outputDir)
             logging.info(">> [Qiime: Import] Uploading sample")
-            ctx_qiime2.createSample(f"{index}-import", outputDataset.id, importedFilePath, taskRun, "Step 1: Import")
+            ctx_qiime2.createSample(f"{index}-import", outputDataset, importedFilePath, taskRun, "Step 1: Import")
 
             zippedMetadataPath = importMetadata(metadataPath, outputDir)
-            ctx_qiime2.createSample(f"{index}-metadata", outputDataset.id, zippedMetadataPath, taskRun, "Step 1: Import")
+            ctx_qiime2.createSample(f"{index}-metadata", outputDataset, zippedMetadataPath, taskRun, "Step 1: Import")
 
     taskRun.submitOutput("outputDataset", outputDataset)

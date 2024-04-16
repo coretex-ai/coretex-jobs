@@ -3,22 +3,22 @@ from contextlib import ExitStack
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, Future
 
 import logging
-import os
 import json
 
-from coretex import currentTaskRun, TaskRun, ComputerVisionDataset, ComputerVisionSample, CoretexImageAnnotation, createDataset
+from coretex import currentTaskRun, TaskRun, ImageDataset, ImageSample, CoretexImageAnnotation, createDataset
 
 from src import sample_generator
 
 
-def uploadSample(path: Path, datasetId: int) -> None:
+def uploadSample(path: Path, dataset: ImageDataset) -> None:
     imagePath = path / "image.png"
     if not imagePath.exists():
         raise RuntimeError("Image not found")
 
-    generatedSample = ComputerVisionSample.createComputerVisionSample(datasetId, imagePath)
-    if generatedSample is None:
-        logging.error(f">> [ImageExtractor] Failed to create sample from \"{imagePath}\"")
+    try:
+        generatedSample = dataset.add(imagePath)
+    except BaseException as ex:
+        logging.error(f">> [ImageExtractor] Failed to create sample from \"{imagePath}\" - \"{ex}\"")
         return
 
     annotationPath = path / "annotation.json"
@@ -32,17 +32,17 @@ def uploadSample(path: Path, datasetId: int) -> None:
     logging.info(f">> [ImageExtractor] Generated sample \"{generatedSample.name}\"")
 
 
-def didGenerateSample(datasetId: int, future: Future[list[Path]]) -> None:
+def didGenerateSample(dataset: ImageDataset, future: Future[list[Path]]) -> None:
     try:
         for samplePath in future.result():
-            uploadSample(samplePath, datasetId)
+            uploadSample(samplePath, dataset)
     except BaseException as exception:
         logging.error(f">> [ImageExtractor] Failed to generate sample. Reason: {exception}")
         logging.debug(exception, exc_info = exception)
 
 
 def main() -> None:
-    taskRun: TaskRun[ComputerVisionDataset] = currentTaskRun()
+    taskRun: TaskRun[ImageDataset] = currentTaskRun()
     taskRun.dataset.download()
 
     excludedClasses = taskRun.parameters.get("excludedClasses", [])
@@ -52,7 +52,7 @@ def main() -> None:
     parentClass = taskRun.dataset.classByName(taskRun.parameters["parentClass"])
     outputDatasetName = f"{taskRun.id} - {taskRun.dataset.name}"
 
-    with createDataset(ComputerVisionDataset, outputDatasetName, taskRun.projectId) as outputDataset:
+    with createDataset(ImageDataset, outputDatasetName, taskRun.projectId) as outputDataset:
         outputDataset.saveClasses(taskRun.dataset.classes)
 
         with ExitStack() as stack:
@@ -67,7 +67,7 @@ def main() -> None:
                 future = executor.submit(sample_generator.generateSample, sample, parentClass)
 
                 # Upload sample
-                uploader.submit(didGenerateSample, outputDataset.id, future)
+                uploader.submit(didGenerateSample, outputDataset, future)
 
     taskRun.submitOutput("outputDataset", outputDataset)
 
