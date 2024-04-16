@@ -11,6 +11,10 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as pth
 
 
+# Minimum number of values in an annotation instance [x1, y1, x2, y2...] for it to be a two dimentional object
+DIMENSION_THRESHOLD = 6
+
+
 def classByLabelId(labelId: int, classes: ImageDatasetClasses) -> Optional[ImageDatasetClass]:
     return classes.classByLabel(classes.labels[labelId])
 
@@ -46,7 +50,7 @@ def isSampleValid(sample: ImageSample) -> bool:
             return False
 
         for instance in instances:
-            if any(len(segmentation) < 6 for segmentation in instance.segmentations):
+            if any(len(segmentation) < DIMENSION_THRESHOLD for segmentation in instance.segmentations):
                 return False
     except Exception as e:
         logging.debug(f"Falied to load sample annotation data for {sample.name}, ID: {sample.id}. Error: {e}")
