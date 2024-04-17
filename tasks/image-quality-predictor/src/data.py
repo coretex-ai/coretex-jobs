@@ -4,7 +4,7 @@ import random
 import logging
 import csv
 
-from PIL import Image
+from PIL import Image, ImageOps
 from coretex import ImageSample, Artifact
 from torch.utils.data import Dataset
 
@@ -87,7 +87,7 @@ class ImageQualityDataset(Dataset):
     def __getitem__(self, idx: int) -> tuple[Any, float]:
         sample, quality = self.data[idx]
 
-        image = Image.open(sample.imagePath).convert("RGB")
+        image = ImageOps.exif_transpose(Image.open(sample.imagePath)).convert("RGB")
 
         if self.transform:
             image = self.transform(image)

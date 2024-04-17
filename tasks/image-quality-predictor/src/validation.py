@@ -4,7 +4,7 @@ import csv
 import logging
 
 from coretex import ImageSample, folder_manager
-from PIL import Image
+from PIL import Image, ImageOps
 
 import torch
 import torchvision.transforms as transforms
@@ -40,7 +40,7 @@ def run(modelPath: Path, dataset: list[tuple[ImageSample, float]], transform: tr
 
         for sample, quality in dataset:
             logging.info(f">> [ImageQuality] Validating sample \"{sample.name}\"...")
-            image = Image.open(sample.imagePath).convert("RGB")
+            image = ImageOps.exif_transpose(Image.open(sample.imagePath).convert("RGB"))
 
             if quality == 0:
                 logging.warning("\tSample has quality == 0")
