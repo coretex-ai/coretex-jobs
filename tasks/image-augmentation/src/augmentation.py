@@ -1,11 +1,12 @@
+from typing import Any
+
 import logging
 
 import cv2
 import numpy as np
-import imgaug.augmenters as iaa
-import imageio.v3 as imageio
+import albumentations as A
 
-from coretex import ImageDataset, ImageSample, CoretexSegmentationInstance, BBox, CoretexImageAnnotation, AnnotatedImageSampleData
+from coretex import ImageDataset, ImageSample, CoretexSegmentationInstance, BBox, CoretexImageAnnotation, TaskRun
 
 from .utils import uploadAugmentedImage
 
@@ -27,22 +28,34 @@ def mask2poly(mask: np.ndarray) -> list[int]:
     return segmentation
 
 
-def transformAnnotationInstances(sampleData: AnnotatedImageSampleData, pipeline: iaa.Sequential) -> CoretexImageAnnotation:
+def performAugmentation(
+    image: np.ndarray,
+    transform: A.ReplayCompose,
+    annotation: CoretexImageAnnotation
+) -> tuple[np.ndarray, CoretexImageAnnotation, dict[str: Any]]:
+
     augmentedInstances: list[CoretexSegmentationInstance] = []
 
-    for instance in sampleData.annotation.instances:
+    data = {"image": image}
+    for i, instance in enumerate(annotation.instances):
         mask = instance.extractSegmentationMask(
-            sampleData.annotation.width,
-            sampleData.annotation.height
+            annotation.width,
+            annotation.height
         )
-
         mask = np.repeat(mask[..., None] * 255, 3, axis = -1)
+        data[f"mask{i}"] = mask
 
-        augmentedMask = pipeline.augment_image(mask)
+    transformed = transform(**data)
+    augmentedImage = transformed["image"]
+    metadata = transformed["replay"]
+    augmentedMasks = [transformed[f"mask{i}"] for i in range(len(annotation.instances))]
+
+    for instance, augmentedMask in zip(annotation.instances, augmentedMasks):
         augmentedMask = (np.average(augmentedMask, axis = -1) > 127).astype(int)
 
         newSegmentations = mask2poly(augmentedMask)
         if newSegmentations is None:
+            logging.error(f"[Image Augmentation] Failed to transfer annotation. {annotation.name}")
             continue
 
         augmentedInstances.append(CoretexSegmentationInstance.create(
@@ -51,31 +64,52 @@ def transformAnnotationInstances(sampleData: AnnotatedImageSampleData, pipeline:
             [newSegmentations]
         ))
 
-    return augmentedInstances
+    return augmentedImage, augmentedInstances, metadata
+
+
+def processMetadata(inputMetadata: dict[str, Any]) -> dict[str, Any]:
+    for transform in inputMetadata["transforms"]:
+        if transform["__class_fullname__"] == "GaussNoise" and transform["applied"]:
+            transform["params"]["gauss"] = None  # Hits timeout during upload
+
+    outputMetadata = {"full_augmentation_metadata": inputMetadata}  # Include the full original metadata
+    transforms = inputMetadata.get("transforms", [])
+
+    for transform in transforms:
+        className = transform.get("__class_fullname__", "")
+        appliedStatus = transform.get("applied", False)
+        outputMetadata[className] = appliedStatus
+
+    return outputMetadata
 
 
 def augmentImage(
-    firstPipeline: iaa.Sequential,
-    secondPipeline: iaa.Sequential,
+    augmentersGeometric: list[A.BaseCompose],
+    transformPhotometric: A.ReplayCompose,
     sample: ImageSample,
-    numOfImages: int,
+    taskRun: TaskRun,
     outputDataset: ImageDataset
 ) -> None:
 
     sample.unzip()
 
-    image = imageio.imread(sample.imagePath)
     sampleData = sample.load()
+    image = sampleData.image
+    annotation = sampleData.annotation
 
-    for i in range(numOfImages):
-        firstPipeline_ = firstPipeline.localize_random_state()
-        firstPipeline_ = firstPipeline_.to_deterministic()
+    for i in range(taskRun.parameters["numOfImages"]):
+        # Dynamicaly build the Compose, so it can transform any number of annotation
+        additionalTargets = {f"mask{i}": "image" for i in range(len(annotation.instances))}
+        transformGeometric = A.ReplayCompose(augmentersGeometric, additional_targets = additionalTargets)
+        augmentedImage, augmentedInstances, metadata = performAugmentation(image, transformGeometric, annotation)
 
-        augmentedImage = firstPipeline_.augment_image(image)
-        augmentedImage = secondPipeline.augment_image(augmentedImage)
-        augmentedInstances = transformAnnotationInstances(sampleData, firstPipeline_)
+        transformedPhotometric = transformPhotometric(image = augmentedImage)
+        augmentedImage = transformedPhotometric["image"]
 
-        annotation = CoretexImageAnnotation.create(
+        metadata["transforms"] = metadata["transforms"] + transformedPhotometric["replay"]["transforms"]
+        metadata = processMetadata(metadata)
+
+        newAnnotation = CoretexImageAnnotation.create(
             sample.name,
             augmentedImage.shape[1],
             augmentedImage.shape[0],
@@ -83,4 +117,4 @@ def augmentImage(
         )
 
         augmentedImageName = f"{sample.name}-{i}" + sample.imagePath.suffix
-        uploadAugmentedImage(augmentedImageName, augmentedImage, annotation, outputDataset)
+        uploadAugmentedImage(augmentedImageName, augmentedImage, newAnnotation, metadata, taskRun, outputDataset)

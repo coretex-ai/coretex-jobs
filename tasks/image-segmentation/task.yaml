@@ -8,7 +8,7 @@ param_groups:
   params:
   - name: dataset
     description: Dataset id that is used for fetching dataset from coretex.
-    value: null
+    value: 33049
     data_type: dataset
     required: true
 - name: outputs
@@ -44,6 +44,6 @@ param_groups:
   - name: excludedClasses
     description: Classes from the dataset which will be excluded from training the
       model
-    value: []
+    value: ["first_name", "last_name", "sex", "date_of_birth"]
     data_type: list[str]
     required: false

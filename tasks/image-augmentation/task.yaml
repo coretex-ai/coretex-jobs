@@ -4,8 +4,8 @@ description: Task template for performing image augmentation on image datasets.
   Input to the task is an image dataset, while the output is an image dataset
   with augmented images generated from the input dataset.
   Each of the images in the input dataset get passed through an image augmenter
-  pipeline which transforms the image in various ways based on the parameters
-  of this task.
+  pipeline which transforms the image based on the parameters of this task.
+  All augmentations will be saved to the sample metadata.
 is_active: true
 project_type: 1
 param_groups:
@@ -27,52 +27,61 @@ param_groups:
   params:
   - name: numOfImages
     description: The number of augmented images each of the input images will generate.
-    value: 5
+    value: 4
     data_type: int
     required: true
-  - name: flipHorizontalPrc
+  - name: flipHorizontalPct
     description: Percent of images which will be flipped horizontally.
       If empty, augmentation will not be performed.
     value: 0.5
     data_type: float
     required: false
-  - name: affine
-    description: 'Determines if affine augmentation will be performed, which include:
-      - scaling
-      - translation
-      - rotation
-      - shearing'
-    value: true
-    data_type: bool
-    required: true
-  - name: crop
-    description: The image will be randomly cropped between 0 and this value.
+  - name: flipVerticalPct
+    description: Percent of images which will be flipped vertically.
       If empty, augmentation will not be performed.
-    value: 0.3
+    value: null
+    data_type: float
+    required: false
+  - name: rotate
+    description: Determines the maximum degrees of rotation from 0 applied to images
+      If empty, augmentation will not be performed.
+    value: null
+    data_type: int
+    required: false
+  - name: rotate180Pct
+    description: Percent of images to rotate by 180 degrees.
+    value: null
     data_type: float
     required: false
   - name: noise
     description: The amount of gaussian noise that will be applied to the images.
       If empty, augmentation will not be performed.
-    value: 0.05
+    value: 20
     data_type: float
     required: false
-  - name: blurPercentage
+  - name: blurPct
     description: Percent of images which will be blurred.
       If empty, augmentation will not be performed.
     value: 0.5
     data_type: float
     required: false
-  - name: blurSigma
-    description: Intensity of the blur which will be applied to the blurred images
-    value: 5
+  - name: blurLimit
+    description: Maximum intensity of the blur which will be applied to the blurred images (max kernel size).
+    value: 7
+    data_type: int
+    required: false
+  - name: brightness
+    description: Brightness will be altered by a value between the positive and negative of this number.
+      If empty, augmentation will not be performed.
+    value: 0.2
     data_type: float
     required: false
   - name: contrast
-    description: Determines if image contrast will be altered.
-    value: true
-    data_type: bool
-    required: true
+    description: Contrast will be altered by a value between the positive and negative of this number.
+      If empty, augmentation will not be performed.
+    value: 0.2
+    data_type: float
+    required: false
   - name: keepOriginalImages
     description: Set to true if you want the untransformed images from the input
       dataset to be included in the output dataset alongside transformed images.

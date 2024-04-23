@@ -1,16 +1,21 @@
+from typing import Optional
+
 import logging
 
 from numpy import ndarray
 
 import imageio.v3 as imageio
 
-from coretex import CoretexImageAnnotation, ImageDataset, folder_manager, ImageSample
+from coretex import CoretexImageAnnotation, ImageDataset, folder_manager, ImageSample, TaskRun
+from coretex.utils import hashCacheName
 
 
 def uploadAugmentedImage(
     imageName: str,
     augmentedImage: ndarray,
     annotation: CoretexImageAnnotation,
+    metadata: dict,
+    taskRun: TaskRun,
     outputDataset: ImageDataset
 ) -> None:
 
@@ -25,6 +30,9 @@ def uploadAugmentedImage(
 
     if not augmentedSample.saveAnnotation(annotation):
         logging.error(f">> [Image Augmentation] Failed to update sample annotation {imagePath}")
+
+    augmentedSample.saveMetadata(metadata)
+    taskRun.createArtifact(imagePath, imagePath.name)
 
 
 def copySample(sample: ImageSample, dataset: ImageDataset) -> None:
@@ -43,3 +51,22 @@ def copySample(sample: ImageSample, dataset: ImageDataset) -> None:
 
             if not copy.delete():
                 logging.error("\tFailed to delete sample")
+
+
+def getOutputDatasetName(taskRun: TaskRun) -> str:
+    relevantParams = taskRun.parameters.copy()
+
+    relevantParams["dataset"] = relevantParams["dataset"].id
+    relevantParams.pop("outputDataset")
+
+    return hashCacheName(f"{taskRun.id}-AugImg", ".".join(str(relevantParams.values())))
+
+
+def getCache(cacheName: str, expectedSize: int) -> Optional[ImageDataset]:
+    caches = ImageDataset.fetchAll(name = cacheName, include_sessions = 1)
+    for cache in caches:
+        if cache.count == expectedSize:
+            logging.info(">> [Image Augmentation] Cache found!")
+            return cache
+
+    return None

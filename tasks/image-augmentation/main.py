@@ -1,33 +1,11 @@
-from typing import Optional
-
 import logging
 
 from coretex import TaskRun, ImageDataset, currentTaskRun, createDataset
-from coretex.utils import hashCacheName
 
-import imgaug.augmenters as iaa
+import albumentations as A
 
 from src.augmentation import augmentImage
-from src.utils import copySample
-
-
-def getOutputDatasetName(taskRun: TaskRun) -> str:
-    relevantParams = taskRun.parameters.copy()
-
-    relevantParams["dataset"] = relevantParams["dataset"].id
-    relevantParams.pop("outputDataset")
-
-    return hashCacheName(f"{taskRun.id}-AugImg", ".".join(str(relevantParams.values())))
-
-
-def getCache(cacheName: str, expectedSize: int) -> Optional[ImageDataset]:
-    caches = ImageDataset.fetchAll(name = cacheName, include_sessions = 1)
-    for cache in caches:
-        if cache.count == expectedSize:
-            logging.info(">> [Image Augmentation] Cache found!")
-            return cache
-
-    return None
+from src.utils import copySample, getOutputDatasetName, getCache
 
 
 def main() -> None:
@@ -46,56 +24,51 @@ def main() -> None:
     with createDataset(ImageDataset, outputDatasetName, taskRun.projectId) as outputDataset:
         outputDataset.saveClasses(dataset.classes)
 
-        flipH = taskRun.parameters["flipHorizontalPrc"]
-        affine = taskRun.parameters["affine"]
+        flipH = taskRun.parameters["flipHorizontalPct"]
+        flipV = taskRun.parameters["flipVerticalPct"]
+        rotate = taskRun.parameters["rotate"]
+        rotate180 = taskRun.parameters["rotate180Pct"]
         noise = taskRun.parameters["noise"]
-        blurPct = taskRun.parameters["blurPercentage"]
-        blurSigma = taskRun.parameters["blurSigma"]
-        crop = taskRun.parameters["crop"]
+        blurPct = taskRun.parameters["blurPct"]
+        blurLimit = taskRun.parameters["blurLimit"]
+        brightness = taskRun.parameters["brightness"]
         contrast = taskRun.parameters["contrast"]
         keepOriginalImages = taskRun.parameters["keepOriginalImages"]
 
-        firstAugmenters: list[iaa.Augmenter] = []
+        augmentersGeometric: list[A.BasicTransform] = []
+        augmentersPhotometric: list[A.BasicTransform] = []
 
         if flipH is not None:
-            firstAugmenters.append(iaa.Fliplr(flipH))
+            augmentersGeometric.append(A.HorizontalFlip(p = flipH))
 
-        if affine:
-            firstAugmenters.append(iaa.Affine(
-                scale = {"x": (0.8, 1.2), "y": (0.8, 1.2)},
-                translate_percent = {"x": (-0.2, 0.2), "y": (-0.2, 0.2)},
-                rotate = (-25, 25),
-                shear = (-8, 8)
-            ))
+        if flipV is not None:
+            augmentersGeometric.append(A.VerticalFlip(p = flipV))
 
-        if crop is not None:
-            firstAugmenters.append(iaa.Crop(percent = (0, crop)))
+        if rotate is not None:
+            augmentersGeometric.append(A.Rotate(rotate))
 
-        secondAugmenters: list[iaa.Augmenter] = []
+        if rotate180:
+            augmentersGeometric.append(A.Rotate((180, 180), p = rotate180))
 
         if noise is not None:
-            secondAugmenters.append(iaa.AdditiveGaussianNoise(loc = 0, scale = (0.0, noise*255), per_channel = 0.5))
+            augmentersPhotometric.append(A.GaussNoise(noise))
 
         if blurPct is not None:
-            secondAugmenters.append(iaa.Sometimes(
-                blurPct,
-                iaa.GaussianBlur(sigma = (max(0, blurSigma - 5), blurSigma + 5))
-            ))
+            augmentersPhotometric.append(A.Blur(blurLimit, p = blurPct))
 
-        if contrast:
-            secondAugmenters.append(iaa.LinearContrast((0.75, 1.5)))
+        if contrast is not None or brightness is not None:
+            augmentersPhotometric.append(A.RandomBrightnessContrast(brightness, contrast))
 
-        firstPipeline = iaa.Sequential(firstAugmenters)
-        secondPipeline = iaa.Sequential(secondAugmenters)
+        transformPhotometric = A.ReplayCompose(augmentersPhotometric)
 
         for index, sample in enumerate(dataset.samples):
             logging.info(f">> [Image Augmentation] Augmenting Sample \"{sample.name}\" - {index + 1}/{dataset.count}...")
 
             augmentImage(
-                firstPipeline,
-                secondPipeline,
+                augmentersGeometric,
+                transformPhotometric,
                 sample,
-                taskRun.parameters["numOfImages"],
+                taskRun,
                 outputDataset
             )
 
