@@ -640,8 +640,8 @@ main <- function(taskRun) {
 
     if (!file.exists(silva_v138_reference_path)) {
         print(paste0("Downloading \"", silva_v138_reference_path, "\"..."))
-        # Raise to 10 minutes
-        options(timeout = 600)
+        # Raise to 20 minutes
+        options(timeout = 1200)
         download.file(
             url = "https://raven.biomech.us:25691/index.php/s/Xriywm4TfT2qmRc/download/SILVA_SSU_r138_2019.binder.RData",
             destfile = silva_v138_reference_path,
