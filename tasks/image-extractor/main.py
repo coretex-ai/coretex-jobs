@@ -4,8 +4,9 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, Future
 
 import logging
 import json
+import os
 
-from coretex import currentTaskRun, TaskRun, ImageDataset, ImageSample, CoretexImageAnnotation, createDataset
+from coretex import currentTaskRun, TaskRun, ImageDataset, CoretexImageAnnotation, createDataset
 
 from src import sample_generator
 
