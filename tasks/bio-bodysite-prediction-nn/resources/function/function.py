@@ -40,7 +40,7 @@ def inference(modelInput: Path, model: Model, uniqueTaxons: dict[str, int]) -> l
 
 
 def response(requestData: dict[str, Any]) -> dict[str, Any]:
-    modelDir = requestData.get("model")
+    modelDir = Path.cwd().parent
 
     with open(modelDir / "model_descriptor.json", "r") as jsonFile:
         modelDescriptor = json.load(jsonFile)

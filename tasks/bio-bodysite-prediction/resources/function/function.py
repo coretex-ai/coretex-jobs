@@ -29,7 +29,7 @@ def unzip(inputPath: Path, dataFormat: int) -> Path:
 
 
 def response(requestData: dict[str, Any]) -> dict[str, Any]:
-    modelDir = requestData.get("model")
+    modelDir = Path.cwd().parent
     model = XGBClassifier()
     model.load_model(modelDir / "model.txt")
 
