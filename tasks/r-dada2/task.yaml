@@ -1,7 +1,6 @@
-id: phyloseq-dada2-phylogenetic-tree
-name: 'Phyloseq -> Step 1: DADA2 + Phylogenetic Tree'
-description: Task template for cleaning the data using DADA2 and generating phylogenetic
-  tree based on the cleaned data
+id: phyloseq-step-1-dada2-denoising
+name: 'Phyloseq -> Step 1: DADA2 Denoising'
+description: Task template for cleaning the data using DADA2.
 is_active: true
 project_type: 11
 param_groups:
@@ -14,10 +13,10 @@ param_groups:
     required: true
 - name: outputs
   params:
-  - name: outputDataset
-    description: Dataset with outputs of this task.
+  - name: artifacts
+    description: Artifacts of this Run.
     value: null
-    data_type: dataset
+    data_type: int
     required: false
 - name: parameters
   params:
@@ -41,7 +40,7 @@ param_groups:
     dynamic: true
   - name: trimRightReverse
     description: The number of nucleotides to remove from the end of each read.
-    value: [100]
+    value: [30]
     data_type: list[int]
     required: true
     dynamic: true
