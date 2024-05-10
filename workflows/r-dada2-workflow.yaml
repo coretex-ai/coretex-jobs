@@ -5,11 +5,23 @@ description: Workflow for cleaning the data using DADA2 and generating phylogene
 project_type: 11
 is_active: true
 jobs:
-  step-1-dada2-and-phylogenetic-tree:
-    template_id: phyloseq-dada2-phylogenetic-tree
+  step-1-dada2-denoising:
+    template_id: phyloseq-step-1-dada2-denoising
 
-  step-2-alpha-and-beta-diversity-analysis:
+  step-2-compare-dada2-results:
+    template_id: phyloseq-compare-dada-2-results
+    param_groups:
+      inputs:
+        dada2Artifacts: step-1-dada2-denoising.artifacts
+
+  step-3-generate-phylogenetic-tree:
+    template_id: phyloseq-step-2-phylogenetic-tree
+    param_groups:
+      inputs:
+        dada2Artifacts: step-2-compare-dada2-results.artifacts
+
+  step-4-alpha-and-beta-diversity-analysis:
     template_id: phyloseq-alpha-beta-diversity-analysis
     param_groups:
       inputs:
-        dataset: step-1-dada2-and-phylogenetic-tree.outputDataset
+        dataset: step-3-generate-phylogenetic-tree.outputDataset
