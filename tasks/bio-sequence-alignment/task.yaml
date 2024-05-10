@@ -1,4 +1,4 @@
-id: 27e5357c-9cdb-4610-accb-9c05ed2815cc
+id: bio-sequence-alignment
 name: Microbiome Forensics -> Sequence Alignment
 description: Task template for aligning/mapping sequence reads to reference genome.
   Either genomeUrl or referenceDataset has to be filled

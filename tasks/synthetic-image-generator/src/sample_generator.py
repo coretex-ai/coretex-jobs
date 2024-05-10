@@ -3,7 +3,7 @@ from pathlib import Path
 import random
 import uuid
 
-from PIL import Image
+from PIL import Image, ImageOps
 from coretex import ImageSample, CoretexImageAnnotation, CoretexSegmentationInstance, folder_manager
 from coretex.utils import cropToWidth
 
@@ -50,7 +50,7 @@ def generateSample(
         raise RuntimeError(f"Sample \"{sample.name}\" has no annotations")
 
     image = Image.fromarray(data.image)
-    backgroundImage = Image.open(backgroundImagePath)
+    backgroundImage = ImageOps.exif_transpose(Image.open(backgroundImagePath))
 
     # Resize image
     parentAnnotationWidth = int(backgroundImage.width * random.uniform(minImageSize, maxImageSize))
