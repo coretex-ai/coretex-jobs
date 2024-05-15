@@ -341,7 +341,7 @@ def main() -> None:
 
     outputDir = folder_manager.createTempFolder("alpha_beta_output")
 
-    datasetName = f"{taskRun.id} - Step 7: Alpha & Beta diversity"
+    datasetName = f"{taskRun.id}-step-7-alpha-and-beta-diversity"
     with createDataset(CustomDataset, datasetName, taskRun.projectId) as outputDataset:
 
         for sample in phylogeneticTreeSamples:

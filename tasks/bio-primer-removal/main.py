@@ -75,7 +75,7 @@ def main() -> None:
         reverseReadsFolder = folder_manager.createTempFolder("revereseReads")
 
     outputDataset = SequenceDataset.createSequenceDataset(
-        f"{taskRun.id} - Cutadapt Output",
+        f"{taskRun.id}-cutadapt-output",
         taskRun.projectId,
         dataset.metadata.zipPath
     )

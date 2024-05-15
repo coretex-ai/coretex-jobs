@@ -55,7 +55,7 @@ def main() -> None:
     random.seed(taskRun.parameters["seed"])
 
     with ExitStack() as stack:
-        outputDatasetName = f"{taskRun.id} - {taskRun.dataset.name}"
+        outputDatasetName = f"{taskRun.id}-{taskRun.dataset.name}"
         outputDataset = stack.enter_context(createDataset(ImageDataset, outputDatasetName, taskRun.projectId))
         outputDataset.saveClasses(taskRun.dataset.classes)
 

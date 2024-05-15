@@ -16,7 +16,7 @@ def getJsonName(datasetName: str, sampleOrigin: list[str], sequencingTechnique: 
     origins = ".".join(sampleOrigin)
     techniques = ".".join(sequencingTechnique)
 
-    suffix = f"{origins}_{techniques}"
+    suffix = f"{origins}-{techniques}"
 
     return hashCacheName(datasetName, suffix)
 
