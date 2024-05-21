@@ -1,3 +1,4 @@
+from typing import Optional
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -7,7 +8,7 @@ from coretex import CustomDataset, CustomSample, TaskRun, folder_manager, curren
 from coretex.bioinformatics import ctx_qiime2
 
 
-def phylogenyAlignToTreeMafftFasttreeSample(sample: CustomSample, outputDir: Path) -> Path:
+def phylogenyAlignToTreeMafftFasttreeSample(sample: CustomSample, outputDir: Path, threads: Optional[int]) -> Path:
     sequencesPath = Path(sample.path) / "rep-seqs.qza"
 
     aligmentPath = outputDir / "aligned-rep-seqs.qza"
@@ -20,7 +21,8 @@ def phylogenyAlignToTreeMafftFasttreeSample(sample: CustomSample, outputDir: Pat
         str(aligmentPath),
         str(maskedAligmentPath),
         str(unrootedTreePath),
-        str(rootedTreePath)
+        str(rootedTreePath),
+        threads
     )
 
     outputPath = outputDir / "tree.zip"
@@ -48,7 +50,7 @@ def processSample(
 
     # Phylogenetic diversity analysis
     logging.info(">> [Qiime: Phylogenetic Diversity] Generating phylogenetic tree")
-    treePath = phylogenyAlignToTreeMafftFasttreeSample(sample, sampleOutputDir)
+    treePath = phylogenyAlignToTreeMafftFasttreeSample(sample, sampleOutputDir, taskRun.parameters["threads"])
     ctx_qiime2.createSample(f"{index}-phylogenetic-tree", outputDataset, treePath, taskRun, "Step 6: Phylogenetic tree")
 
 

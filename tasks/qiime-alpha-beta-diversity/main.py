@@ -23,7 +23,8 @@ def diversityCoreMetricsPhylogeneticSample(
     tablePath: Path,
     samplingDepth: int,
     metadataPath: Path,
-    outputDir: Path
+    outputDir: Path,
+    threads
 ) -> Path:
 
     phylogenyPath = sample.joinPath("rooted-tree.qza")
@@ -34,7 +35,8 @@ def diversityCoreMetricsPhylogeneticSample(
         str(tablePath),
         samplingDepth,
         str(metadataPath),
-        str(outputPath)
+        str(outputPath),
+        threads
     )
 
     outputZipPath = outputDir / f"{outputPath.name}.zip"
@@ -184,7 +186,8 @@ def processSample(
             denoisedSample.joinPath("table.qza"),
             taskRun.parameters["samplingDepth"],
             metadataPath,
-            sampleOutputDir
+            sampleOutputDir,
+            taskRun.parameters["threads"]
         )
 
         coreMetricsSample = ctx_qiime2.createSample(
