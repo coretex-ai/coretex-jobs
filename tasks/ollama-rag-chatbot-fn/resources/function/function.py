@@ -30,7 +30,7 @@ def response(requestData: dict[str, Any]) -> dict[str, Any]:
     if query == None:
         functions.badRequest("Query cannot be empty")
 
-    if inputSessionId is None:
+    if inputSessionId is None or not sessionPath.exists():
         logging.debug(">>> Creating new session")
         queryEmbedding = ollama.embeddings(model = EMBEDDING_MODEL, prompt = query)["embedding"]
 
