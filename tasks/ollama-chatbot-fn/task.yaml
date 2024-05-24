@@ -1,0 +1,13 @@
+id: ollama-rag-endpoint
+name: "RAG endpoint"
+description: Ceates an endpoint for a chatbot
+is_active: true
+project_type: 8
+param_groups:
+- name: parameters
+  params:
+  - name: model
+    description: LLM that will act as converation partner. Available models can be browsed at https://ollama.com/library
+    value: llama3
+    data_type: str
+    required: true
