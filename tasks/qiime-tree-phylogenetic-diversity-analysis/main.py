@@ -65,7 +65,7 @@ def main() -> None:
 
     outputDir = folder_manager.createTempFolder("tree_output")
 
-    outputDatasetName = f"{taskRun.id} - Step 6: Phylogenetic tree"
+    outputDatasetName = f"{taskRun.id}-step-6-phylogenetic-tree"
     with createDataset(CustomDataset, outputDatasetName, taskRun.projectId) as outputDataset:
         for sample in denoisedSamples:
             index = ctx_qiime2.sampleNumber(sample)

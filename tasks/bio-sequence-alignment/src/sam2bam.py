@@ -28,7 +28,7 @@ def loadData(dataset: CustomDataset) -> list[Path]:
 def sam2bam(taskRun: TaskRun[CustomDataset], samDir: Path) -> None:
     bamDir = folder_manager.createTempFolder("BAM")
 
-    datasetName = f"{taskRun.id} - Sequence alignment: BAM"
+    datasetName = f"{taskRun.id}-sequence-alignment-bam"
     with createDataset(CustomDataset, datasetName, taskRun.projectId) as bamDataset:
 
         logging.info(f">> [Sequence Alignment] Output BAM files will be uploaded to coretex dataset: \"{bamDataset.name}\", ID: {bamDataset.id}")

@@ -72,7 +72,7 @@ def main() -> None:
 
     outputDir = folder_manager.createTempFolder("demux_output")
 
-    outputDatasetName = f"{taskRun.id} - Step 2: Demultiplexing"
+    outputDatasetName = f"{taskRun.id}-step-2-demultiplexing"
     with createDataset(CustomDataset, outputDatasetName, taskRun.projectId) as outputDataset:
         for sample in importedSamples:
             sample.unzip()

@@ -28,7 +28,7 @@ def getMatrixName(
     origins = ".".join(sampleOrigin)
     techniques = ".".join(sequencingTechnique)
 
-    suffix = f"{origins}_{techniques}_{percentile}_{quantize}"
+    suffix = f"{origins}-{techniques}-{percentile}-{quantize}"
 
     return hashCacheName(datasetName, suffix)
 

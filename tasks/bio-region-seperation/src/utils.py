@@ -34,7 +34,7 @@ def clearDirectory(directory: Path) -> None:
 def uploadToCoretex(taskRun: TaskRun[CustomDataset], groups: list[Path]) -> None:
     zipOut = Path(folder_manager.createTempFolder("zipOut"))
 
-    datasetName = f"{taskRun.id} - Separated Sequences"
+    datasetName = f"{taskRun.id}-separated-sequences"
     with createDataset(CustomDataset, datasetName, taskRun.projectId) as dataset:
         for group in groups:
             groupZip = zipOut / (group.name + ".zip")

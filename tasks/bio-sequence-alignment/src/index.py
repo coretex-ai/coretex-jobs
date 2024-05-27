@@ -104,7 +104,7 @@ def index(taskRun: TaskRun[CustomDataset]) -> Path:
         cacheName = hashCacheName(filename, genomeUrl)
     else:
         referenceDataset = taskRun.parameters["referenceDataset"]
-        cacheName = f"{referenceDataset.id}_genomeCache"
+        cacheName = f"{referenceDataset.id}-genomeCache"
 
     cache = getCache(cacheName)
     if cache is not None and isCacheValid(cache):

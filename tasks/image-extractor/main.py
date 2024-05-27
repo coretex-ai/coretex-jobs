@@ -51,7 +51,7 @@ def main() -> None:
         taskRun.dataset.classes.exclude(excludedClasses)
 
     parentClass = taskRun.dataset.classByName(taskRun.parameters["parentClass"])
-    outputDatasetName = f"{taskRun.id} - {taskRun.dataset.name}"
+    outputDatasetName = f"{taskRun.id}-{taskRun.dataset.name}"
 
     with createDataset(ImageDataset, outputDatasetName, taskRun.projectId) as outputDataset:
         outputDataset.saveClasses(taskRun.dataset.classes)

@@ -208,7 +208,7 @@ def main() -> None:
 
     outputDir = folder_manager.createTempFolder("qiime_output")
 
-    outputDatasetName = f"{taskRun.id} - Step 3: DADA2"
+    outputDatasetName = f"{taskRun.id}-step-3-dada2"
     with createDataset(CustomDataset, outputDatasetName, taskRun.projectId) as outputDataset:
         for sample in demuxSamples:
             sample.unzip()

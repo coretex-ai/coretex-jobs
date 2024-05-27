@@ -17,7 +17,7 @@ def getOutputDatasetName(taskRun: TaskRun) -> str:
     relevantParams["dataset"] = relevantParams["dataset"].id
     relevantParams.pop("outputDataset")
 
-    return hashCacheName(f"{taskRun.id}-AugImg", ".".join(str(relevantParams.values())))
+    return hashCacheName(f"{taskRun.id}-augimg", ".".join(str(relevantParams.values())))
 
 
 def getCache(cacheName: str, expectedSize: int) -> Optional[ImageDataset]:
