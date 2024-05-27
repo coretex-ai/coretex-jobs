@@ -10,7 +10,7 @@ param_groups:
     description: Dataset containing PDF and txt files which will act as external data for enriched responses through RAG
     value: null
     data_type: dataset
-    required: false
+    required: true
 - name: outputs
   params:
   - name: outputDataset

@@ -69,9 +69,6 @@ def loadCorpus(dataset: CustomDataset) -> np.ndarray:
 
 def main():
     taskRun = currentTaskRun()
-    if taskRun.parameters["dataset"] is None:
-        return None
-
     taskRun.dataset.download()
 
     serverProcess = launchOllamaServer()
