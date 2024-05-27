@@ -14,11 +14,14 @@ from utils import loadCorpusAndIndex, retrieveDocuments
 from model import launchOllamaServer, pullModel, warmup, EMBEDDING_MODEL, LLM
 
 
-memoryFolder = folder_manager.createTempFolder("memories")
-if not memoryFolder.exists():
-    memoryFolder.mkdir()
+memoryFolder = folder_manager.temp / "memories"
+memoryFolder.mkdir(exist_ok = True)
 
-corpus, index = loadCorpusAndIndex(Path.cwd().parent / "corpus-index")
+indexDir = Path.cwd().parent / "corpus-index"
+rag = indexDir.exists()
+
+if rag:
+    corpus, index = loadCorpusAndIndex()
 
 
 def response(requestData: dict[str, Any]) -> dict[str, Any]:
@@ -32,19 +35,23 @@ def response(requestData: dict[str, Any]) -> dict[str, Any]:
 
     if inputSessionId is None or not sessionPath.exists():
         logging.debug(">>> Creating new session")
-        queryEmbedding = ollama.embeddings(model = EMBEDDING_MODEL, prompt = query)["embedding"]
+        if rag:
+            queryEmbedding = ollama.embeddings(model = EMBEDDING_MODEL, prompt = query)["embedding"]
+            retrievedDocuments = retrieveDocuments(
+                np.array([queryEmbedding]),
+                index,
+                corpus,
+                int(requestData.get("paragraphs", 5))
+            )
 
-        retrievedDocuments = retrieveDocuments(
-            np.array([queryEmbedding]),
-            index,
-            corpus,
-            int(requestData.get("paragraphs", 5))
-        )
+            context = " ".join([doc[0] for doc in retrievedDocuments])
+            suffix = f"Respond to the users queries with the help of the following data that has been retrieved through RAG: \n\n{context}\n\n Do not mention that this data was provided and just answer the queries."
+        else:
+            suffix = "Aid the user in any way you can."
 
-        context = " ".join([doc[0] for doc in retrievedDocuments])
         messages = [{
             "role": "system",
-            "content": f"You are a helpful chatbot. Respond to the users queries with the help of the following data that has been retrieved through RAG: \n\n{context}\n\n Do not mention that this data was provided and just answer the queries."
+            "content": f"You are a helpful chatbot. {suffix}"
         }]
     else:
         with sessionPath.open("r") as file:
@@ -76,6 +83,9 @@ def response(requestData: dict[str, Any]) -> dict[str, Any]:
 
 
 launchOllamaServer()
+
 pullModel(LLM)
-pullModel(EMBEDDING_MODEL)
+if rag:
+    pullModel(EMBEDDING_MODEL)
+
 warmup()

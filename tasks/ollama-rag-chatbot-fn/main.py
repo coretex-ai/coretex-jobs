@@ -20,9 +20,6 @@ def getIndexPath(dataset: CustomDataset):
 
 def main():
     taskRun = currentTaskRun()
-    taskRun.dataset.download()
-    sample = taskRun.dataset.samples[0]
-    sample.unzip()
 
     model = Model.createModel(f"{taskRun.id}-rag-chatbot", taskRun.id, 1.0, {})
 
@@ -30,7 +27,13 @@ def main():
     resDir = folder_manager.createTempFolder("resDir")
 
     copyDir(modelFunction, resDir, "function")
-    copyDir(sample.path, resDir, "corpus-index")
+
+    if taskRun.parameters["dataset"] is not None:
+        taskRun.dataset.download()
+        sample = taskRun.dataset.samples[0]
+        sample.unzip()
+
+        copyDir(sample.path, resDir, "corpus-index")
 
     model.upload(resDir)
 
