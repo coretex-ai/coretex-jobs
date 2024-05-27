@@ -28,3 +28,11 @@ param_groups:
     value: null
     data_type: dataset
     required: false
+- name: parameters
+  params:
+  - name: threads
+    description: Number of threads to use for qiime commands. If empty, multithreading will not be used.
+      Set to -1 to use a thread for each CPU core
+    value: -1
+    data_type: int
+    required: false

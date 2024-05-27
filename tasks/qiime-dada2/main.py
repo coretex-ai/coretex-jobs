@@ -20,7 +20,8 @@ def dada2DenoiseSingleSample(
     trimLeftF: int,
     truncLenF: int,
     trimLeftR: Optional[int],
-    truncLenR: Optional[int]
+    truncLenR: Optional[int],
+    threads: Optional[int]
 ) -> Path:
 
     samplePath = Path(sample.path)
@@ -43,7 +44,8 @@ def dada2DenoiseSingleSample(
             truncLenR,
             str(representativeSequencesPath),
             str(tablePath),
-            str(denoisingStatsPath)
+            str(denoisingStatsPath),
+            threads
         )
     else:
         logging.info(">> [Qiime: DADA2] Denoising single-end sequences")
@@ -53,7 +55,8 @@ def dada2DenoiseSingleSample(
             truncLenF,
             str(representativeSequencesPath),
             str(tablePath),
-            str(denoisingStatsPath)
+            str(denoisingStatsPath),
+            threads
         )
 
     denoiseOutput = outputDir / "denoise-output.zip"
@@ -162,6 +165,7 @@ def processSample(
         truncLenF,
         trimLeftR,
         truncLenR,
+        taskRun.parameters["threads"]
     )
 
     denoisedSample = ctx_qiime2.createSample(f"{index}-denoise", outputDataset, denoiseOutput, taskRun, "Step 3: DADA2")
