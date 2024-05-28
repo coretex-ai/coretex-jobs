@@ -1,5 +1,5 @@
 id: ollama-rag-index
-name: Rag index
+name: ollama-rag-index
 description: Geneates a dataset with paragraphs and their index from PDF and txt files whih will be used in RAG-endpoint
 is_active: true
 project_type: 8
