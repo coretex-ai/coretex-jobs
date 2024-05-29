@@ -4,13 +4,16 @@ from ultralytics.models.yolo.detect.train import DetectionTrainer
 
 def onTrainStart(trainer: DetectionTrainer) -> None:
     currentTaskRun().createMetrics([
-        Metric.create("precision", "epoch", MetricType.int, "value", MetricType.float, [1, 10], [0, 1]),
-        Metric.create("recall",    "epoch", MetricType.int, "value", MetricType.float, [1, 10], [0, 1]),
-        Metric.create("mAP50",     "epoch", MetricType.int, "value", MetricType.float, [1, 10], [0, 1]),
-        Metric.create("mAP50-95",  "epoch", MetricType.int, "value", MetricType.float, [1, 10], [0, 1]),
-        Metric.create("box_loss",  "epoch", MetricType.int, "value", MetricType.float, [1, 10]),
-        Metric.create("cls_loss",  "epoch", MetricType.int, "value", MetricType.float, [1, 10]),
-        Metric.create("dfl_loss",  "epoch", MetricType.int, "value", MetricType.float, [1, 10])
+        Metric.create("precision", "epoch", MetricType.int, "value", MetricType.float, [1, trainer.epochs], [0, 1]),
+        Metric.create("recall",    "epoch", MetricType.int, "value", MetricType.float, [1, trainer.epochs], [0, 1]),
+        Metric.create("mAP50",     "epoch", MetricType.int, "value", MetricType.float, [1, trainer.epochs], [0, 1]),
+        Metric.create("mAP50-95",  "epoch", MetricType.int, "value", MetricType.float, [1, trainer.epochs], [0, 1]),
+        Metric.create("box_om",    "epoch", MetricType.int, "value", MetricType.float, [1, trainer.epochs]),
+        Metric.create("cls_om",    "epoch", MetricType.int, "value", MetricType.float, [1, trainer.epochs]),
+        Metric.create("dfl_om",    "epoch", MetricType.int, "value", MetricType.float, [1, trainer.epochs]),
+        Metric.create("box_oo",    "epoch", MetricType.int, "value", MetricType.float, [1, trainer.epochs]),
+        Metric.create("cls_oo",    "epoch", MetricType.int, "value", MetricType.float, [1, trainer.epochs]),
+        Metric.create("dfl_oo",    "epoch", MetricType.int, "value", MetricType.float, [1, trainer.epochs])
     ])
 
 

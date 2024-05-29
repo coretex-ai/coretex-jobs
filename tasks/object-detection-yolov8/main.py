@@ -13,6 +13,7 @@ from ultralytics.utils.metrics import DetMetrics
 import yaml
 
 from src import callback as cb, predict
+from src.utils import downloadModelWeights
 
 
 def loadAnnotation(sample: ImageSample) -> Optional[CoretexImageAnnotation]:
@@ -169,10 +170,11 @@ def main() -> None:
     ctxModel: Optional[Model] = taskRun.parameters.get("model")
     if ctxModel is None:
         # Start training from specified YoloV8 weights
-        weights = taskRun.parameters.get("weights", "yolov8n.pt")
+        weights = taskRun.parameters.get("weights", "yolov10n.pt")
         logging.info(f">> [ObjectDetection] Using \"{weights}\" for training the model")
 
-        model = YOLO(taskRun.parameters.get("weights", "yolov8n.pt"))
+        downloadModelWeights(weights)
+        model = YOLO(weights)
     else:
         logging.info(f">> [ObjectDetection] Using \"{ctxModel.name}\" for training the model")
 

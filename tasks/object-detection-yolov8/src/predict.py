@@ -19,7 +19,7 @@ def classByLabelId(labelId: int, classes: ImageDatasetClasses) -> Optional[Image
     return classes.classByLabel(classes.labels[labelId])
 
 
-def processResult(result: Results, classes: list[ImageDatasetClasses], savePath: Path):
+def processResult(result: Results, classes: list[ImageDatasetClasses], savePath: Path) -> None:
     fig = plt.figure(num = 1, clear = True)
     plt.imshow(result.orig_img)
 
@@ -59,7 +59,7 @@ def isSampleValid(sample: ImageSample) -> bool:
     return True
 
 
-def predictBatch(model: YOLO, dataset: ImageDataset, startIdx: int, endIdx: int, resultPath: Path):
+def predictBatch(model: YOLO, dataset: ImageDataset, startIdx: int, endIdx: int, resultPath: Path) -> None:
     batch = [sample for sample in dataset.samples[startIdx:endIdx] if isSampleValid(sample)]
 
     results: Results = model.predict([sample.imagePath for sample in batch], save = True, project = "./results")
