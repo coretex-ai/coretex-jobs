@@ -1,5 +1,5 @@
-id: object-detection-yolov8
-name: Object Detection (YoloV8)
+id: object-detection-yolov10
+name: Object Detection (YoloV10)
 description: ""
 is_active: true
 project_type: 1
@@ -29,15 +29,16 @@ param_groups:
   - name: parameters
     params:
     - name: weights
-      description: "YoloV8 weights which are used for training the model."
+      description: "YoloV10 weights which are used for training the model."
       value:
         selected: 0
         options:
-        - yolov8n.pt
-        - yolov8s.pt
-        - yolov8m.pt
-        - yolov8l.pt
-        - yolov8x.pt
+        - yolov10n.pt
+        - yolov10s.pt
+        - yolov10m.pt
+        - yolov10b.pt
+        - yolov10l.pt
+        - yolov10x.pt
       data_type: enum
       required: false
     - name: epochs
