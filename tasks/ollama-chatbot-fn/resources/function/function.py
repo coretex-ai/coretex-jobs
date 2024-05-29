@@ -21,7 +21,7 @@ indexDir = Path.cwd().parent / "corpus-index"
 rag = indexDir.exists()
 
 if rag:
-    corpus, index = loadCorpusAndIndex()
+    corpus, index = loadCorpusAndIndex(indexDir)
 
 
 def response(requestData: dict[str, Any]) -> dict[str, Any]:
