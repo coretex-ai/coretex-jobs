@@ -1,0 +1,17 @@
+param_groups:
+  -
+    name: inputs
+    params:
+      -
+        name: dataset
+        value: 36943
+        required: true
+        data_type: dataset
+        description: 'custom dataset with .pdf documents'
+      -
+        name: language
+        value: Serbian
+        required: true
+        data_type: str
+        description: 'The user inputs the language they want to translate the text into.'
+      

@@ -1,0 +1,5 @@
+coretex
+ollama
+requests
+pymupdf
+faiss-cpu
