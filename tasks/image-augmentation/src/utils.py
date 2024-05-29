@@ -39,7 +39,7 @@ def copySample(sample: ImageSample, dataset: ImageDataset) -> None:
     sample.unzip()
 
     try:
-        copy = dataset.add(sample.imagePath)
+        copy = dataset.add(sample.imagePath, sample.name)
     except BaseException as ex:
         logging.error(f"\tFailed to copy sample \"{sample.name}\" - \"{ex}\"")
         return
