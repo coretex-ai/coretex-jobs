@@ -20,6 +20,7 @@ def readPDF(filePath: Path) -> list[str]:
         for page in doc:
             paragraphs = page.get_text().split("\n")
             pagesText.extend(paragraphs)
+
     return pagesText
 
 
@@ -27,10 +28,7 @@ def loadCorpus(dataset: CustomDataset) -> list[list[str]]:
     corpus: list[list[str]] = []
     for sample in dataset.samples:
         sample.unzip()
-
-        pdfPaths = [path for path in sample.path.iterdir() if path.suffix == ".pdf"]
-
-        for pdfPath in pdfPaths:
+        for pdfPath in sample.path.glob("*.pdf"):
             corpus.append(readPDF(pdfPath))
 
     return corpus
@@ -53,8 +51,8 @@ def main() -> None:
     newDataset = CustomDataset.createDataset(newDatasetName, taskRun.projectId)
 
     language = taskRun.parameters["language"]
-    counter: int = 1
-    for document in corpus:
+
+    for counter, document in enumerate(corpus, start=1):
         document = [x.strip() for x in document]
         while "" in document:
             document.remove("")
@@ -73,11 +71,12 @@ def main() -> None:
         
         with open(f"{counter}.txt", "w") as file:
             file.write(translatedText)
+
         with zipfile.ZipFile(f"{counter}.zip", "w") as zipFile:
             zipFile.write(f"{counter}.txt")
+
         filePath = f"{counter}.zip"
         newDataset.add(filePath)
-        counter += 1
 
 
 main()
