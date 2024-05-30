@@ -3,3 +3,4 @@ ollama
 requests
 pymupdf
 faiss-cpu
+

@@ -68,3 +68,4 @@ def pullModel(model: str) -> None:
         ollama.pull(model)
     except ResponseError:
         pullModel(model)
+
