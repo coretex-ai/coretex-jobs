@@ -110,7 +110,7 @@ def sequenceDatasetSplit(dataset: SequenceDataset, numbers: list[int], projectID
                 sample.unzip()
                 sampleNameInMetadata = newMetadataList[j][fieldNames[0]]
                 if(sample.name.startswith(sampleNameInMetadata.split("_")[0])):
-                    newDatasetsList[i].add(sample.zipPath, sampleName=sampleNameInMetadata.split("_")[0])
+                    newDatasetsList[i].add(sample.zipPath, sampleName=sampleNameInMetadata)
         
         newDatasetsList[i].add(pathToMetadata)
 
