@@ -1,20 +1,19 @@
-from typing import Optional
+from typing import Optional, Any
 
 import logging
 
-from numpy import ndarray
+import numpy as np
 
 import imageio.v3 as imageio
 
 from coretex import CoretexImageAnnotation, ImageDataset, folder_manager, ImageSample, TaskRun
-from coretex.utils import hashCacheName
 
 
 def uploadAugmentedImage(
     imageName: str,
-    augmentedImage: ndarray,
+    augmentedImage: np.ndarray,
     annotation: CoretexImageAnnotation,
-    metadata: dict,
+    metadata: dict[str, Any],
     taskRun: TaskRun,
     outputDataset: ImageDataset
 ) -> None:
@@ -53,13 +52,12 @@ def copySample(sample: ImageSample, dataset: ImageDataset) -> None:
                 logging.error("\tFailed to delete sample")
 
 
-def getOutputDatasetName(taskRun: TaskRun) -> str:
+def getRelevantParameters(taskRun: TaskRun) -> list[str]:
     relevantParams = taskRun.parameters.copy()
 
     relevantParams["dataset"] = relevantParams["dataset"].id
     relevantParams.pop("outputDataset")
-
-    return hashCacheName(f"{taskRun.id}-AugImg", ".".join(str(relevantParams.values())))
+    return [str(value) for value in relevantParams.values()]
 
 
 def getCache(cacheName: str, expectedSize: int) -> Optional[ImageDataset]:
@@ -70,3 +68,20 @@ def getCache(cacheName: str, expectedSize: int) -> Optional[ImageDataset]:
             return cache
 
     return None
+
+
+def convertToSerializable(obj):
+    if isinstance(obj, dict):
+        return {k: convertToSerializable(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convertToSerializable(i) for i in obj]
+    elif isinstance(obj, tuple):
+        return tuple(convertToSerializable(i) for i in obj)
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    else:
+        return obj

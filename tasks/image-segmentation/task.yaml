@@ -44,6 +44,6 @@ param_groups:
   - name: excludedClasses
     description: Classes from the dataset which will be excluded from training the
       model
-    value: ["first_name", "last_name", "sex", "date_of_birth"]
+    value: null
     data_type: list[str]
     required: false

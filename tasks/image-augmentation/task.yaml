@@ -86,5 +86,5 @@ param_groups:
     description: Set to true if you want the untransformed images from the input
       dataset to be included in the output dataset alongside transformed images.
     value: false
-    data_byte: bool
+    data_type: bool
     required: true

@@ -8,7 +8,7 @@ import albumentations as A
 
 from coretex import ImageDataset, ImageSample, CoretexSegmentationInstance, BBox, CoretexImageAnnotation, TaskRun
 
-from .utils import uploadAugmentedImage
+from .utils import uploadAugmentedImage, convertToSerializable
 
 
 def mask2poly(mask: np.ndarray) -> list[int]:
@@ -72,6 +72,7 @@ def processMetadata(inputMetadata: dict[str, Any]) -> dict[str, Any]:
         if transform["__class_fullname__"] == "GaussNoise" and transform["applied"]:
             transform["params"]["gauss"] = None  # Hits timeout during upload
 
+    inputMetadata = convertToSerializable(inputMetadata)  # Some values in metadata are not json serializable
     outputMetadata = {"full_augmentation_metadata": inputMetadata}  # Include the full original metadata
     transforms = inputMetadata.get("transforms", [])
 
