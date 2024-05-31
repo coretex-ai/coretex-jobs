@@ -4,10 +4,10 @@ param_groups:
     params:
       -
         name: dataset
-        value: 36810
+        value: 36676
         required: true
         data_type: dataset
-        description: "User-entered database"
+        description: "User-entered dataset"
       -
         name: numSplit
         value: 2

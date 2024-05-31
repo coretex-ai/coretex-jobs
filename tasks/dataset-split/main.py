@@ -22,21 +22,20 @@ def imageDatasetSplit(dataset: ImageDataset, numbers: list[int], projectID: int)
     newDatasetsList: list[NetworkDataset] = []
 
     numSplit = len(numbers)
-
+    
     counter = 0
     for i in range(numSplit):
         newDataset = ImageDataset.createDataset(f"{currentTaskRun().id}-newDataset-{i}", projectID)
         newDataset.saveClasses(dataset.classes)
-        newDatasetsList.append(newDataset)
-
+        
         for _ in range(numbers[i]):
             samples[counter].unzip()
-            newSample = newDatasetsList[i].add(samples[counter].imagePath)
-
-            tmpAnotation = newSample.load().annotation
+            newSample = newDataset.add(samples[counter].imagePath)
+            
+            tmpAnotation = samples[counter].load().annotation
             if(tmpAnotation is not None):
                 newSample.saveAnnotation(tmpAnotation)
-
+            
             try:
                 tmpMetadata = samples[counter].loadMetadata()
                 newSample.saveMetadata(tmpMetadata)
@@ -44,8 +43,10 @@ def imageDatasetSplit(dataset: ImageDataset, numbers: list[int], projectID: int)
                 logging.warning("File not found")
             except ValueError:
                 logging.warning("Invalid data type")
-
+            
             counter += 1
+
+        newDatasetsList.append(newDataset)
 
     return newDatasetsList
 
@@ -110,7 +111,7 @@ def sequenceDatasetSplit(dataset: SequenceDataset, numbers: list[int], projectID
                 sample.unzip()
                 sampleNameInMetadata = newMetadataList[j][fieldNames[0]]
                 if(sample.name.startswith(sampleNameInMetadata.split("_")[0])):
-                    newDatasetsList[i].add(sample.zipPath, sampleName=sampleNameInMetadata)
+                    newDatasetsList[i].add(sample.zipPath, sampleName=sampleNameInMetadata.split("_")[0])
         
         newDatasetsList[i].add(pathToMetadata)
 
@@ -119,7 +120,6 @@ def sequenceDatasetSplit(dataset: SequenceDataset, numbers: list[int], projectID
 
 def main() -> None:
     taskRun = currentTaskRun()
-    taskRun.setDatasetType(SequenceDataset)
     dataset = taskRun.dataset
     
     numSplit = taskRun.parameters["numSplit"]
@@ -136,16 +136,17 @@ def main() -> None:
     newDatasetsList: list[NetworkDataset]
 
     if(isinstance(dataset, ImageDataset)):
-        logging.warning("image")
         newDatasetsList = imageDatasetSplit(dataset, numbers, projectID)
     
-    if(isinstance(dataset, SequenceDataset)):
-        logging.warning("sequence")
-        newDatasetsList = sequenceDatasetSplit(dataset, numbers, projectID)
-
     if(isinstance(dataset, CustomDataset)):
-        logging.warning("custom")
-        newDatasetsList = customDatasetSplit(dataset, numbers, projectID) 
+        try:
+            taskRun.setDatasetType(SequenceDataset)
+            dataset = taskRun.dataset
+            n = dataset.count
+            numbers = numberOfElementsInEachNewDataset(n, numSplit)
+            newDatasetsList = sequenceDatasetSplit(dataset, numbers, projectID)
+        except:
+            newDatasetsList = customDatasetSplit(dataset, numbers, projectID) 
     
 
 main()
