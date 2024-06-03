@@ -1,17 +1,15 @@
-from coretex import currentTaskRun
-from coretex import CustomDataset
-from typing import Any
-
 from pathlib import Path
 
 import logging
-import fitz
-import ollama
 import zipfile
 
-import numpy as np
+import fitz
+import ollama
 
 from model import launchOllamaServer, pullModel, LLM
+
+from coretex import currentTaskRun
+from coretex import CustomDataset
 
 
 def readPDF(filePath: Path) -> list[str]:
@@ -47,16 +45,13 @@ def main() -> None:
     logging.info(">> [OllamaRAG] Loading text corpus")
     corpus = loadCorpus(taskRun.dataset)
     
-    newDatasetName = f"{taskRun.id}-translated"
-    newDataset = CustomDataset.createDataset(newDatasetName, taskRun.projectId)
+    translatedDataset = CustomDataset.createDataset(f"{taskRun.id}-translated", taskRun.projectId)
 
     language = taskRun.parameters["language"]
 
-    for counter, document in enumerate(corpus, start=1):
+    for counter, document in enumerate(corpus, start = 1):
         document = [x.strip() for x in document]
-        while "" in document:
-            document.remove("")
-
+        document = [line for line in document if line != ""]
         translatedText: str = ""
         for paragraph in document:
             logging.info(">> [OllamaRAG] Translating paragraph")
@@ -75,9 +70,11 @@ def main() -> None:
         with zipfile.ZipFile(f"{counter}.zip", "w") as zipFile:
             zipFile.write(f"{counter}.txt")
 
+        Path(f"{counter}.txt").unlink()
         filePath = f"{counter}.zip"
-        newDataset.add(filePath)
+        translatedDataset.add(filePath)
+        Path(f"{counter}.zip").unlink()
 
 
-main()
-
+if __name__ == "__main__":
+    main()
