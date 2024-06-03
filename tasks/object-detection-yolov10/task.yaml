@@ -1,0 +1,91 @@
+id: object-detection-yolov10
+name: Object Detection (YoloV10)
+description: ""
+is_active: true
+project_type: 1
+
+param_groups:
+  - name: inputs
+    params:
+    - name: dataset
+      description: "A dataset which contains images and annotations which are represented\
+        \ by Coretex.ai\r\nimage annotation format."
+      value: null
+      data_type: dataset
+      required: true
+    - name: model
+      description: "Coretex model used as a checkpoint for transfer learning. If this\n
+        value is specified it is used over \"weights\" parameter."
+      value: null
+      data_type: model
+      required: false
+  - name: outputs
+    params:
+    - name: outputModel
+      description: Model trained by this task.
+      value: null
+      data_type: model
+      required: false
+  - name: parameters
+    params:
+    - name: weights
+      description: "YoloV8 weights which are used for training the model."
+      value:
+        selected: 0
+        options:
+        - yolov10n.pt
+        - yolov10s.pt
+        - yolov10m.pt
+        - yolov10b.pt
+        - yolov10l.pt
+        - yolov10x.pt
+      data_type: enum
+      required: false
+    - name: epochs
+      description: "Number of passes that the model will make through the dataset while\r\
+        \ntraining. Higher values increase training time and accuracy, while lower\r\
+        \nvalues decrease training time, but they might also decrease accuracy."
+      value: 100
+      data_type: int
+      required: true
+    - name: batchSize
+      description: "Number of segments into which the dataset is split before the training.\r\
+        \nDuring the training a single epoch passes through all of the segments\r\n\
+        before moving on to the next epoch. Higher values decrease training time,\r\n\
+        but will increase memory consumption, while lower values increase training\r\
+        \ntime, but decrease memory consumption."
+      value: 16
+      data_type: int
+      required: true
+    - name: imageSize
+      description: "Size to which the images from the dataset will be resized to before\
+        \ training.\r\nThis affects input and output shapes of the model. Input and\
+        \ output image shapes\r\nwill be equal to \"imageSize * imageSize * 3\" where\
+        \ imageSize represents both width\r\nand height of the image, while number 3\
+        \ (RGB image) represents the number of channels.\r\n\r\nHigher values increase\
+        \ training time, but they can increase model accuracy, while lower\r\nvalues\
+        \ decrease training time, but they also can decrease model accuracy."
+      value: 640
+      data_type: int
+      required: true
+    - name: validationSplit
+      description: "Percentage of dataset which will be used for validation. Prefered\
+        \ value range is\r\n0.1 - 0.9, while the optimal value is 0.2. If values are\
+        \ close or equal to 0, or\r\nclose or equal to 1 unexpected errors can appear.\r\
+        \n\r\nIf value for \"validationSplit\" is 0.2, then that means that 20% of the\
+        \ dataset\r\nwill go for validation, while the rest (80%) will go for training."
+      value: 0.2
+      data_type: float
+      required: true
+    - name: excludedClasses
+      description: Classes which will be excluded from the dataset when the training
+        process starts.
+      value: []
+      data_type: list[str]
+      required: false
+    - name: earlyStopping
+      description: Enable/disable early stopping of Run if loss hasn't decreased after
+        multiple epochs
+      value: true
+      data_type: bool
+      required: true

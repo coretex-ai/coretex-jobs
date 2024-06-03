@@ -4,8 +4,9 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, Future
 
 import logging
 import json
+import os
 
-from coretex import currentTaskRun, TaskRun, ImageDataset, ImageSample, CoretexImageAnnotation, createDataset
+from coretex import currentTaskRun, TaskRun, ImageDataset, CoretexImageAnnotation, createDataset
 
 from src import sample_generator
 
@@ -50,7 +51,7 @@ def main() -> None:
         taskRun.dataset.classes.exclude(excludedClasses)
 
     parentClass = taskRun.dataset.classByName(taskRun.parameters["parentClass"])
-    outputDatasetName = f"{taskRun.id} - {taskRun.dataset.name}"
+    outputDatasetName = f"{taskRun.id}-{taskRun.dataset.name}"
 
     with createDataset(ImageDataset, outputDatasetName, taskRun.projectId) as outputDataset:
         outputDataset.saveClasses(taskRun.dataset.classes)

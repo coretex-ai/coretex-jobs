@@ -1,3 +1,4 @@
+from typing import Optional
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -8,7 +9,8 @@ from coretex.bioinformatics import ctx_qiime2
 def featureClassifierClassifySklearnSample(
     sample: CustomSample,
     classifierPath: Path,
-    outputDir: Path
+    outputDir: Path,
+    threads: Optional[int]
 ) -> Path:
 
     outputPath = outputDir / "taxonomy.qza"
@@ -16,7 +18,8 @@ def featureClassifierClassifySklearnSample(
     ctx_qiime2.featureClassifierClassifySklearn(
         str(classifierPath),
         str(sample.joinPath("rep-seqs.qza")),
-        str(outputPath)
+        str(outputPath),
+        threads
     )
 
     outputZipPath = outputDir / "taxonomy.zip"
@@ -32,7 +35,8 @@ def processSample(
     metadataSample: CustomSample,
     taskRun: TaskRun,
     outputDataset: CustomDataset,
-    outputDir: Path
+    outputDir: Path,
+    threads: Optional[int]
 ):
 
     sample.unzip()
@@ -53,7 +57,8 @@ def processSample(
     taxonomyPath = featureClassifierClassifySklearnSample(
         sample,
         classifierPath,
-        sampleOutputDir
+        sampleOutputDir,
+        threads
     )
 
     taxonomySample = ctx_qiime2.createSample(f"{index}-taxonomy", outputDataset, taxonomyPath, taskRun, "Step 5: Taxonomic Analysis")
@@ -99,7 +104,7 @@ def main() -> None:
 
     outputDir = folder_manager.createTempFolder("taxonomy_output")
 
-    outputDatasetName = f"{taskRun.id} - Step 5: Taxonomic analysis"
+    outputDatasetName = f"{taskRun.id}-step-5-taxonomic-analysis"
     with createDataset(CustomDataset, outputDatasetName,taskRun.projectId) as outputDataset:
         for sample in denoisedSamples:
             index = ctx_qiime2.sampleNumber(sample)
@@ -114,7 +119,8 @@ def main() -> None:
                 metadataSample,
                 taskRun,
                 outputDataset,
-                outputDir
+                outputDir,
+                taskRun.parameters["threads"]
             )
 
     taskRun.submitOutput("outputDataset", outputDataset)

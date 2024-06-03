@@ -89,6 +89,7 @@ def closedReferenceClustering(
     referenceSequencesPath: Path,
     outputDir: Path,
     percentIdentity: float,
+    threads: Optional[int]
 ) -> Path:
 
     tablePath = sample.path / "table.qza"
@@ -105,7 +106,8 @@ def closedReferenceClustering(
         percentIdentity,
         clusteredTablePath,
         clusteredSequencesPath,
-        unmatchedSequencesPath
+        unmatchedSequencesPath,
+        threads
     )
 
     outputPath = outputDir / "otu.zip"
@@ -122,6 +124,7 @@ def openReferenceClustering(
     referenceSequencesPath: Path,
     outputDir: Path,
     percentIdentity: float,
+    threads: Optional[int]
 ) -> Path:
 
     tablePath = sample.path / "table.qza"
@@ -138,7 +141,8 @@ def openReferenceClustering(
         percentIdentity,
         clusteredTablePath,
         clusteredSequencesPath,
-        newReferenceSequencesPath
+        newReferenceSequencesPath,
+        threads
     )
 
     outputPath = outputDir / "otu.zip"
@@ -150,7 +154,12 @@ def openReferenceClustering(
     return outputPath
 
 
-def deNovoClustering(sample: CustomSample, outputDir: Path, percentIdentity: float) -> Path:
+def deNovoClustering(
+    sample: CustomSample,
+    outputDir: Path,
+    percentIdentity: float,
+    threads: Optional[int]
+) -> Path:
     tablePath = sample.path / "table.qza"
     sequencesPath = sample.path / "rep-seqs.qza"
 
@@ -162,7 +171,8 @@ def deNovoClustering(sample: CustomSample, outputDir: Path, percentIdentity: flo
         str(sequencesPath),
         percentIdentity,
         str(clusteredTablePath),
-        str(clusteredSequencesPath)
+        str(clusteredSequencesPath),
+        threads
     )
 
     outputPath = outputDir / "otu.zip"
@@ -193,19 +203,37 @@ def processSample(
 
     referenceDataset = taskRun.parameters["referenceDataset"]
 
+    threads = taskRun.parameters["threads"]
     if clusteringMethod == "De Novo":
         logging.info(">> [Qiime: Clustering] Performing de novo clustering")
-        otuPath = deNovoClustering(sample, sampleOutputDir, taskRun.parameters["percentIdentity"])
+        otuPath = deNovoClustering(
+            sample,
+            sampleOutputDir,
+            taskRun.parameters["percentIdentity"],
+            threads
+        )
     elif referenceDataset is not None:
         logging.info(">> [Qiime: Clustering] Importing reference dataset")
         referenceSequencesPath = importReferenceDataset(referenceDataset, outputDir, taskRun)
         if clusteringMethod == "Closed Reference":
             logging.info(">> [Qiime: Clustering] Performing closed reference clustering")
-            otuPath = closedReferenceClustering(sample, referenceSequencesPath, outputDir, percentIdentity)
+            otuPath = closedReferenceClustering(
+                sample,
+                referenceSequencesPath,
+                outputDir,
+                percentIdentity,
+                threads
+            )
 
         if clusteringMethod == "Open Reference":
             logging.info(">> [Qiime: Clustering] Performing open reference custering")
-            otuPath = openReferenceClustering(sample, referenceSequencesPath, outputDir, percentIdentity)
+            otuPath = openReferenceClustering(
+                sample,
+                referenceSequencesPath,
+                outputDir,
+                percentIdentity,
+                threads
+            )
     else:
         raise ValueError(">> [Qiime: Clustering] referenceDataset parameter must not be empty in case of closed or open reference clustering")
 
@@ -226,7 +254,7 @@ def main() -> None:
 
     outputDir = folder_manager.createTempFolder("otu_output")
 
-    outputDatasetName = f"{taskRun.id} - Step 4: OTU clustering - {clusteringMethod}"
+    outputDatasetName = f"{taskRun.id}-step-4-otu-clustering-{clusteringMethod}"
     with createDataset(CustomDataset, outputDatasetName, taskRun.projectId) as outputDataset:
         for sample in denoisedSamples:
             index = ctx_qiime2.sampleNumber(sample)

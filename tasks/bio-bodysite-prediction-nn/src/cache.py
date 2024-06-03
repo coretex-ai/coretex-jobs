@@ -18,7 +18,7 @@ def getCacheName(datasetName: str, sampleOrigin: list[str], sequencingTechnique:
 
     suffix = f"{origins}_{techniques}"
 
-    return hashCacheName(datasetName + "_nn", suffix)
+    return hashCacheName(datasetName + "-nn", suffix)
 
 
 def getCache(cacheName: str) -> Optional[CustomDataset]:

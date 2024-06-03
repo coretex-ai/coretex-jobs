@@ -18,7 +18,7 @@ def sequeneAlignment(taskRun: TaskRun[CustomDataset], genomePrefix: Path) -> Pat
     logging.info(">> [Sequence Alignment] Dataset downloaded")
     sequencePaths = sa.loadFa(taskRun.dataset)
 
-    datasetName = f"{taskRun.id} - Sequence alignment: SAM"
+    datasetName = f"{taskRun.id}-sequence-alignment-sam"
     with createDataset(CustomDataset, datasetName, taskRun.projectId) as samDataset:
         logging.info(f">> [Sequence Alignment] Output SAM files will be uploaded to coretex dataset: \"{samDataset.name}\", ID: {samDataset.id}")
         logging.info(">> [Sequence Alignment] Starting sequence alignment process")
