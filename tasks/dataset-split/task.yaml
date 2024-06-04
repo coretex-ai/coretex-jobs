@@ -1,3 +1,8 @@
+id: dataset-split
+name: Dataset Split
+description: "Task to split a dataset into a user-defined number of parts"
+is_active: true
+project_type: 
 param_groups:
   -
     name: inputs

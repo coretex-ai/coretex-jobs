@@ -120,7 +120,6 @@ def sequenceDatasetSplit(dataset: SequenceDataset, numberOfSamples: list[int], p
         Path(f"_metadata_{i}.csv").unlink()
         Path(f"_metadata_{i}.zip").unlink()
         
-
     return listOfNewDatasets
 
 
