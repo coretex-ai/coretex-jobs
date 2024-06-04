@@ -4,12 +4,12 @@ param_groups:
     params:
       -
         name: dataset
-        value: 36676
+        value: null
         required: true
         data_type: dataset
         description: "User-entered dataset"
       -
-        name: numSplit
+        name: numberOfNewDatasets
         value: 2
         required: true
         data_type: int
