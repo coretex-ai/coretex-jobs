@@ -5,8 +5,7 @@ import csv
 import zipfile
 import logging
 
-from coretex import currentTaskRun
-from coretex import NetworkDataset, ImageDataset, CustomDataset, SequenceDataset
+from coretex import currentTaskRun, NetworkDataset, ImageDataset, CustomDataset, SequenceDataset
 
 
 def numberOfSamplesInEachNewDataset(n: int, numberOfNewDatasets: int) -> list[int]:
@@ -32,15 +31,15 @@ def imageDatasetSplit(dataset: ImageDataset, numberOfSamples: list[int], project
         
         for _ in range(numberOfSamples[i]):
             samples[counter].unzip()
-            newSample = newDataset.add(samples[counter].imagePath)
+            addedSample = newDataset.add(samples[counter].imagePath)
             
             tmpAnotation = samples[counter].load().annotation
             if(tmpAnotation is not None):
-                newSample.saveAnnotation(tmpAnotation)
+                addedSample.saveAnnotation(tmpAnotation)
             
             try:
                 tmpMetadata = samples[counter].loadMetadata()
-                newSample.saveMetadata(tmpMetadata)
+                addedSample.saveMetadata(tmpMetadata)
             except FileNotFoundError:
                 logging.warning("File not found")
             except ValueError:
