@@ -1,22 +1,10 @@
 import logging
-import sys
+
+from coretex import currentTaskRun, NetworkDataset, CustomDataset, ImageDataset, SequenceDataset
 
 
-from coretex import currentTaskRun
-from coretex import NetworkDataset, CustomDataset, ImageDataset
-
-def allDatasetsIsSameClass(listOfDatasets: list[NetworkDataset]) -> bool:
-    print([type(x) for x in listOfDatasets])
-    print([isinstance(x, ImageDataset) for x in listOfDatasets])
-    return len(set([isinstance(x, ImageDataset) for x in listOfDatasets])) == 1
-
-
-#def allDatasetsIsSameType(listOfDatasets: list[NetworkDataset]) -> bool:
-#    return len(set([type(x) for x in listOfDatasets])) == 1
-
-"""
 def customDatasetMerge(listOfDatasets: list[CustomDataset], projectID: int) -> NetworkDataset:
-    newDataset: NetworkDataset = CustomDataset.createDataset(f"{currentTaskRun().id}-merge-dataset", projectID)
+    newDataset: NetworkDataset = CustomDataset.createDataset(f"{currentTaskRun().id}-merge-custom-dataset", projectID)
     
     for dataset in listOfDatasets:
         dataset.download()
@@ -26,9 +14,10 @@ def customDatasetMerge(listOfDatasets: list[CustomDataset], projectID: int) -> N
             newDataset.add(sample.zipPath)
 
     return newDataset
-"""
+
+
 def imageDatasetMerge(listOfDatasets: list[ImageDataset], projectID: int) -> NetworkDataset:
-    mergeDataset = ImageDataset.createDataset(f"{currentTaskRun().id}-merge-dataset", projectID)
+    mergeDataset = ImageDataset.createDataset(f"{currentTaskRun().id}-merge-image-dataset", projectID)
     mergeDataset.saveClasses(listOfDatasets[0].classes)
 
     for dataset in listOfDatasets:
@@ -54,31 +43,17 @@ def imageDatasetMerge(listOfDatasets: list[ImageDataset], projectID: int) -> Net
     return mergeDataset
 
 
-
-
 def main() -> None:
+
     taskRun = currentTaskRun()
-    listOfDatasets = taskRun.parameters["datasetsList"]
     projectID = taskRun.projectId
-    
-    mergeDataset: NetworkDataset
+    listOfDatasets = taskRun.parameters["datasetsList"]
 
+    if(isinstance(listOfDatasets[0], CustomDataset)):
+        datasetMerge = customDatasetMerge(listOfDatasets, projectID)
     
-    
-
-    if(not allDatasetsIsSameClass(listOfDatasets)):
-        logging.error("The datasets are not of the same type.")
-        sys.exit("The End")
-    else:
-        mergeDataset = imageDatasetMerge(listOfDatasets, projectID)
-    
-    #if(not allDatasetsIsSameType(listOfDatasets)):
-    #    logging.error("The datasets are not of the same type.")
-    #    sys.exit("The End")
-
-  
-    
-
+    if(isinstance(listOfDatasets[0], ImageDataset)):
+        datasetMerge = imageDatasetMerge(listOfDatasets, projectID)
 
 
 if __name__ == "__main__":

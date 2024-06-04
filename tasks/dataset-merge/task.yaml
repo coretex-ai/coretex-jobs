@@ -5,12 +5,10 @@ description: "This task is used to merge user-defined numbers of coretex dataset
 is_active: true
 project_type: 
 param_groups:
-  -
-    name: inputs
+  - name: inputs
     params:
-      -
-        name: datasetsList
-        value: [37154, 37126]
+      - name: datasetsList
+        value: [37126, 37127]
         required: true
         data_type: list[dataset]
         description: "list od datasets for merge"
