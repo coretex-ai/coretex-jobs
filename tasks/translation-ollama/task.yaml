@@ -5,17 +5,14 @@ description: "This task is used for translating .pdf
 is_active: true
 project_type: 
 param_groups:
-  -
-    name: inputs
+  - name: inputs
     params:
-      -
-        name: dataset
+      - name: dataset
         value: null
         required: true
         data_type: dataset
         description: 'custom dataset with .pdf documents'
-      -
-        name: language
+      - name: language
         value: Serbian
         required: true
         data_type: str

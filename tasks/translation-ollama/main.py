@@ -8,8 +8,7 @@ import ollama
 
 from model import launchOllamaServer, pullModel, LLM
 
-from coretex import currentTaskRun
-from coretex import CustomDataset
+from coretex import currentTaskRun, CustomDataset
 
 
 def readPDF(filePath: Path) -> list[str]:
@@ -52,6 +51,7 @@ def main() -> None:
     for counter, document in enumerate(corpus, start = 1):
         document = [x.strip() for x in document]
         document = [line for line in document if line != ""]
+        
         translatedText: str = ""
         for paragraph in document:
             logging.info(">> [OllamaRAG] Translating paragraph")
@@ -62,7 +62,7 @@ def main() -> None:
             }
             response = ollama.chat(model = LLM, messages = [msg])
             answer = response["message"]["content"]
-            translatedText = translatedText + answer + "\n"
+            translatedText += answer + "\n"
         
         with open(f"{counter}.txt", "w") as file:
             file.write(translatedText)
@@ -72,6 +72,7 @@ def main() -> None:
 
         Path(f"{counter}.txt").unlink()
         filePath = f"{counter}.zip"
+        
         translatedDataset.add(filePath)
         Path(f"{counter}.zip").unlink()
 
