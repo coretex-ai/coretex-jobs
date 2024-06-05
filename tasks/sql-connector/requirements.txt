@@ -1,0 +1,2 @@
+coretex
+mysql-connector-python
