@@ -1,0 +1,7 @@
+coretex
+pillow
+torch
+torchvision
+scikit-learn
+seaborn
+matplotlib
