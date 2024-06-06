@@ -16,14 +16,16 @@ def main() -> None:
     user = taskRun.parameters["user"]
     password = taskRun.parameters["password"]
     host = taskRun.parameters["host"]
+    port = taskRun.parameters["port"]
     database = taskRun.parameters["database"]
 
     configForConnection = {
         'user': user,
         'password': password,
         'host': host,
-        'unix_socket': '/Applications/MAMP/tmp/mysql/mysql.sock',
+        #'unix_socket': '/Applications/MAMP/tmp/mysql/mysql.sock',
         'database': database,
+        'port': port
     }
     try:
         logging.info("Connecting with database")
@@ -37,7 +39,7 @@ def main() -> None:
             tables = [table[0] for table in tables]
             
             for table in tables:
-                dataFromTableForCSV = []
+                dataFromTableForCSV: list[dict] = []
                 
                 cursor.execute(f"SELECT column_name FROM information_schema.columns WHERE table_schema = '{database}' AND table_name = '{table}'")
                 columnNames = list(cursor.fetchall())

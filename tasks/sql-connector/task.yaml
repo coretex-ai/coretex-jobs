@@ -21,8 +21,13 @@ param_groups:
         required: true
         data_type: str
         description: "Host"
+      - name: port
+        value: 8889
+        required: true
+        data_type: int
+        description: "Port"
       - name: database
-        value: test_db
+        value: imported_db
         required: true
         data_type: str
         description: "Database name"
