@@ -20,7 +20,7 @@ def trainEpoch(
     optimizer: optim.Adam,
     criterion: nn.MSELoss,
     device: torch.device
-) -> torch.Tensor:
+) -> tuple[float, float]:
 
     model.train()
 
@@ -46,7 +46,13 @@ def trainEpoch(
     return trainingLoss, trainingAccuracy
 
 
-def computeValData(validLoader: DataLoader, model: OrientationClassifier, criterion: nn.MSELoss, device: torch.device) -> torch.Tensor:
+def computeValData(
+    validLoader: DataLoader,
+    model: OrientationClassifier,
+    criterion: nn.MSELoss,
+    device: torch.device
+) -> tuple[float, float]:
+
     model.eval()
 
     runningValLoss = 0.0
@@ -62,7 +68,6 @@ def computeValData(validLoader: DataLoader, model: OrientationClassifier, criter
 
             runningValLoss += loss.item()
             runningValAcc += calculateAccuracy(outputs, labels)
-
 
     validationLoss = runningValLoss / len(validLoader)
     validationAccuracy = runningValAcc / len(validLoader)

@@ -23,7 +23,7 @@ def createMetrics(taskRun: TaskRun) -> None:
     ])
 
 
-def main():
+def main() -> None:
     taskRun: TaskRun[ImageDataset] = currentTaskRun()
     createMetrics(taskRun)
     taskRun.dataset.download()
@@ -37,8 +37,9 @@ def main():
     labelColumn = taskRun.parameters["labelColumn"]
 
     mean, std = getMeanAndStd(imagesDir)
+    transform = getTransform((imageSize, imageSize), (mean, std))
 
-    dataset = OrientedDataset(imagesDir, sampleIds, labelColumn, transform = getTransform((imageSize, imageSize), (mean, std)))
+    dataset = OrientedDataset(imagesDir, sampleIds, labelColumn, transform)
     trainDataset, validDataset = splitDataset(dataset, taskRun.parameters["validSplit"])
 
     trainLoader = DataLoader(trainDataset, batch_size = batchSize, shuffle = True, num_workers = 0)

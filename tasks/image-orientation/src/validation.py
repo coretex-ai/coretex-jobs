@@ -12,7 +12,13 @@ from .model import OrientationClassifier
 from .utils import calculateAccuracy
 
 
-def validate(dataLoader: DataLoader, model: OrientationClassifier, device: torch.device, confMatrixPath: Path):
+def validate(
+    dataLoader: DataLoader,
+    model: OrientationClassifier,
+    device: torch.device,
+    confMatrixPath: Path
+) -> float:
+
     predictedOrientations: list[int] = []
     trueOrientations: list[int] = []
 

@@ -1,25 +1,32 @@
+from __future__ import annotations
 from typing import Any, Optional
 from pathlib import Path
 
 import json
 
 from PIL import Image, ImageOps
-from torch.utils.data import Dataset, random_split
 from torchvision import transforms
 from coretex import ImageDataset, folder_manager
+from torch.utils.data import Dataset, random_split
 
 import torch
 
 
 class OrientedDataset(Dataset):
 
-    def __init__(self, imagesDir: Path, sampleIds: list[int], labelColumn: str, transform: transforms.Compose = None):
+    def __init__(
+        self, imagesDir: Path,
+        sampleIds: list[int],
+        labelColumn: str,
+        transform: transforms.Compose = None
+    ) -> None:
+
         self.imagesDir = imagesDir
         self.sampleIds = sampleIds
         self.labelColumn = labelColumn
         self.transform = transform
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.sampleIds)
 
     def __getitem__(self, idx) -> dict[str, Any]:
@@ -53,7 +60,7 @@ def getTransform(
     return transforms.Compose(compose)
 
 
-def prepareDataset(dataset: ImageDataset) -> Path:
+def prepareDataset(dataset: ImageDataset) -> tuple[Path, list[int]]:
     sampleIds: list[int] = []
     imagesDir = folder_manager.createTempFolder("imagesDir")
     for sample in dataset.samples:
@@ -66,7 +73,7 @@ def prepareDataset(dataset: ImageDataset) -> Path:
     return imagesDir, sampleIds
 
 
-def splitDataset(dataset: "OrientedDataset", validSplit: float) -> tuple["OrientedDataset", "OrientedDataset"]:
+def splitDataset(dataset: OrientedDataset, validSplit: float) -> tuple["OrientedDataset", "OrientedDataset"]:
     totalSize = len(dataset)
     trainSize = int((1.0 - validSplit) * totalSize)
     validationSize = totalSize - trainSize
