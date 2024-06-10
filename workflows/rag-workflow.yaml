@@ -1,0 +1,14 @@
+id: rag-workflow
+name: rag-workflow
+description: Workflow that performs RAG related indexing on an input dataset of pdf/txt files and then generates an endpint with the index embedded
+project_type: 8
+is_active: true
+jobs:
+  rag-index:
+    template_id: ollama-rag-index
+
+  rag-chatbot:
+    template_id: ollama-rag-endpoint
+    param_groups:
+      inputs:
+        dataset: rag-index.outputDataset
