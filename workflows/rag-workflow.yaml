@@ -8,7 +8,7 @@ jobs:
     template_id: ollama-rag-index
 
   rag-chatbot:
-    template_id: ollama-rag-endpoint
+    template_id: ollama-chatbot-endpoint
     param_groups:
       inputs:
         dataset: rag-index.outputDataset
