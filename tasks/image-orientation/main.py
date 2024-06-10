@@ -16,10 +16,10 @@ from src.utils import getMeanAndStd
 
 def createMetrics(taskRun: TaskRun) -> None:
     taskRun.createMetrics([
-        Metric.create("training_loss", "epoch", MetricType.int, "value", MetricType.float, [1, 10]),
-        Metric.create("validation_loss", "epoch", MetricType.int, "value", MetricType.float, [1, 10]),
-        Metric.create("training_accuracy", "epoch", MetricType.int, "value", MetricType.float, [1, 10]),
-        Metric.create("validation_accuracy", "epoch", MetricType.int, "value", MetricType.float, [1, 10])
+        Metric.create("training_loss", "epoch", MetricType.int, "value", MetricType.float),
+        Metric.create("validation_loss", "epoch", MetricType.int, "value", MetricType.float),
+        Metric.create("training_accuracy", "epoch", MetricType.int, "value", MetricType.float),
+        Metric.create("validation_accuracy", "epoch", MetricType.int, "value", MetricType.float)
     ])
 
 
