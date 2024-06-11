@@ -8,22 +8,20 @@ from mysql.connector import Error
 
 import mysql.connector
 
-from coretex import currentTaskRun, CustomDataset
+from coretex import currentTaskRun, CustomDataset, CredentialsSecret
 
 
 def main() -> None:
     taskRun = currentTaskRun()
-    user = taskRun.parameters["user"]
-    password = taskRun.parameters["password"]
+    credentials = taskRun.parameters["credentials"]
     host = taskRun.parameters["host"]
     port = taskRun.parameters["port"]
     database = taskRun.parameters["database"]
 
     configForConnection = {
-        'user': user,
-        'password': password,
+        'user': credentials.username,
+        'password': credentials.password,
         'host': host,
-        #'unix_socket': '/Applications/MAMP/tmp/mysql/mysql.sock',
         'database': database,
         'port': port
     }
@@ -64,13 +62,13 @@ def main() -> None:
                 Path(f"{table}.csv").unlink()
                 Path(f"{table}.zip").unlink()
 
-    except Error as e:
-        logging.error(f"Error while connecting to database {e}")
-
-    finally:
         if(conn.is_connected()):
             conn.close()
             logging.info("Connection with database is closed")
+
+    except Error as e:
+        logging.error(f"Error while connecting to database {e}")
+
     
 
 if __name__ == "__main__":

@@ -6,28 +6,23 @@ project_type:
 param_groups:
   - name: inputs
     params:
-      - name: user
-        value: root
+      - name: credentials
+        value: null
         required: true
-        data_type: str
-        description: "Username"
-      - name: password
-        value: root
-        required: true
-        data_type: str
-        description: "Password"
+        data_type: credentials_secret
+        description: "Credentials"
       - name: host
-        value: localhost
+        value: null
         required: true
         data_type: str
         description: "Host"
       - name: port
-        value: 8889
+        value: null
         required: true
         data_type: int
         description: "Port"
       - name: database
-        value: imported_db
+        value: null
         required: true
         data_type: str
         description: "Database name"
