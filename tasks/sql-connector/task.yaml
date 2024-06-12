@@ -7,7 +7,7 @@ param_groups:
   - name: inputs
     params:
       - name: user
-        value: postgres
+        value: intern1
         required: true
         data_type: str
         description: user
@@ -27,7 +27,7 @@ param_groups:
         data_type: int
         description: "Port"
       - name: database
-        value: postgres
+        value: db1
         required: true
         data_type: str
         description: "Database name"

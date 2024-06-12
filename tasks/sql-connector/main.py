@@ -44,50 +44,45 @@ def main() -> None:
     }
 
 
-    try:
-        logging.info("Connecting with database")
-        conn = psycopg2.connect(**configForConnection)
-        #if not conn.closed():
-         #   logging.warning("ostvarena konekcija")
+    logging.info("Connecting with database")
+    conn = psycopg2.connect(**configForConnection)
+    #dataset = CustomDataset.createDataset(f"{taskRun.id}-{database}", taskRun.projectId)
 
-        dataset = CustomDataset.createDataset(f"{taskRun.id}-{database}", taskRun.projectId)
+    cursor = conn.cursor()
+    cursor.execute(f"SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+    tables = cursor.fetchall()
+    tables = [table[0] for table in tables]
 
-        cursor = conn.cursor()
-        cursor.execute(f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{database}'")
-        tables = list(cursor.fetchall())
-        tables = [table[0] for table in tables]
-        logging.warning(f"marker {cursor}")
-        for table in tables:
-            dataFromTableForCSV: list[dict] = []
+    for table in tables:
+        dataFromTableForCSV: list[dict] = []
                 
-            cursor.execute(f"SELECT column_name FROM information_schema.columns WHERE table_schema = '{database}' AND table_name = '{table}'")
-            columnNames = list(cursor.fetchall())
-            columnNames = [name[0] for name in columnNames]
+        cursor.execute(f"SELECT column_name FROM information_schema.columns WHERE table_schema = '{database}' AND table_name = '{table}'")
+        columnNames = list(cursor.fetchall())
+        columnNames = [name[0] for name in columnNames]
                 
-            cursor.execute(f"SELECT * FROM {table}")
-            rows = list(cursor.fetchall())
+        cursor.execute(f"SELECT * FROM {table}")
+        rows = list(cursor.fetchall())
                 
-            for row in rows:
-                dataFromTableForCSV.append(dict(zip(columnNames, list(row))))
+        for row in rows:
+            dataFromTableForCSV.append(dict(zip(columnNames, list(row))))
 
-            with open(f"{table}.csv", "w", newline="") as file:
-                writer = csv.DictWriter(file, fieldnames=columnNames)
-                writer.writeheader()
-                writer.writerows(dataFromTableForCSV)
+        with open(f"{table}.csv", "w", newline="") as file:
+            writer = csv.DictWriter(file, fieldnames=columnNames)
+            writer.writeheader()
+            writer.writerows(dataFromTableForCSV)
                 
-            with zipfile.ZipFile(f"{table}.zip", "w") as zipFile:
-                zipFile.write(f"{table}.csv")
+        with zipfile.ZipFile(f"{table}.zip", "w") as zipFile:
+            zipFile.write(f"{table}.csv")
 
-            dataset.add(f"{table}.zip")
+        #dataset.add(f"{table}.zip")
+        
+        Path(f"{table}.csv").unlink()
+        Path(f"{table}.zip").unlink()
 
-            Path(f"{table}.csv").unlink()
-            Path(f"{table}.zip").unlink()
+    conn.close()
+    logging.info("Connection with database is closed")
 
-        conn.close()
-        logging.info("Connection with database is closed")
 
-    except:
-        logging.error("Error while connecting to database")
 
 
 
