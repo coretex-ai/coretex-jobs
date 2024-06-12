@@ -29,7 +29,7 @@ def imageDatasetMerge(listOfDatasets: list[ImageDataset], projectID: int) -> Net
             addedSample = mergeDataset.add(sample.imagePath)
 
             tmpAnotation = sample.load().annotation
-            if(tmpAnotation is not None):
+            if tmpAnotation is not None:
                 addedSample.saveAnnotation(tmpAnotation)
             
             try:
@@ -49,10 +49,10 @@ def main() -> None:
     projectID = taskRun.projectId
     listOfDatasets = taskRun.parameters["datasetsList"]
 
-    if(isinstance(listOfDatasets[0], CustomDataset)):
+    if isinstance(listOfDatasets[0], CustomDataset):
         datasetMerge = customDatasetMerge(listOfDatasets, projectID)
     
-    if(isinstance(listOfDatasets[0], ImageDataset)):
+    if isinstance(listOfDatasets[0], ImageDataset):
         datasetMerge = imageDatasetMerge(listOfDatasets, projectID)
 
 
