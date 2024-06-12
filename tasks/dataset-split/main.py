@@ -1,9 +1,9 @@
 from pathlib import Path
 
-import sys
 import csv
-import zipfile
 import logging
+import sys
+import zipfile
 
 from coretex import currentTaskRun, NetworkDataset, ImageDataset, CustomDataset, SequenceDataset
 
@@ -11,6 +11,7 @@ from coretex import currentTaskRun, NetworkDataset, ImageDataset, CustomDataset,
 def numberOfSamplesInEachNewDataset(n: int, numberOfNewDatasets: int) -> list[int]:
     r = n % numberOfNewDatasets
     numberOfSamples = [n // numberOfNewDatasets] * numberOfNewDatasets
+    
     for i in range(r):
         numberOfSamples[i] += 1
 
@@ -34,7 +35,7 @@ def imageDatasetSplit(dataset: ImageDataset, numberOfSamples: list[int], project
             addedSample = newDataset.add(samples[counter].imagePath)
             
             tmpAnotation = samples[counter].load().annotation
-            if(tmpAnotation is not None):
+            if tmpAnotation is not None:
                 addedSample.saveAnnotation(tmpAnotation)
             
             try:
@@ -104,20 +105,17 @@ def sequenceDatasetSplit(dataset: SequenceDataset, numberOfSamples: list[int], p
             zipFile.write(f"_metadata_{i}.csv")
 
         newDataset = CustomDataset.createDataset(f"{currentTaskRun().id}-newDataset-{i}", projectID)
-        if(newDataset is not None):
+        if newDataset is not None:
             listOfNewDatasets.append(newDataset)
         
         for j in range(numberOfSamples[i]):
             for sample in samples:
                 sample.unzip()
                 sampleNameInMetadata = listOfNewMetadata[j][fieldNames[0]]
-                if(sample.name.startswith(sampleNameInMetadata.split("_")[0])):
+                if sample.name.startswith(sampleNameInMetadata.split("_")[0]):
                     listOfNewDatasets[i].add(sample.zipPath, sampleName=sampleNameInMetadata.split("_")[0])
         
         listOfNewDatasets[i].add(f"_metadata_{i}.zip")
-
-        Path(f"_metadata_{i}.csv").unlink()
-        Path(f"_metadata_{i}.zip").unlink()
         
     return listOfNewDatasets
 
@@ -130,7 +128,7 @@ def main() -> None:
     projectID = taskRun.projectId
 
     n = dataset.count
-    if(n <= numberOfNewDatasets or numberOfNewDatasets < 2):
+    if n <= numberOfNewDatasets or numberOfNewDatasets < 2:
         logging.error("Number of samples is smaller than the number you want to divide the database")
         sys.exit("The End")
         
@@ -138,10 +136,10 @@ def main() -> None:
 
     listOfNewDatasets: list[NetworkDataset]
 
-    if(isinstance(dataset, ImageDataset)):
+    if isinstance(dataset, ImageDataset):
         listOfNewDatasets = imageDatasetSplit(dataset, numberOfSamples, projectID)
     
-    if(isinstance(dataset, CustomDataset)):
+    if isinstance(dataset, CustomDataset):
         try:
             taskRun.setDatasetType(SequenceDataset)
             dataset = taskRun.dataset
