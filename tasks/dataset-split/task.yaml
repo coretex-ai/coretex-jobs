@@ -1,6 +1,6 @@
 id: dataset-split
 name: Dataset Split
-description: "Task to split a dataset into a user-defined number of parts"
+description: Task to split a dataset into a user-defined number of parts
 is_active: true
 project_type: 
 param_groups:
@@ -10,9 +10,9 @@ param_groups:
         value: null
         required: true
         data_type: dataset
-        description: "User-entered dataset"
+        description: User-entered dataset
       - name: numberOfNewDatasets
         value: 2
         required: true
         data_type: int
-        description: "Number of parts the database"
+        description: Number of parts the database
