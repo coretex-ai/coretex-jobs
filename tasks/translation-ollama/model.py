@@ -14,16 +14,6 @@ OLLAMA_SERVER_URL = "http://127.0.0.1:11434"
 LLM = "llama3"
 
 
-def warmup() -> None:
-    ollama.chat(
-        model = LLM,
-        messages = [{
-            "role": "user",
-            "content": f"This is a test and a warmup. Respond with \"OK\"."
-        }]
-    )
-
-
 def isOllamaInstalled() -> bool:
     try:
         subprocess.run(["ollama", "--version"], check = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
@@ -43,7 +33,7 @@ def installOllama() -> None:
 def isOllamaServerActiveAndRunning() -> bool:
     try:
         response = requests.get(OLLAMA_SERVER_URL)
-        return bool(response.status_code == 200)
+        return bool(response.ok)
     except requests.ConnectionError:
         return False
 

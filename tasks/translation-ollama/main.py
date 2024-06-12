@@ -6,13 +6,14 @@ import zipfile
 import fitz
 import ollama
 
-from model import launchOllamaServer, pullModel, LLM
+from coretex import currentTaskRun, CustomDataset, TaskRun
 
-from coretex import currentTaskRun, CustomDataset
+from model import launchOllamaServer, pullModel, LLM
 
 
 def readPDF(filePath: Path) -> list[str]:
     pagesText: list[str] = []
+    
     with fitz.open(filePath) as doc:
         for page in doc:
             paragraphs = page.get_text().split("\n")
@@ -23,17 +24,20 @@ def readPDF(filePath: Path) -> list[str]:
 
 def loadCorpus(dataset: CustomDataset) -> list[list[str]]:
     corpus: list[list[str]] = []
+    
     for sample in dataset.samples:
         sample.unzip()
-        for pdfPath in sample.path.glob("*.pdf"):
-            corpus.append(readPDF(pdfPath))
+
+        for pdfPath in sample.path.rglob("*.pdf"):
+            if not "__MACOSX" in str(pdfPath):
+                corpus.append(readPDF(pdfPath))
 
     return corpus
 
 
 def main() -> None:
-    taskRun = currentTaskRun()
-    dataset: CustomDataset = taskRun.dataset
+    taskRun: TaskRun[CustomDataset] = currentTaskRun()
+    dataset = taskRun.dataset
     dataset.download()
 
     launchOllamaServer()
@@ -52,7 +56,7 @@ def main() -> None:
         document = [x.strip() for x in document]
         document = [line for line in document if line != ""]
         
-        translatedText: str = ""
+        translatedText = ""
         for paragraph in document:
             logging.info(">> [OllamaRAG] Translating paragraph")
             query = f"I will send you one paragraph, you translate into {language}. Let your response be only the translation of the sent paragraph, without additional comments. The paragraph to be translated is: {paragraph}"
@@ -64,18 +68,17 @@ def main() -> None:
             answer = response["message"]["content"]
             translatedText += answer + "\n"
         
-        with open(f"{counter}.txt", "w") as file:
+        txtFileName = f"{counter}.txt" 
+        with open(txtFileName, "w") as file:
             file.write(translatedText)
 
-        with zipfile.ZipFile(f"{counter}.zip", "w") as zipFile:
-            zipFile.write(f"{counter}.txt")
-
-        Path(f"{counter}.txt").unlink()
-        filePath = f"{counter}.zip"
+        zipFileName = f"{counter}.zip"
+        with zipfile.ZipFile(zipFileName, "w") as zipFile:
+            zipFile.write(txtFileName)
         
-        translatedDataset.add(filePath)
-        Path(f"{counter}.zip").unlink()
+        translatedDataset.add(zipFileName)
 
 
 if __name__ == "__main__":
     main()
+    

@@ -1,7 +1,7 @@
 id: translation-ollama
 name: LLM-translation template
-description: "This task is used for translating .pdf 
-  files into the desired language using the Ollama chatbot."
+description: This task is used for translating .pdf 
+  files into the desired language using the Ollama chatbot.
 is_active: true
 project_type: 
 param_groups:
@@ -11,9 +11,9 @@ param_groups:
         value: null
         required: true
         data_type: dataset
-        description: 'custom dataset with .pdf documents'
+        description: custom dataset with .pdf documents
       - name: language
         value: Serbian
         required: true
         data_type: str
-        description: 'The user inputs the language they want to translate the text into.'
+        description: The user inputs the language they want to translate the text into.
