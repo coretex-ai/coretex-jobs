@@ -1,154 +1,129 @@
-from pathlib import Path
+from typing import Any
 
 import csv
 import logging
 import sys
 import zipfile
 
-from coretex import currentTaskRun, NetworkDataset, ImageDataset, CustomDataset, SequenceDataset
+from coretex import currentTaskRun, ImageDataset, CustomDataset, SequenceDataset, ImageSample, ImageDatasetClasses, CustomSample, SequenceSample
+
+from utils import samplesSplit, SampleType, DatasetType
 
 
-def numberOfSamplesInEachNewDataset(n: int, numberOfNewDatasets: int) -> list[int]:
-    r = n % numberOfNewDatasets
-    numberOfSamples = [n // numberOfNewDatasets] * numberOfNewDatasets
-    
-    for i in range(r):
-        numberOfSamples[i] += 1
+def imageDatasetSplit(splitSamples: list[list[ImageSample]], datasetClasses: ImageDatasetClasses, projectID: int) -> list[ImageDataset]:
+    splitDatasetsList: list[ImageDataset] = []
 
-    return numberOfSamples
+    for index, sampleChunk in enumerate(splitSamples):
+        splitDataset = ImageDataset.createDataset(f"{currentTaskRun().id}-newDataset-{index}", projectID)
+        splitDataset.saveClasses(datasetClasses)
 
-
-def imageDatasetSplit(dataset: ImageDataset, numberOfSamples: list[int], projectID: int) -> list[NetworkDataset]:  
-    dataset.download()
-    samples = dataset.samples
-    listOfNewDatasets: list[NetworkDataset] = []
-
-    numberOfNewDatasets = len(numberOfSamples)
-    
-    counter = 0
-    for i in range(numberOfNewDatasets):
-        newDataset = ImageDataset.createDataset(f"{currentTaskRun().id}-newDataset-{i}", projectID)
-        newDataset.saveClasses(dataset.classes)
-        
-        for _ in range(numberOfSamples[i]):
-            samples[counter].unzip()
-            addedSample = newDataset.add(samples[counter].imagePath)
+        for sample in sampleChunk:
+            sample.unzip()
+            addedSample = splitDataset.add(sample.imagePath)
             
-            tmpAnotation = samples[counter].load().annotation
+            tmpAnotation = sample.load().annotation
             if tmpAnotation is not None:
                 addedSample.saveAnnotation(tmpAnotation)
-            
+
             try:
-                tmpMetadata = samples[counter].loadMetadata()
+                tmpMetadata = sample.loadMetadata()
                 addedSample.saveMetadata(tmpMetadata)
             except FileNotFoundError:
-                logging.warning("File not found")
+                logging.warning("Metadata file not found")
             except ValueError:
-                logging.warning("Invalid data type")
-            
-            counter += 1
+                logging.warning("Invalid metadata type")
+        
+        splitDatasetsList.append(splitDataset)
 
-        listOfNewDatasets.append(newDataset)
-
-    return listOfNewDatasets
+    return splitDatasetsList
 
 
-def customDatasetSplit(dataset: CustomDataset, numberOfSamples: list[int], projectID: int) -> list[NetworkDataset]:  
-    dataset.download()
-    samples = dataset.samples
-    listOfNewDatasets: list[NetworkDataset] = []
+def customDatasetSplit(splitSamples: list[list[CustomSample]], projectID: int) -> list[CustomDataset]:  
+    splitDatasetsList: list[CustomDataset] = []
 
-    numberOfNewDatasets = len(numberOfSamples)
+    for index, sampleChunk in enumerate(splitSamples):
+        splitDataset = CustomDataset.createDataset(f"{currentTaskRun().id}-newDataset-{index}", projectID)
 
-    counter = 0
-    for i in range(numberOfNewDatasets):
-        newDataset = CustomDataset.createDataset(f"{currentTaskRun().id}-newDataset-{i}", projectID)
-        listOfNewDatasets.append(newDataset)
+        for sample in sampleChunk:
+            sample.unzip()
+            splitDataset.add(sample.zipPath)
 
-        for _ in range(numberOfSamples[i]):
-            listOfNewDatasets[i].add(samples[counter].zipPath)
-            counter += 1
+        splitDatasetsList.append(splitDataset)
 
-    return listOfNewDatasets
+    return splitDatasetsList
 
 
-def sequenceDatasetSplit(dataset: SequenceDataset, numberOfSamples: list[int], projectID: int) -> list[NetworkDataset]:
-    dataset.download()
-    md = list(dataset.metadata.load().folderContent)
-    mdStrAdress = md[0]   #address where the file metadata is located in the form of a string
+def sequenceDatasetSplit(splitSamples: list[list[SequenceSample]], metadata: Any, projectID: int) -> list[CustomDataset]:
+    metadataAddress = list(metadata.load().folderContent)[0] #address where the file metadata is located in the form of a string
     
-    samples = dataset.samples
-
-    with open(mdStrAdress, mode="r", newline="") as file:
+    with open(metadataAddress, mode="r", newline="") as file:
         reader = csv.DictReader(file)
-        listOfOriginalMetadata: list[dict] = []
+        originalMetadata: list[dict] = []
         
         for row in reader:
-            listOfOriginalMetadata.append(dict(row))
+            originalMetadata.append(dict(row))
 
-    listOfNewDatasets: list[NetworkDataset] = []
+    splitDatasetsList: list[CustomDataset] = []
+    
+    for index, sampleChunk in enumerate(splitSamples):
+        splitDataset = CustomDataset.createDataset(f"{currentTaskRun().id}-newDataset-{index}", projectID)
+        splitMetadataList: list[dict] = []
+        
+        for sample in sampleChunk:
+            sample.unzip()
+            splitDataset.add(sample.zipPath)
+            
+            fieldNames = list(originalMetadata[0].keys())
+            
+            for oneMetadata in originalMetadata:
+                if sample.name.startswith(oneMetadata[fieldNames[0]].split("_")[0]):
+                    splitMetadataList.append(oneMetadata)
 
-    numberOfNewDatasets = len(numberOfSamples)
-
-    lastIndex = 0
-    for i in range(numberOfNewDatasets):      
-        listOfNewMetadata = listOfOriginalMetadata[lastIndex : lastIndex + numberOfSamples[i]]
-        fieldNames = list(listOfNewMetadata[0].keys())
-        lastIndex += numberOfSamples[i]
-
-        with open(f"_metadata_{i}.csv", "w", newline="") as file:
+        metadataCSV = f"_metadata_{index}.csv"
+        with open(metadataCSV, "w", newline="") as file:
             writer = csv.DictWriter(file, fieldnames=fieldNames)
             writer.writeheader()
-            writer.writerows(listOfNewMetadata)
-            
-        with zipfile.ZipFile(f"_metadata_{i}.zip", "w") as zipFile:
-            zipFile.write(f"_metadata_{i}.csv")
+            writer.writerows(splitMetadataList)
 
-        newDataset = CustomDataset.createDataset(f"{currentTaskRun().id}-newDataset-{i}", projectID)
-        if newDataset is not None:
-            listOfNewDatasets.append(newDataset)
-        
-        for j in range(numberOfSamples[i]):
-            for sample in samples:
-                sample.unzip()
-                sampleNameInMetadata = listOfNewMetadata[j][fieldNames[0]]
-                if sample.name.startswith(sampleNameInMetadata.split("_")[0]):
-                    listOfNewDatasets[i].add(sample.zipPath, sampleName=sampleNameInMetadata.split("_")[0])
-        
-        listOfNewDatasets[i].add(f"_metadata_{i}.zip")
-        
-    return listOfNewDatasets
+        metadataZIP = f"_metadata_{index}.zip"
+        with zipfile.ZipFile(metadataZIP, "w") as zipFile:
+            zipFile.write(metadataCSV)
+
+        splitDataset.add(metadataZIP)
+
+    splitDatasetsList.append(splitDataset)
+          
+    return splitDatasetsList
 
 
 def main() -> None:
     taskRun = currentTaskRun()
-    dataset = taskRun.dataset
+    originalDataset = taskRun.dataset
     
-    numberOfNewDatasets = taskRun.parameters["numberOfNewDatasets"]
+    newDatasetCount = taskRun.parameters["numberOfNewDatasets"]
     projectID = taskRun.projectId
 
-    n = dataset.count
-    if n <= numberOfNewDatasets or numberOfNewDatasets < 2:
+    n = originalDataset.count
+    if n <= newDatasetCount or newDatasetCount < 2:
         logging.error("Number of samples is smaller than the number you want to divide the database")
         sys.exit("The End")
-        
-    numberOfSamples = numberOfSamplesInEachNewDataset(n, numberOfNewDatasets)
 
-    listOfNewDatasets: list[NetworkDataset]
+    splitSamples: list[list[SampleType]] = samplesSplit(originalDataset, newDatasetCount)
 
-    if isinstance(dataset, ImageDataset):
-        listOfNewDatasets = imageDatasetSplit(dataset, numberOfSamples, projectID)
-    
-    if isinstance(dataset, CustomDataset):
+    splitDatasetsList: list[DatasetType]
+
+    if isinstance(originalDataset, ImageDataset):
+        splitDatasetsList = imageDatasetSplit(splitSamples, originalDataset.classes, projectID)
+
+    if isinstance(originalDataset, CustomDataset):
         try:
             taskRun.setDatasetType(SequenceDataset)
-            dataset = taskRun.dataset
-            n = dataset.count
-            numberOfSamples = numberOfSamplesInEachNewDataset(n, numberOfNewDatasets)
-            listOfNewDatasets = sequenceDatasetSplit(dataset, numberOfSamples, projectID)
+            originalDataset = taskRun.dataset
+            splitSamples = samplesSplit(originalDataset, newDatasetCount)
+            listOfNewDatasets = sequenceDatasetSplit(splitSamples, originalDataset.metadata, projectID)
         except:
-            listOfNewDatasets = customDatasetSplit(dataset, numberOfSamples, projectID) 
-    
+            splitDatasetsList = customDatasetSplit(splitSamples, projectID) 
+
 
 if __name__ == "__main__":
     main()
