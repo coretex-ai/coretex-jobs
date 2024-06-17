@@ -46,7 +46,7 @@ def main() -> None:
 
     logging.info("Connecting with database")
     conn = psycopg2.connect(**configForConnection)
-    #dataset = CustomDataset.createDataset(f"{taskRun.id}-{database}", taskRun.projectId)
+    dataset = CustomDataset.createDataset(f"{taskRun.id}-{database}", taskRun.projectId)
 
     cursor = conn.cursor()
     cursor.execute(f"SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
@@ -56,10 +56,10 @@ def main() -> None:
     for table in tables:
         dataFromTableForCSV: list[dict] = []
                 
-        cursor.execute(f"SELECT column_name FROM information_schema.columns WHERE table_schema = '{database}' AND table_name = '{table}'")
+        cursor.execute(f"SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '{table}'")
         columnNames = list(cursor.fetchall())
         columnNames = [name[0] for name in columnNames]
-                
+             
         cursor.execute(f"SELECT * FROM {table}")
         rows = list(cursor.fetchall())
                 
@@ -74,7 +74,7 @@ def main() -> None:
         with zipfile.ZipFile(f"{table}.zip", "w") as zipFile:
             zipFile.write(f"{table}.csv")
 
-        #dataset.add(f"{table}.zip")
+        dataset.add(f"{table}.zip")
         
         Path(f"{table}.csv").unlink()
         Path(f"{table}.zip").unlink()
