@@ -7,12 +7,12 @@ param_groups:
   - name: inputs
     params:
       - name: dataset
-        value: null
+        value: 37696
         required: true
         data_type: dataset
         description: User-entered dataset
       - name: numberOfNewDatasets
-        value: 2
+        value: 3
         required: true
         data_type: int
         description: Number of parts the database

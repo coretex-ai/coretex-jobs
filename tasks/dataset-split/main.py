@@ -11,6 +11,8 @@ from utils import samplesSplit, SampleType, DatasetType
 
 
 def imageDatasetSplit(splitSamples: list[list[ImageSample]], datasetClasses: ImageDatasetClasses, projectID: int) -> list[ImageDataset]:
+    logging.info("Division of the ImageDataset")
+    
     splitDatasetsList: list[ImageDataset] = []
 
     for index, sampleChunk in enumerate(splitSamples):
@@ -35,6 +37,8 @@ def imageDatasetSplit(splitSamples: list[list[ImageSample]], datasetClasses: Ima
         
         splitDatasetsList.append(splitDataset)
 
+       
+
     return splitDatasetsList
 
 
@@ -50,10 +54,14 @@ def customDatasetSplit(splitSamples: list[list[CustomSample]], projectID: int) -
 
         splitDatasetsList.append(splitDataset)
 
+        logging.info(f'New dataset named "{splitDataset.name}" has been created with {len(sampleChunk)} samples')
+
     return splitDatasetsList
 
 
 def sequenceDatasetSplit(splitSamples: list[list[SequenceSample]], metadata: Any, projectID: int) -> list[CustomDataset]:
+    logging.info("Division of the SequenceDataset")
+    
     metadataAddress = list(metadata.load().folderContent)[0] #address where the file metadata is located in the form of a string
     
     with open(metadataAddress, mode="r", newline="") as file:
@@ -104,25 +112,31 @@ def main() -> None:
     projectID = taskRun.projectId
 
     n = originalDataset.count
-    if n <= newDatasetCount or newDatasetCount < 2:
-        logging.error("Number of samples is smaller than the number you want to divide the database")
-        sys.exit("The End")
+    try:
+        if n <= newDatasetCount:
+            raise ValueError("Number of samples is smaller than the number you want to divide the dataset")
+        if newDatasetCount < 2:
+            raise ValueError("Dataset can be divided into at least two parts")
 
-    splitSamples: list[list[SampleType]] = samplesSplit(originalDataset, newDatasetCount)
+        splitSamples: list[list[SampleType]] = samplesSplit(originalDataset, newDatasetCount)
 
-    splitDatasetsList: list[DatasetType]
+        splitDatasetsList: list[DatasetType]
 
-    if isinstance(originalDataset, ImageDataset):
-        splitDatasetsList = imageDatasetSplit(splitSamples, originalDataset.classes, projectID)
+        if isinstance(originalDataset, ImageDataset):
+            splitDatasetsList = imageDatasetSplit(splitSamples, originalDataset.classes, projectID)
 
-    if isinstance(originalDataset, CustomDataset):
-        try:
-            taskRun.setDatasetType(SequenceDataset)
-            originalDataset = taskRun.dataset
-            splitSamples = samplesSplit(originalDataset, newDatasetCount)
-            listOfNewDatasets = sequenceDatasetSplit(splitSamples, originalDataset.metadata, projectID)
-        except:
-            splitDatasetsList = customDatasetSplit(splitSamples, projectID) 
+        if isinstance(originalDataset, CustomDataset):
+            try:
+                taskRun.setDatasetType(SequenceDataset)
+                originalDataset = taskRun.dataset
+                splitSamples = samplesSplit(originalDataset, newDatasetCount)
+                listOfNewDatasets = sequenceDatasetSplit(splitSamples, originalDataset.metadata, projectID)
+            except:
+                logging.info(f"Divisioning CustomDataset {originalDataset.name}...")
+                splitDatasetsList = customDatasetSplit(splitSamples, projectID) 
+    
+    except ValueError as e:
+        logging.error(e)
 
 
 if __name__ == "__main__":
