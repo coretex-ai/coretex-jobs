@@ -2,42 +2,44 @@ from typing import Any
 
 import csv
 import logging
-import sys
 import zipfile
 
 from coretex import currentTaskRun, ImageDataset, CustomDataset, SequenceDataset, ImageSample, ImageDatasetClasses, CustomSample, SequenceSample
 
-from utils import samplesSplit, SampleType, DatasetType
+from utils import splitOriginalSamples, SampleType, DatasetType
 
 
 def imageDatasetSplit(splitSamples: list[list[ImageSample]], datasetClasses: ImageDatasetClasses, projectID: int) -> list[ImageDataset]:
-    logging.info("Division of the ImageDataset")
-    
     splitDatasetsList: list[ImageDataset] = []
 
     for index, sampleChunk in enumerate(splitSamples):
-        splitDataset = ImageDataset.createDataset(f"{currentTaskRun().id}-newDataset-{index}", projectID)
+        splitDataset = ImageDataset.createDataset(f"{currentTaskRun().id}-splitDataset-{index}", projectID)
         splitDataset.saveClasses(datasetClasses)
 
         for sample in sampleChunk:
             sample.unzip()
             addedSample = splitDataset.add(sample.imagePath)
+            logging.info(f'  The sample "{sample.name}" has been added to the dataset "{splitDataset.name}"')
+
             
             tmpAnotation = sample.load().annotation
             if tmpAnotation is not None:
                 addedSample.saveAnnotation(tmpAnotation)
+                logging.info(f'  The anotation for sample "{sample.name}" has been added')
 
             try:
                 tmpMetadata = sample.loadMetadata()
                 addedSample.saveMetadata(tmpMetadata)
+                logging.info(f'  The metadata for sample "{sample.name}" has been added')
             except FileNotFoundError:
-                logging.warning("Metadata file not found")
+                logging.info(f'  The metadata for sample "{sample.name}" was not found')
             except ValueError:
-                logging.warning("Invalid metadata type")
+                logging.info(f'  Invalid metadata type for sample "{sample.name}"')
         
         splitDatasetsList.append(splitDataset)
 
-       
+        logging.info(f'  New dataset named "{splitDataset.name}" contains {len(sampleChunk)} samples')
+
 
     return splitDatasetsList
 
@@ -46,22 +48,21 @@ def customDatasetSplit(splitSamples: list[list[CustomSample]], projectID: int) -
     splitDatasetsList: list[CustomDataset] = []
 
     for index, sampleChunk in enumerate(splitSamples):
-        splitDataset = CustomDataset.createDataset(f"{currentTaskRun().id}-newDataset-{index}", projectID)
+        splitDataset = CustomDataset.createDataset(f"{currentTaskRun().id}-splitDataset-{index}", projectID)
 
         for sample in sampleChunk:
             sample.unzip()
             splitDataset.add(sample.zipPath)
+            logging.info(f'  The sample "{sample.name}" has been added to the dataset "{splitDataset.name}"')
 
         splitDatasetsList.append(splitDataset)
 
-        logging.info(f'New dataset named "{splitDataset.name}" has been created with {len(sampleChunk)} samples')
+        logging.info(f'  New dataset named "{splitDataset.name}" contains {len(sampleChunk)} samples')
 
     return splitDatasetsList
 
 
 def sequenceDatasetSplit(splitSamples: list[list[SequenceSample]], metadata: Any, projectID: int) -> list[CustomDataset]:
-    logging.info("Division of the SequenceDataset")
-    
     metadataAddress = list(metadata.load().folderContent)[0] #address where the file metadata is located in the form of a string
     
     with open(metadataAddress, mode="r", newline="") as file:
@@ -74,12 +75,13 @@ def sequenceDatasetSplit(splitSamples: list[list[SequenceSample]], metadata: Any
     splitDatasetsList: list[CustomDataset] = []
     
     for index, sampleChunk in enumerate(splitSamples):
-        splitDataset = CustomDataset.createDataset(f"{currentTaskRun().id}-newDataset-{index}", projectID)
+        splitDataset = CustomDataset.createDataset(f"{currentTaskRun().id}-splitDataset-{index}", projectID)
         splitMetadataList: list[dict] = []
         
         for sample in sampleChunk:
             sample.unzip()
             splitDataset.add(sample.zipPath)
+            logging.info(f'  The sample "{sample.name}" has been added to the dataset "{splitDataset.name}"')
             
             fieldNames = list(originalMetadata[0].keys())
             
@@ -98,41 +100,46 @@ def sequenceDatasetSplit(splitSamples: list[list[SequenceSample]], metadata: Any
             zipFile.write(metadataCSV)
 
         splitDataset.add(metadataZIP)
+        logging.info(f'  The _metadata sample "{metadataZIP}" has been added to the dataset "{splitDataset.name}"')
 
-    splitDatasetsList.append(splitDataset)
-          
+        splitDatasetsList.append(splitDataset)
+        logging.info(f'  New dataset named "{splitDataset.name}" contains {len(sampleChunk)} samples')
+    
     return splitDatasetsList
 
 
 def main() -> None:
     taskRun = currentTaskRun()
     originalDataset = taskRun.dataset
-    
-    newDatasetCount = taskRun.parameters["numberOfNewDatasets"]
+    #taskRun.submitOutput
+    datasetParts = taskRun.parameters["datasetParts"]
     projectID = taskRun.projectId
 
     n = originalDataset.count
     try:
-        if n <= newDatasetCount:
+        if n <= datasetParts:
             raise ValueError("Number of samples is smaller than the number you want to divide the dataset")
-        if newDatasetCount < 2:
+        if datasetParts < 2:
             raise ValueError("Dataset can be divided into at least two parts")
 
-        splitSamples: list[list[SampleType]] = samplesSplit(originalDataset, newDatasetCount)
+        splitSamples: list[list[SampleType]] = splitOriginalSamples(originalDataset, datasetParts)
 
         splitDatasetsList: list[DatasetType]
 
         if isinstance(originalDataset, ImageDataset):
+            logging.info(f"  Divisioning ImageDataset {originalDataset.name}...")
             splitDatasetsList = imageDatasetSplit(splitSamples, originalDataset.classes, projectID)
 
         if isinstance(originalDataset, CustomDataset):
             try:
                 taskRun.setDatasetType(SequenceDataset)
                 originalDataset = taskRun.dataset
-                splitSamples = samplesSplit(originalDataset, newDatasetCount)
+                splitSamples = splitOriginalSamples(originalDataset, datasetParts)
+                logging.info(f"  Divisioning SequenceDataset {originalDataset.name}...")
+                logging.warning(originalDataset.metadata)
                 listOfNewDatasets = sequenceDatasetSplit(splitSamples, originalDataset.metadata, projectID)
             except:
-                logging.info(f"Divisioning CustomDataset {originalDataset.name}...")
+                logging.info(f"  Divisioning CustomDataset {originalDataset.name}...")
                 splitDatasetsList = customDatasetSplit(splitSamples, projectID) 
     
     except ValueError as e:
