@@ -88,7 +88,7 @@ def main():
     datasetName = f"{taskRun.id}-rag-embedding-index"
     logging.info(f">> [OllamaRAG] Uploading to dataset \"{datasetName}\"")
 
-    with createDataset(CustomDataset, datasetName, taskRun.projectId, {}) as outputDataset:
+    with createDataset(CustomDataset, datasetName, taskRun.projectId) as outputDataset:
         corpusPath = folder_manager.temp / "corpus.pkl"
         with corpusPath.open("wb") as file:
             pickle.dump(corpus, file)

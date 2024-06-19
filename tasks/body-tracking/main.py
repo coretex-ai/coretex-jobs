@@ -126,7 +126,7 @@ def main() -> None:
     savedModelUrl = taskRun.parameters["savedModelUrl"]
     savedModelFilename = "multipose_savedModel.zip"
 
-    coretexModel = Model.createModel(taskRun.name, taskRun.id, 0.9139, {})
+    coretexModel = Model.createModel(f"{taskRun.id}-{taskRun.name}", taskRun.projectId, 0.9139)
     logging.info(f">> [Task] Model accuracy is: {coretexModel.accuracy}")
 
     savedModelPath = fetchModelFile(savedModelUrl, savedModelFilename)
@@ -136,6 +136,7 @@ def main() -> None:
     saveJSModel(fetchModelFile(tfjsModelUrl, tfjsFilename), modelPath, tfjsModelPath, taskRun, coretexModel)
 
     coretexModel.upload(modelPath)
+    taskRun.submitOutput("outputModel", coretexModel)
 
 
 if __name__ == "__main__":

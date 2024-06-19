@@ -1,5 +1,13 @@
 id: ollama-llama2-sentiment-analysis-fn
 name: "Ollama: Llama2 Sentiment Analysis - Function"
-description: This template uploads a function for sentiment analysis with llama2 (through ollama)
+description: This template uploads a Model which can be used for creating Endpoints for sentiment analysis with llama2 (through ollama)
 is_active: true
 project_type: 8
+param_groups:
+  - name: outputs
+    params:
+      - name: outputModel
+        description: Model which can be used for creating Endpoints
+        value: null
+        data_type: model
+        required: false
