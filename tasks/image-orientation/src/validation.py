@@ -54,7 +54,7 @@ def runValidation(
     validLoader: DataLoader,
     device: torch.device,
     taskRun: TaskRun
-) -> int:
+) -> float:
 
     model = OrientationClassifier()
     model.load_state_dict(torch.load(modelPath))
