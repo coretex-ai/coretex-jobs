@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 import logging
 import csv
@@ -62,9 +62,6 @@ def takeAllData(conn: Any, dataset: CustomDataset, queryGetTables: str, queryGet
             zipFile.write(f"{table}.csv")
 
         dataset.add(f"{table}.zip")
-        
-        Path(f"{table}.csv").unlink()
-        Path(f"{table}.zip").unlink()
 
     cursor.close()
     conn.close()
