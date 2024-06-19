@@ -10,7 +10,7 @@ from src.dataset import extractTestTrainData, loadDataset
 
 
 def saveModel(taskRun: TaskRun[CustomDataset], accuracy: float, trainColumnCount: int, labels: list[str]):
-    model = Model.createModel(taskRun.name, taskRun.id, accuracy, {})
+    model = Model.createModel(f"{taskRun.id}-{taskRun.name}", taskRun.projectId, accuracy)
     modelPath = folder_manager.temp / "model"
 
     model.saveModelDescriptor(modelPath, {
@@ -38,6 +38,7 @@ def saveModel(taskRun: TaskRun[CustomDataset], accuracy: float, trainColumnCount
     })
 
     model.upload(modelPath)
+    taskRun.submitOutput("trainedModel", model)
 
 
 def main() -> None:

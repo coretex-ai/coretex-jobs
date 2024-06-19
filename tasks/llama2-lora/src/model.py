@@ -48,7 +48,7 @@ def uploadModel(taskRun: TaskRun, trainer: SFTTrainer, accuracy: float) -> None:
     newModelPath = modelFolder / f"{taskRun.id}-fine-tuned-llama2-{modelVersion}-lora-adapters"
 
     trainer.model.save_pretrained(newModelPath)
-    coretexModel = Model.createModel(newModelPath.name, taskRun.id, accuracy, {})
+    coretexModel = Model.createModel(newModelPath.name, taskRun.projectId, accuracy)
     coretexModel.upload(modelFolder)
 
     taskRun.submitOutput("outputModel", coretexModel)

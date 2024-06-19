@@ -4,6 +4,13 @@ description: TODO
 is_active: false
 project_type: 7
 param_groups:
+- name: outputs
+  params:
+  - name: outputModel
+    description: Model which will be generated as a result of this Task
+    value: null
+    data_type: model
+    required: false
 - name: parameters
   params:
   - name: tfjsModelUrl
