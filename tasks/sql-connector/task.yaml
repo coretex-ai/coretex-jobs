@@ -1,33 +1,37 @@
 id: sql-connector
 name: SQL Connector
-description: "A task that will connect to the SQL database using credentials, fetch data from all tables, and insert it into a Cortex Dataset"
+description: A task that will connect to the SQL database using credentials, fetch data from all tables, and insert it into a Cortex Dataset
 is_active: true
 project_type: 
 param_groups:
   - name: inputs
     params:
-      - name: user
-        value: intern1
+      - name: database_type
+        value:
+          selected: 0
+          options:
+          - MySQL
+          - PostgreSQL
         required: true
-        data_type: str
-        description: user
-      - name: password
-        value: biomech123
+        data_type: enum
+        description: dataset type
+      - name: credentials
+        value: null
         required: true
-        data_type: str
-        description: password
+        data_type: credentials_secret
+        description: Credentials
       - name: host
-        value: localhost
+        value: 192.168.136.179
         required: true
         data_type: str
-        description: "Host"
+        description: Host
       - name: port
         value: 5432
         required: true
         data_type: int
-        description: "Port"
+        description: Port
       - name: database
         value: db1
         required: true
         data_type: str
-        description: "Database name"
+        description: Database name
