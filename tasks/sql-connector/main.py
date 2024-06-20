@@ -1,9 +1,11 @@
-from pathlib import Path
-from typing import Any
+from typing import Any, Union
 
 import logging
 import csv
 import zipfile
+
+from mysql.connector import CMySQLConnection
+from psycopg2.extensions import connection
 
 import mysql.connector
 import psycopg2
@@ -12,24 +14,24 @@ import psycopg2
 from coretex import currentTaskRun, CustomDataset
 
 
-def connectMysqlDatabase(connectionConfig: dict) -> Any:
-    logging.info("Connecting with database")
+def connectMysqlDatabase(connectionConfig: dict) -> CMySQLConnection:
+    logging.info(f' >> [SQL Connector] Connecting with MySQL database "{connectionConfig["database"]}"...')
+    
     try:
         conn = mysql.connector.connect(**connectionConfig)   
-
     except mysql.connector.errors.Error as e:
-        logging.error(f"Error while connecting to database {e}")
+        logging.error(f" >> [SQL Connector] Error while connecting to database: {e}")
     
     return conn
     
 
-def connectPostgresqlDatabase(connectionConfig: dict) -> Any:
-    logging.info("Connecting with database")
+def connectPostgresqlDatabase(connectionConfig: dict) -> connection:
+    logging.info(f' >> [SQL Connector] Connecting with PostgreSQL database "{connectionConfig["database"]}"...')
+
     try:
         conn = psycopg2.connect(**connectionConfig)
-
     except psycopg2._psycopg.Error as e:
-        logging.error(f"Error while connecting to database {e}")
+        logging.error(f" >> [SQL Connector] Error while connecting to database: {e}")
 
     return conn
 
@@ -41,7 +43,7 @@ def takeAllData(conn: Any, dataset: CustomDataset, queryGetTables: str, queryGet
     tables = [table[0] for table in tables]
  
     for table in tables:
-        dataFromTableForCSV: list[dict] = []
+        tableData: list[dict] = []
 
         cursor.execute(queryGetRows + f"'{table}'")
         columnNames = list(cursor.fetchall())
@@ -51,21 +53,24 @@ def takeAllData(conn: Any, dataset: CustomDataset, queryGetTables: str, queryGet
         rows = list(cursor.fetchall())
                 
         for row in rows:
-            dataFromTableForCSV.append(dict(zip(columnNames, list(row))))
+            tableData.append(dict(zip(columnNames, list(row))))
 
-        with open(f"{table}.csv", "w", newline="") as file:
+        sampleNameCSV = f"{table}.csv"
+        with open(sampleNameCSV, "w", newline="") as file:
             writer = csv.DictWriter(file, fieldnames=columnNames)
             writer.writeheader()
-            writer.writerows(dataFromTableForCSV)
-                
-        with zipfile.ZipFile(f"{table}.zip", "w") as zipFile:
-            zipFile.write(f"{table}.csv")
+            writer.writerows(tableData)
 
-        dataset.add(f"{table}.zip")
+        sampleNameZIP = f"{table}.zip"
+        with zipfile.ZipFile(sampleNameZIP, "w") as zipFile:
+            zipFile.write(sampleNameCSV)
+
+        dataset.add(sampleNameZIP)
+        logging.info(f' >> [SQL Connector] The sample "{sampleNameZIP}" has been added to the dataset "{dataset.name}"')
 
     cursor.close()
     conn.close()
-    logging.info("Connection with database is closed")
+    logging.info(" >> [SQL Connector] Connection with database is closed")
 
 
 def main() -> None:
@@ -86,7 +91,7 @@ def main() -> None:
     }
 
     if databaseType == "MySQL":
-        conn = connectMysqlDatabase(connectionConfig)
+        conn: Union[CMySQLConnection, connection] = connectMysqlDatabase(connectionConfig)
 
         if conn.is_connected():
             dataset = CustomDataset.createDataset(f"{taskRun.id}-{database}", taskRun.projectId)
@@ -95,7 +100,7 @@ def main() -> None:
             takeAllData(conn, dataset, queryGetTables, queryGetRows)
         
         else:
-            logging.warning("Problem with the database connection")
+            logging.warning(" >> [SQL Connector] Problem with the database connection")
 
     if databaseType == "PostgreSQL":
         conn = connectPostgresqlDatabase(connectionConfig)
@@ -107,7 +112,7 @@ def main() -> None:
             takeAllData(conn, dataset, queryGetTables, queryGetRows)
 
         else:
-            logging.warning("Problem with the database connection")
+            logging.warning(" >> [SQL Connector] Problem with the database connection")
     
 
 if __name__ == "__main__":
