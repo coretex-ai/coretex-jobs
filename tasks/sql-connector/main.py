@@ -36,7 +36,7 @@ def connectPostgresqlDatabase(connectionConfig: dict) -> connection:
     return conn
 
 
-def takeAllData(conn: Any, dataset: CustomDataset, queryGetTables: str, queryGetRows: str) -> None:
+def fetchAllData(conn: Any, dataset: CustomDataset, queryGetTables: str, queryGetRows: str) -> None:
     cursor = conn.cursor()
     cursor.execute(queryGetTables)
     tables = cursor.fetchall()
@@ -97,7 +97,7 @@ def main() -> None:
             dataset = CustomDataset.createDataset(f"{taskRun.id}-{database}", taskRun.projectId)
             queryGetTables = f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{database}'"
             queryGetRows = f"SELECT column_name FROM information_schema.columns WHERE table_schema = '{database}' AND table_name = "
-            takeAllData(conn, dataset, queryGetTables, queryGetRows)
+            fetchAllData(conn, dataset, queryGetTables, queryGetRows)
         
         else:
             logging.warning(" >> [SQL Connector] Problem with the database connection")
@@ -109,7 +109,7 @@ def main() -> None:
             dataset = CustomDataset.createDataset(f"{taskRun.id}-{database}", taskRun.projectId)
             queryGetTables = f"SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
             queryGetRows = f"SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = "
-            takeAllData(conn, dataset, queryGetTables, queryGetRows)
+            fetchAllData(conn, dataset, queryGetTables, queryGetRows)
 
         else:
             logging.warning(" >> [SQL Connector] Problem with the database connection")
