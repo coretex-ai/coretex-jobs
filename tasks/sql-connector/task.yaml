@@ -14,25 +14,25 @@ param_groups:
           - PostgreSQL
         required: true
         data_type: enum
-        description: dataset type
+        description: The user selects the type of SQL database from which they want to fetch data
       - name: credentials
         value: null
         required: true
         data_type: credentials_secret
-        description: Credentials
+        description: Credentials for accessing the SQL database
       - name: host
         value: 192.168.136.179
         required: true
         data_type: str
-        description: Host
+        description: SQL database host
       - name: port
         value: 5432
         required: true
         data_type: int
-        description: Port
+        description: SQL database port
       - name: database
         value: db1
         required: true
         data_type: str
-        description: Database name
+        description: SQL database name
         
