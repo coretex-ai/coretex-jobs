@@ -2,6 +2,7 @@ from typing import TypeVar
 
 from coretex import NetworkDataset, NetworkSample
 
+
 SampleType = TypeVar("SampleType", bound = NetworkSample)
 DatasetType = TypeVar("DatasetType", bound = NetworkDataset)
 

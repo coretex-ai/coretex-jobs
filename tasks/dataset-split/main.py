@@ -2,18 +2,20 @@ import csv
 import logging
 import zipfile
 
-from coretex import currentTaskRun, ImageDataset, CustomDataset, SequenceDataset, ImageSample, ImageDatasetClasses, CustomSample, SequenceSample
+from coretex import currentTaskRun, folder_manager, ImageDataset, CustomDataset, SequenceDataset, ImageSample, CustomSample, SequenceSample, NetworkDataset
 from coretex.networking import NetworkRequestError
 
-from utils import splitOriginalSamples, SampleType, DatasetType
+from utils import splitOriginalSamples
 
 
-def imageDatasetSplit(splitSamples: list[list[ImageSample]], datasetClasses: ImageDatasetClasses, projectID: int) -> list[ImageDataset]:
-    splitDatasets: list[ImageDataset] = []
+def imageDatasetSplit(originalDataset: ImageDataset, datasetParts: int, projectID: int) -> list[NetworkDataset]:
+    splitSamples: list[list[ImageSample]] = splitOriginalSamples(originalDataset, datasetParts)
+    
+    splitDatasets: list[NetworkDataset] = []
 
     for index, sampleChunk in enumerate(splitSamples):
         splitDataset = ImageDataset.createDataset(f"{currentTaskRun().id}-splitDataset-{index}", projectID)
-        splitDataset.saveClasses(datasetClasses)
+        splitDataset.saveClasses(originalDataset.classes)
 
         for sample in sampleChunk:
             sample.unzip()
@@ -41,8 +43,10 @@ def imageDatasetSplit(splitSamples: list[list[ImageSample]], datasetClasses: Ima
     return splitDatasets
 
 
-def customDatasetSplit(splitSamples: list[list[CustomSample]], projectID: int) -> list[CustomDataset]:  
-    splitDatasets: list[CustomDataset] = []
+def customDatasetSplit(originalDataset: SequenceDataset, datasetParts: int, projectID: int) -> list[NetworkDataset]:  
+    splitSamples: list[list[CustomSample]] = splitOriginalSamples(originalDataset, datasetParts)
+    
+    splitDatasets: list[NetworkDataset] = []
 
     for index, sampleChunk in enumerate(splitSamples):
         splitDataset = CustomDataset.createDataset(f"{currentTaskRun().id}-splitDataset-{index}", projectID)
@@ -59,9 +63,11 @@ def customDatasetSplit(splitSamples: list[list[CustomSample]], projectID: int) -
     return splitDatasets
 
 
-def sequenceDatasetSplit(splitSamples: list[list[SequenceSample]], metadata: CustomSample, projectID: int) -> list[CustomDataset]:
-    metadataAddress = list(metadata.load().folderContent)[0] #address where the file metadata is located in the form of a string
+def sequenceDatasetSplit(originalDataset: SequenceDataset, datasetParts: int, projectID: int) -> list[NetworkDataset]:
+    splitSamples: list[list[SequenceSample]] = splitOriginalSamples(originalDataset, datasetParts)
     
+    metadataAddress = list(originalDataset.metadata.load().folderContent)[0] #address where the file metadata is located in the form of a string
+  
     with open(metadataAddress, mode = "r", newline = "") as file:
         reader = csv.DictReader(file)
         originalMetadata: list[dict] = []
@@ -69,7 +75,7 @@ def sequenceDatasetSplit(splitSamples: list[list[SequenceSample]], metadata: Cus
         for row in reader:
             originalMetadata.append(dict(row))
 
-    splitDatasets: list[CustomDataset] = []
+    splitDatasets: list[NetworkDataset] = []
     
     for index, sampleChunk in enumerate(splitSamples):
         splitDataset = CustomDataset.createDataset(f"{currentTaskRun().id}-splitDataset-{index}", projectID)
@@ -86,18 +92,20 @@ def sequenceDatasetSplit(splitSamples: list[list[SequenceSample]], metadata: Cus
                 if sample.name.startswith(oneMetadata[fieldNames[0]].split("_")[0]):
                     splitMetadataList.append(oneMetadata)
 
-        metadataCSV = f"_metadata_{index}.csv"
+        metadataNameCSV = f"_metadata_{index}.csv"
+        metadataCSV = folder_manager.temp / metadataNameCSV
         with open(metadataCSV, "w", newline = "") as file:
             writer = csv.DictWriter(file, fieldnames=fieldNames)
             writer.writeheader()
             writer.writerows(splitMetadataList)
 
-        metadataZIP = f"_metadata_{index}.zip"
+        metadataNameZIP = f"_metadata_{index}.zip"
+        metadataZIP = folder_manager.temp / metadataNameZIP
         with zipfile.ZipFile(metadataZIP, "w") as zipFile:
             zipFile.write(metadataCSV)
 
         splitDataset.add(metadataZIP)
-        logging.info(f' >> [Dataset Split] The _metadata sample "{metadataZIP}" has been added to the dataset "{splitDataset.name}"')
+        logging.info(f' >> [Dataset Split] The _metadata sample "{metadataNameZIP}" has been added to the dataset "{splitDataset.name}"')
 
         splitDatasets.append(splitDataset)
         logging.info(f' >> [Dataset Split] New dataset named "{splitDataset.name}" contains {len(sampleChunk)} samples')
@@ -118,24 +126,21 @@ def main() -> None:
     if datasetParts < 2:
         raise ValueError("Dataset can be divided into at least two parts")
 
-    splitSamples: list[list[SampleType]] = splitOriginalSamples(originalDataset, datasetParts)
-
-    splitDatasets: list[DatasetType] = []
+    splitDatasets: list[NetworkDataset]
 
     if isinstance(originalDataset, ImageDataset):
         logging.info(f" >> [Dataset Split] Divisioning ImageDataset {originalDataset.name}...")
-        splitDatasets = imageDatasetSplit(splitSamples, originalDataset.classes, projectID)
+        splitDatasets = imageDatasetSplit(originalDataset, datasetParts, projectID)
 
     if isinstance(originalDataset, CustomDataset):
         try:
             taskRun.setDatasetType(SequenceDataset)
             originalDataset = taskRun.dataset
-            splitSamples = splitOriginalSamples(originalDataset, datasetParts)
             logging.info(f" >> [Dataset Split] Divisioning SequenceDataset {originalDataset.name}...")
-            splitDatasets = sequenceDatasetSplit(splitSamples, originalDataset.metadata, projectID)
+            splitDatasets = sequenceDatasetSplit(originalDataset, datasetParts, projectID)
         except:
             logging.info(f" >> [Dataset Split] Divisioning CustomDataset {originalDataset.name}...")
-            splitDatasets = customDatasetSplit(splitSamples, projectID) 
+            splitDatasets = customDatasetSplit(originalDataset, datasetParts, projectID) 
 
     splitDatasetIDs = [ds.id for ds in splitDatasets]
 
