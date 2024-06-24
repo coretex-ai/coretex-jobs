@@ -6,7 +6,7 @@ import zipfile
 import fitz
 import ollama
 
-from coretex import currentTaskRun, CustomDataset, TaskRun
+from coretex import currentTaskRun, folder_manager, CustomDataset, TaskRun
 
 from model import launchOllamaServer, pullModel, LLM
 
@@ -68,17 +68,18 @@ def main() -> None:
             answer = response["message"]["content"]
             translatedText += answer + "\n"
         
-        txtFileName = f"{counter}.txt" 
-        with open(txtFileName, "w") as file:
-            file.write(translatedText)
+        txtFileName = f"file-{counter}.txt"
+        txtFile = folder_manager.temp / txtFileName
+        with open(txtFile, "w") as f:
+            f.write(translatedText)
 
-        zipFileName = f"{counter}.zip"
-        with zipfile.ZipFile(zipFileName, "w") as zipFile:
-            zipFile.write(txtFileName)
+        zipFileName = f"file-{counter}.zip"
+        zipFile = folder_manager.temp / zipFileName
+        with zipfile.ZipFile(zipFile, "w") as zf:
+            zf.write(txtFile)
         
-        translatedDataset.add(zipFileName)
+        translatedDataset.add(zipFile)
 
 
 if __name__ == "__main__":
     main()
-    
