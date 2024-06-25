@@ -345,7 +345,7 @@ def main() -> None:
     outputDir = folder_manager.createTempFolder("alpha_beta_output")
 
     datasetName = f"{taskRun.id}-step-7-alpha-and-beta-diversity"
-    with createDataset(CustomDataset, datasetName, taskRun.projectId) as outputDataset:
+    with createDataset(CustomDataset, datasetName[:50], taskRun.projectId) as outputDataset:
 
         for sample in phylogeneticTreeSamples:
             index = ctx_qiime2.sampleNumber(sample)

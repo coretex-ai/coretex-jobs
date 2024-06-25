@@ -61,7 +61,7 @@ def importMultiplexed(
 ) -> None:
 
     outputDatasetName = f"{taskRun.id}-step-1-import-multiplexed"
-    with createDataset(CustomDataset, outputDatasetName, taskRun.projectId) as outputDataset:
+    with createDataset(CustomDataset, outputDatasetName[:50], taskRun.projectId) as outputDataset:
 
         logging.info(">> [Qiime: Import] Preparing multiplexed data for import into Qiime2")
 

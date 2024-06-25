@@ -83,8 +83,8 @@ def importDemultiplexed(
     outputDir: Path
 ) -> None:
 
-    outputDatasetName = f"{taskRun.id} - Step 1: Import - Demultiplexed"
-    with createDataset(CustomDataset, outputDatasetName, taskRun.projectId) as outputDataset:
+    outputDatasetName = f"{taskRun.id}-step-1-import-demultiplexed"
+    with createDataset(CustomDataset, outputDatasetName[:50], taskRun.projectId) as outputDataset:
 
         logging.info(">> [Qiime: Import] Preparing demultiplexed data for import into Qiime2")
         inputPath = outputDir / "manifest.tsv"
