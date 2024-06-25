@@ -1,8 +1,8 @@
 id: dataset-split
-name: Dataset Split
+name: dataset-split
 description: Task to split a dataset into a user-defined number of parts
 is_active: true
-project_type: 
+project_type: 8
 param_groups:
   - name: inputs
     params:
@@ -23,4 +23,3 @@ param_groups:
         required: false
         data_type: list[int]
         description: List containing IDs of all parts of the provided dataset into which it was split
-        
