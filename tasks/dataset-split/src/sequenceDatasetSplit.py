@@ -58,7 +58,7 @@ def sequenceDatasetSplit(originalDataset: SequenceDataset, datasetParts: int, pr
         for row in reader:
             originalMetadata.append(row)
     
-    if not (any(x.lower in fieldNames for x in CASEINSENSITIVE_NAMES) or any(x in fieldNames for x in CASESENSITIVE_NAMES)):
+    if not (any(x.lower() in CASEINSENSITIVE_NAMES for x in fieldNames) or any(x in CASESENSITIVE_NAMES for x in fieldNames)):
         raise ValueError("Invalid metadata file. There is no valid column with sample names")
     
     for name in fieldNames:
