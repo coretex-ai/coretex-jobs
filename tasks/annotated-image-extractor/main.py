@@ -53,7 +53,7 @@ def main() -> None:
     if len(annotatedSamples) == 0:
         raise RuntimeError(f"Provided dataset \"{dataset.name}\" has no annotated Samples")
 
-    with createDataset(ImageDataset, f"{taskRun.id}-{dataset.name}", taskRun.projectId) as annotatedDataset:
+    with createDataset(ImageDataset, taskRun.generateEntityName(), taskRun.projectId) as annotatedDataset:
         if not annotatedDataset.saveClasses(dataset.classes):
             raise RuntimeError("Failed to copy classes")
 

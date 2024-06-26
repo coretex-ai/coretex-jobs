@@ -10,7 +10,7 @@ from src.dataset import extractTestTrainData, loadDataset
 
 
 def saveModel(taskRun: TaskRun[CustomDataset], accuracy: float, trainColumnCount: int, labels: list[str]):
-    model = Model.createModel(taskRun.name, taskRun.id, accuracy, {})
+    model = Model.createModel(taskRun.generateEntityName(), taskRun.id, accuracy, {})
     modelPath = folder_manager.temp / "model"
 
     model.saveModelDescriptor(modelPath, {

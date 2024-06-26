@@ -7,7 +7,7 @@ def main():
     taskRun = currentTaskRun()
 
     logging.info(">> [StableDiffusion] Creating Coretex model")
-    model = Model.createModel(taskRun.name, taskRun.id, 1.0, {})
+    model = Model.createModel(taskRun.generateEntityName(), taskRun.id, 1.0, {})
 
     logging.info(">> [StableDiffusion] Uploading files")
     model.upload("resources")

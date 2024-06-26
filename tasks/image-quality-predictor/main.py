@@ -85,7 +85,7 @@ def main() -> None:
         logging.error(f">> [ImageQuality] Failed to create artifact \"{sampleResultsCsvPath.name}\"")
 
     logging.info(">> [ImageQuality] Uploading model...")
-    ctxModel = Model.createModel(taskRun.name, taskRun.id, accuracy)
+    ctxModel = Model.createModel(taskRun.generateEntityName(), taskRun.id, accuracy)
     ctxModel.upload(modelPath)
 
     taskRun.submitOutput("model", ctxModel)
