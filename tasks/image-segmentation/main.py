@@ -118,7 +118,7 @@ def main() -> None:
     detect.run(taskRun, model, taskRun.dataset)
 
     coretexModel = Model.createModel(
-        taskRun.name,
+        taskRun.generateEntityName(),
         taskRun.id,
         history.history["val_accuracy"][-1]  # gets the validation accuracy after last epoch
     )

@@ -199,7 +199,7 @@ def main() -> None:
     recall = results.results_dict["metrics/recall(B)"]
     f1 = calculateF1(precision, recall)
 
-    ctxModel = Model.createModel(taskRun.name, taskRun.id, f1, {})
+    ctxModel = Model.createModel(taskRun.generateEntityName(), taskRun.id, f1, {})
     ctxModel.upload(Path(".", "results", "train", "weights"))
 
     logging.info(">> [ObjectDetection] Running prediction on training dataset")
