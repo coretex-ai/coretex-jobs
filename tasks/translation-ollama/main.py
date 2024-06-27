@@ -3,7 +3,7 @@ from pathlib import Path
 import logging
 import zipfile
 
-import fitz
+import fitz  # PyMyPDF
 import ollama
 
 from coretex import currentTaskRun, folder_manager, CustomDataset, TaskRun
@@ -28,7 +28,11 @@ def loadCorpus(dataset: CustomDataset) -> list[list[str]]:
     for sample in dataset.samples:
         sample.unzip()
 
-        for pdfPath in sample.path.rglob("*.pdf"):
+        pdfPaths = list(sample.path.rglob("*.pdf"))
+        if len(pdfPaths) == 0:
+            raise ValueError(">> [LLM Translate] The provided dataset does not contain any .pdf documents")
+        
+        for pdfPath in pdfPaths:
             if not "__MACOSX" in str(pdfPath):
                 corpus.append(readPDF(pdfPath))
 
@@ -76,10 +80,11 @@ def main() -> None:
         zipFileName = f"file-{counter}.zip"
         zipFile = folder_manager.temp / zipFileName
         with zipfile.ZipFile(zipFile, "w") as zf:
-            zf.write(txtFile)
+            zf.write(txtFile, txtFileName)
         
         translatedDataset.add(zipFile)
 
+        taskRun.submitOutput("translatedDataset", translatedDataset)
 
 if __name__ == "__main__":
     main()
