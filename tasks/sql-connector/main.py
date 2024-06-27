@@ -16,14 +16,14 @@ from coretex import currentTaskRun, CustomDataset
 
 def connectMysqlDatabase(connectionConfig: dict) -> CMySQLConnection:
     logging.info(f' >> [SQL Connector] Connecting with MySQL database "{connectionConfig["database"]}"...')
-    
+
     try:
-        conn = mysql.connector.connect(**connectionConfig)   
+        conn = mysql.connector.connect(**connectionConfig)
     except mysql.connector.errors.Error as e:
         logging.error(f" >> [SQL Connector] Error while connecting to database: {e}")
-    
+
     return conn
-    
+
 
 def connectPostgresqlDatabase(connectionConfig: dict) -> connection:
     logging.info(f' >> [SQL Connector] Connecting with PostgreSQL database "{connectionConfig["database"]}"...')
@@ -41,17 +41,17 @@ def fetchAllData(conn: Any, dataset: CustomDataset, queryGetTables: str, queryGe
     cursor.execute(queryGetTables)
     tables = cursor.fetchall()
     tables = [table[0] for table in tables]
- 
+
     for table in tables:
         tableData: list[dict] = []
 
         cursor.execute(queryGetRows + f"'{table}'")
         columnNames = list(cursor.fetchall())
-        columnNames = [name[0] for name in columnNames]             
-        
+        columnNames = [name[0] for name in columnNames]
+
         cursor.execute(f"SELECT * FROM {table}")
         rows = list(cursor.fetchall())
-                
+
         for row in rows:
             tableData.append(dict(zip(columnNames, list(row))))
 
@@ -76,7 +76,7 @@ def fetchAllData(conn: Any, dataset: CustomDataset, queryGetTables: str, queryGe
 def main() -> None:
     taskRun = currentTaskRun()
     databaseType = taskRun.parameters["database_type"]
-    
+
     credentials = taskRun.parameters["credentials"]
     host = taskRun.parameters["host"]
     port = taskRun.parameters["port"]
@@ -98,7 +98,7 @@ def main() -> None:
             queryGetTables = f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{database}'"
             queryGetRows = f"SELECT column_name FROM information_schema.columns WHERE table_schema = '{database}' AND table_name = "
             fetchAllData(conn, dataset, queryGetTables, queryGetRows)
-        
+
         else:
             logging.warning(" >> [SQL Connector] Problem with the database connection")
 
@@ -113,8 +113,7 @@ def main() -> None:
 
         else:
             logging.warning(" >> [SQL Connector] Problem with the database connection")
-    
+
 
 if __name__ == "__main__":
     main()
-    
