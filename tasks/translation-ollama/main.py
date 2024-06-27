@@ -63,7 +63,9 @@ def main() -> None:
         translatedText = ""
         for paragraph in document:
             logging.info(">> [OllamaRAG] Translating paragraph")
-            query = f"I will send you one paragraph, you translate into {language}. Let your response be only the translation of the sent paragraph, without additional comments. The paragraph to be translated is: {paragraph}"
+            query = f"I will send you one paragraph, you translate into {language}. \
+                Let your response be only the translation of the sent paragraph, \
+                without additional comments. The paragraph to be translated is: {paragraph}"
             msg = {
                 "role": "user",
                 "content": query
