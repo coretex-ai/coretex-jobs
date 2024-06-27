@@ -1,5 +1,5 @@
-id: translate-test-with-llm
-name: translate-test-with-llm
+id: translate-with-llm
+name: translate-with-llm
 description: This task is used for translating .pdf 
   files into the desired language using the Ollama chatbot.
 is_active: true
