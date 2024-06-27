@@ -7,7 +7,7 @@ param_groups:
   - name: inputs
     params:
       - name: dataset
-        value: null
+        value: 36676
         required: true
         data_type: dataset
         description: Dataset which is going to be split into multiple parts

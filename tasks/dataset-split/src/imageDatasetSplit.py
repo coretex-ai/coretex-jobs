@@ -1,22 +1,22 @@
 import logging
 
-from coretex import currentTaskRun, NetworkDataset, ImageDataset, ImageSample
+from coretex import ImageDataset, ImageSample
 
-from .utils import splitOriginalSamples
+from .utils import splitOriginalSamples, validateAndCorectEntityName
 
 
-def imageDatasetSplit(originalDataset: ImageDataset, datasetParts: int, projectId: int) -> list[NetworkDataset]:
+def imageDatasetSplit(originalDataset: ImageDataset, datasetParts: int, taskRunId: int, projectId: int) -> list[ImageDataset]:
     splitSamples: list[list[ImageSample]] = splitOriginalSamples(originalDataset.samples, datasetParts)
-    
-    splitDatasets: list[NetworkDataset] = []
+
+    splitDatasets: list[ImageDataset] = []
 
     for index, sampleChunk in enumerate(splitSamples):
-        splitDataset = ImageDataset.createDataset(f"{currentTaskRun().id}-split-dataset-{index}", projectId)
+        splitDataset = ImageDataset.createDataset(f"{taskRunId}-split-dataset-{index}", projectId)
         splitDataset.saveClasses(originalDataset.classes)
 
         for sample in sampleChunk:
             sample.unzip()
-            addedSample = splitDataset.add(sample.imagePath)
+            addedSample = splitDataset.add(sample.imagePath, validateAndCorectEntityName(sample.name))
             logging.info(f">> [Dataset Split] The sample \"{sample.name}\" has been added to the dataset \"{splitDataset.name}\"")
 
             tmpAnotation = sample.load().annotation
@@ -32,7 +32,7 @@ def imageDatasetSplit(originalDataset: ImageDataset, datasetParts: int, projectI
                 logging.info(f">> [Dataset Split] The metadata for sample \"{sample.name}\" was not found")
             except ValueError:
                 logging.info(f">> [Dataset Split] Invalid metadata type for sample \"{sample.name}\"")
-        
+
         splitDatasets.append(splitDataset)
 
         logging.info(f">> [Dataset Split] New dataset named \"{splitDataset.name}\" contains {len(sampleChunk)} samples")

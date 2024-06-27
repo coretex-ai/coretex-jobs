@@ -1,17 +1,17 @@
 import logging
 
-from coretex import currentTaskRun, NetworkDataset, CustomDataset, CustomSample
+from coretex import CustomDataset, CustomSample
 
 from .utils import splitOriginalSamples
 
 
-def customDatasetSplit(originalDataset: CustomDataset, datasetParts: int, projectId: int) -> list[NetworkDataset]:  
+def customDatasetSplit(originalDataset: CustomDataset, datasetParts: int, taskRunId: int, projectId: int) -> list[CustomDataset]:
     splitSamples: list[list[CustomSample]] = splitOriginalSamples(originalDataset.samples, datasetParts)
-    
-    splitDatasets: list[NetworkDataset] = []
+
+    splitDatasets: list[CustomDataset] = []
 
     for index, sampleChunk in enumerate(splitSamples):
-        splitDataset = CustomDataset.createDataset(f"{currentTaskRun().id}-split-dataset-{index}", projectId)
+        splitDataset = CustomDataset.createDataset(f"{taskRunId}-split-dataset-{index}", projectId)
 
         for sample in sampleChunk:
             splitDataset.add(sample.zipPath)
