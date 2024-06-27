@@ -24,4 +24,3 @@ param_groups:
         required: false
         data_type: dataset
         description: Dataset containing .txt documents that are translations of .pdf files into the selected language
-        
