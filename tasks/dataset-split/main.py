@@ -22,26 +22,21 @@ def main() -> None:
     splitDatasets: list[NetworkDataset]
 
     if isinstance(originalDataset, ImageDataset):
-        logging.info(f">> [Dataset Split] Divisioning ImageDataset {originalDataset.name}...")
+        logging.info(f">> [Dataset Split] Splitting ImageDataset {originalDataset.name}...")
         splitDatasets = imageDatasetSplit(originalDataset, datasetParts, projectId)
 
     if isinstance(originalDataset, CustomDataset):
         try:
             taskRun.setDatasetType(SequenceDataset)
             originalDataset = taskRun.dataset
-            logging.info(f">> [Dataset Split] Divisioning SequenceDataset {originalDataset.name}...")
+            logging.info(f">> [Dataset Split] Splitting SequenceDataset {originalDataset.name}...")
             splitDatasets = sequenceDatasetSplit(originalDataset, datasetParts, projectId)
-        
         except FileNotFoundError as e:
-            logging.info(f">> [Dataset Split] Divisioning CustomDataset {originalDataset.name}...")
+            logging.info(f">> [Dataset Split] Splitting CustomDataset {originalDataset.name}...")
             splitDatasets = customDatasetSplit(originalDataset, datasetParts, projectId) 
 
-    splitDatasetIDs = [ds.id for ds in splitDatasets]
-
-    try:
-        taskRun.submitOutput("splitDatasetIDs", splitDatasetIDs)
-    except NetworkRequestError as e:
-        logging.warning(f">> [Dataset Split] Error while submitting the output value: {e}")
+    outputDatasets = [ds.id for ds in splitDatasets]
+    taskRun.submitOutput("outputDatasets", outputDatasets)
         
 
 if __name__ == "__main__":

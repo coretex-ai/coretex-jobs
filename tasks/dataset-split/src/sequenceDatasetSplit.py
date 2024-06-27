@@ -17,7 +17,7 @@ CASESENSITIVE_NAMES = ["SampleID" , "Sample ID", "OTUID", "OTU ID", "sample_name
 
 class MetadataFileNotFoundError(Exception):
     def __init__(self, *args: object) -> None:
-        super().__init__(*args)
+        pass
 
 
 def detectEncodingCsv(filePath: Path) -> str:
