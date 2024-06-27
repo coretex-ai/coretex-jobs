@@ -1,14 +1,21 @@
-id: dataset-split
-name: Dataset Split
+id: dataset-merge
+name: dataset-merge
 description: This task is used to merge user-defined numbers of coretex datasets of the same 
   type into a single coretex dataset.
 is_active: true
-project_type: 
+project_type: 8
 param_groups:
   - name: inputs
     params:
       - name: datasetsList
-        value: null
+        value: [36676, 37155]
         required: true
         data_type: list[dataset]
-        description: list od datasets for merge
+        description: A list of datasets of the same type that need to be merged into one dataset
+  - name: outputs
+    params:
+      - name: mergeDataset
+        value: null
+        required: false
+        data_type: dataset
+        description: MergeDataset that contains all the samples from the provided datasets for merging
