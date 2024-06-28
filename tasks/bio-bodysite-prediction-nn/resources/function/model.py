@@ -148,7 +148,7 @@ class Model(tf.keras.Model):
         self.lam = lam
 
         self._activation_gating = activation_gating
-        self.activation_gating = activation_gating # will overwrite _activation_gating
+        self.activation_gating = activation_gating  # type: ignore[assignment]
 
         self.activation_pred = activation_pred
 
@@ -337,7 +337,7 @@ class Model(tf.keras.Model):
         return convertFromOneHot(np.array(y_pred))
 
 
-    def test(self, data: tf.data.Dataset, batches: int) -> tuple[np.ndarray, np.ndarray, float]:
+    def test(self, data: tf.data.Dataset, batches: int) -> tuple[np.ndarray, np.ndarray]:
 
         y_pred: list[list[int]] = [] # List of one hot vectors
         y_true: list[list[int]] = []
@@ -374,11 +374,11 @@ class Model(tf.keras.Model):
 
     @property
     def activation_gating(self) -> Callable:
-        return self._activation_gating
+        return self._activation_gating  # type: ignore[return-value]
 
 
     @activation_gating.setter
-    def activation_gating(self, value: str) -> Callable:
+    def activation_gating(self, value: str) -> Callable:  # type: ignore[return]
         if value == 'relu':
             self._activation_gating = tf.nn.relu
         elif value == 'l_relu':
@@ -388,7 +388,7 @@ class Model(tf.keras.Model):
         elif value == 'tanh':
             self._activation_gating = tf.nn.tanh
         elif value == 'none':
-            self._activation_gating = lambda x: x
+            self._activation_gating = lambda x: x  # type: ignore[assignment]
         else:
             raise NotImplementedError('activation for the gating network not recognized')
 

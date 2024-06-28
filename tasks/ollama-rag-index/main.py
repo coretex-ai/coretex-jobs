@@ -64,7 +64,7 @@ def loadCorpus(dataset: CustomDataset) -> np.ndarray:
             with open(txtPath, "r") as f:
                 corpus.append(f.read())
 
-        return np.array(corpus)
+    return np.array(corpus)
 
 
 def main():

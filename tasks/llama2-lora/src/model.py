@@ -17,6 +17,8 @@ def getModelName(modelVersion: str) -> str:
     if modelVersion == "70b-chat":
         return "NousResearch/Llama-2-70b-chat-hf"
 
+    raise ValueError("Invalid model version")
+
 
 def loadTokenizer(modelName:  str, context: Optional[int] = None) -> AutoTokenizer:
     tokenizer = AutoTokenizer.from_pretrained(modelName, trust_remote_code=True, model_max_length = context)

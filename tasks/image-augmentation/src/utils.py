@@ -1,3 +1,5 @@
+from typing import Optional
+
 import logging
 
 from numpy import ndarray
@@ -10,7 +12,7 @@ from coretex import CoretexImageAnnotation, ImageDataset, folder_manager, ImageS
 def uploadAugmentedImage(
     imageName: str,
     augmentedImage: ndarray,
-    annotation: CoretexImageAnnotation,
+    annotation: Optional[CoretexImageAnnotation],
     outputDataset: ImageDataset
 ) -> None:
 
@@ -23,8 +25,9 @@ def uploadAugmentedImage(
         logging.error(f">> [Image Augmentation] Failed to upload sample {imagePath} - \"{ex}\"")
         return
 
-    if not augmentedSample.saveAnnotation(annotation):
-        logging.error(f">> [Image Augmentation] Failed to update sample annotation {imagePath}")
+    if annotation is not None:
+        if not augmentedSample.saveAnnotation(annotation):
+            logging.error(f">> [Image Augmentation] Failed to update sample annotation {imagePath}")
 
 
 def copySample(sample: ImageSample, dataset: ImageDataset) -> None:

@@ -1,3 +1,5 @@
+from typing import Optional
+
 import logging
 
 import cv2
@@ -10,7 +12,7 @@ from coretex import ImageDataset, ImageSample, CoretexSegmentationInstance, BBox
 from .utils import uploadAugmentedImage
 
 
-def mask2poly(mask: np.ndarray) -> list[int]:
+def mask2poly(mask: np.ndarray) -> Optional[list[int]]:
     contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     if len(contours) == 0:
         logging.warning(">> [Image Augmentation] Could not find annotated area on augmented image")
@@ -27,13 +29,17 @@ def mask2poly(mask: np.ndarray) -> list[int]:
     return segmentation
 
 
-def transformAnnotationInstances(sampleData: AnnotatedImageSampleData, pipeline: iaa.Sequential) -> CoretexImageAnnotation:
+def transformAnnotationInstances(sampleData: AnnotatedImageSampleData, pipeline: iaa.Sequential) -> Optional[list[CoretexSegmentationInstance]]:
     augmentedInstances: list[CoretexSegmentationInstance] = []
 
-    for instance in sampleData.annotation.instances:
+    annotation = sampleData.annotation
+    if annotation is None:
+        return None
+
+    for instance in annotation.instances:
         mask = instance.extractSegmentationMask(
-            sampleData.annotation.width,
-            sampleData.annotation.height
+            annotation.width,
+            annotation.height
         )
 
         mask = np.repeat(mask[..., None] * 255, 3, axis = -1)
@@ -74,13 +80,15 @@ def augmentImage(
         augmentedImage = firstPipeline_.augment_image(image)
         augmentedImage = secondPipeline.augment_image(augmentedImage)
         augmentedInstances = transformAnnotationInstances(sampleData, firstPipeline_)
-
-        annotation = CoretexImageAnnotation.create(
-            sample.name,
-            augmentedImage.shape[1],
-            augmentedImage.shape[0],
-            augmentedInstances
-        )
+        if augmentedInstances is not None:
+            annotation = CoretexImageAnnotation.create(
+                sample.name,
+                augmentedImage.shape[1],
+                augmentedImage.shape[0],
+                augmentedInstances
+            )
+        else:
+            annotation = None
 
         augmentedImageName = f"{sample.name}-{i}" + sample.imagePath.suffix
         uploadAugmentedImage(augmentedImageName, augmentedImage, annotation, outputDataset)

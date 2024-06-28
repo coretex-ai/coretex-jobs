@@ -103,7 +103,7 @@ def saveFeatureTable(featureTablePath: str, tableInput: np.ndarray, taskRun: Tas
 def savePlotFig(
     taskRun: TaskRun[CustomDataset],
     distributionDict: dict,
-    savePath: str,
+    savePath: Path,
     fileName: str,
     xLabelRotation: bool,
     xLabel: str,
@@ -133,7 +133,7 @@ def savePlotFig(
 
 def savePredictionFile(
     taskRun: TaskRun[CustomDataset],
-    savePath: str,
+    savePath: Path,
     xTrain: csr_matrix,
     xTest: csr_matrix,
     sampleIdList: list,

@@ -19,7 +19,7 @@ def classByLabelId(labelId: int, classes: ImageDatasetClasses) -> Optional[Image
     return classes.classByLabel(classes.labels[labelId])
 
 
-def processResult(result: Results, classes: list[ImageDatasetClasses], savePath: Path):
+def processResult(result: Results, classes: ImageDatasetClasses, savePath: Path) ->  None:
     fig = plt.figure(num = 1, clear = True)
     plt.imshow(result.orig_img)
 

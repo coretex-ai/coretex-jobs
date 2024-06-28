@@ -6,7 +6,7 @@ import torch
 
 def getPeftParameters(loraAlpha: float, loraDropout: float, rank: int) -> LoraConfig:
     return LoraConfig(
-        lora_alpha = loraAlpha,
+        lora_alpha = int(loraAlpha),
         lora_dropout = loraDropout,
         r = rank,
         bias = "none",

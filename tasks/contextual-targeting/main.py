@@ -17,7 +17,7 @@ MODEL_NAME = "deepspeech-0.8.2-model.pbmm"
 MODEL_SCORER_NAME = "deepspeech-0.8.2-model.scorer"
 
 
-def transcribe(dataset: CustomDataset, parameters: Dict[str, Any]) -> List[Tuple[CustomSample, Transcription]]:
+def transcribe(dataset: CustomDataset, parameters: Dict[str, Any]) -> Transcription:
     modelFile = fetchModelFile(parameters["modelUrl"], MODEL_NAME, ".pbmm")
     modelScorerFile = fetchModelFile(parameters["modelScorerUrl"], MODEL_SCORER_NAME, ".scorer")
 
