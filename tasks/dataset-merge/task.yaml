@@ -1,5 +1,5 @@
-id: dataset-merge
-name: dataset-merge
+id: merge-dataset
+name: merge-dataset
 description: This task is used to merge user-defined numbers of coretex datasets of the same
   type into a single coretex dataset.
 is_active: true
