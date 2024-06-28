@@ -1,18 +1,17 @@
 import logging
-
-from coretex import ImageDataset, ImageSample
+from coretex import ImageDataset, ImageSample, ImageDatasetClasses
 
 from .utils import splitOriginalSamples
 
 
-def imageDatasetSplit(originalDataset: ImageDataset, datasetParts: int, taskRunId: int, projectId: int) -> list[ImageDataset]:
+def splitImageDataset(originalDataset: ImageDataset, datasetParts: int, taskRunId: int, projectId: int) -> list[ImageDataset]:
     splitSamples: list[list[ImageSample]] = splitOriginalSamples(originalDataset.samples, datasetParts)
 
     splitDatasets: list[ImageDataset] = []
 
     for index, sampleChunk in enumerate(splitSamples):
         splitDataset = ImageDataset.createDataset(f"{taskRunId}-split-dataset-{index}", projectId)
-        splitDataset.saveClasses(originalDataset.classes)
+        splitDataset.saveClasses(ImageDatasetClasses())
 
         for sample in sampleChunk:
             sample.unzip()
@@ -22,6 +21,12 @@ def imageDatasetSplit(originalDataset: ImageDataset, datasetParts: int, taskRunI
 
             tmpAnotation = sample.load().annotation
             if tmpAnotation is not None:
+                for instance in tmpAnotation.instances:
+                    instanceClass = originalDataset.classes.classById(instance.classId)
+                    if instanceClass is not None and instanceClass not in splitDataset.classes:
+                        splitDataset.classes.extend([instanceClass])
+                        splitDataset.saveClasses(splitDataset.classes)
+
                 addedSample.saveAnnotation(tmpAnotation)
                 logging.info(f">> [Dataset Split] The anotation for sample \"{sample.name}\" has been added")
 

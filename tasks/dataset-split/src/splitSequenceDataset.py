@@ -50,7 +50,7 @@ def checkMetadataInSamples(
     return [metadata for metadata in originalMetadata if metadata[fieldNames[indexId]].split("_")[0] in prefixSamples]
 
 
-def sequenceDatasetSplit(originalDataset: SequenceDataset, datasetParts: int, taskRunId: int, projectId: int) -> list[CustomDataset]:
+def splitSequenceDataset(originalDataset: SequenceDataset, datasetParts: int, taskRunId: int, projectId: int) -> list[CustomDataset]:
     metadataAddress = list(originalDataset.metadata.load().folderContent)[0]  # address where the file metadata is located in the form of a string
     if metadataAddress is None:
         raise MetadataFileError("The metadata file was not found")
