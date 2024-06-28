@@ -254,7 +254,7 @@ def main() -> None:
 
     outputDir = folder_manager.createTempFolder("otu_output")
 
-    outputDatasetName = f"{taskRun.id}-step-4-otu-clustering-{clusteringMethod}"
+    outputDatasetName = f"{taskRun.id}-step-4-otu-clustering-{clusteringMethod.replace(' ', '-').lower()}"
     with createDataset(CustomDataset, outputDatasetName, taskRun.projectId) as outputDataset:
         for sample in denoisedSamples:
             index = ctx_qiime2.sampleNumber(sample)
