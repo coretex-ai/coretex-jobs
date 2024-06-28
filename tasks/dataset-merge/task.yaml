@@ -18,4 +18,4 @@ param_groups:
         value: null
         required: false
         data_type: dataset
-        description: MergeDataset that contains all the samples from the provided datasets for merging
+        description: Dataset that contains all the samples from the provided datasets for merging
