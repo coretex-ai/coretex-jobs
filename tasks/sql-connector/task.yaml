@@ -2,7 +2,7 @@ id: sql-connector
 name: SQL Connector
 description: A task that will connect to the SQL database using credentials, fetch data from all tables, and insert it into a Cortex Dataset
 is_active: true
-project_type: 
+project_type:
 param_groups:
   - name: inputs
     params:
@@ -21,18 +21,17 @@ param_groups:
         data_type: credentials_secret
         description: Credentials for accessing the SQL database
       - name: host
-        value: 192.168.136.179
+        value: null
         required: true
         data_type: str
         description: SQL database host
       - name: port
-        value: 5432
+        value: null
         required: true
         data_type: int
         description: SQL database port
       - name: database
-        value: db1
+        value: null
         required: true
         data_type: str
         description: SQL database name
-        
