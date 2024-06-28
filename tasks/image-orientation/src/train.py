@@ -27,8 +27,8 @@ def trainEpoch(
     runningTrainLoss = 0.0
     runningTrainAcc = 0.0
     for data in trainLoader:
-        inputs = data['image'].to(device)
-        labels = data['label'].to(device)
+        inputs = data["image"].to(device)
+        labels = data["label"].to(device)
 
         optimizer.zero_grad()
 
@@ -60,8 +60,8 @@ def computeValData(
 
     with torch.no_grad():
         for data in validLoader:
-            inputs = data['image'].to(device)
-            labels = data['label'].to(device)
+            inputs = data["image"].to(device)
+            labels = data["label"].to(device)
 
             outputs = model(inputs)
             loss = criterion(outputs, labels)
