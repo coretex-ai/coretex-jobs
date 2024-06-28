@@ -49,7 +49,7 @@ def trainEpoch(
 def computeValData(
     validLoader: DataLoader,
     model: OrientationClassifier,
-    criterion: nn.MSELoss,
+    criterion: nn.CrossEntropyLoss,
     device: torch.device
 ) -> tuple[float, float]:
 
@@ -80,16 +80,18 @@ def runTraining(
     trainLoader: DataLoader,
     validLoader: DataLoader,
     optimizer: optim.Adam,
-    criterion: nn.BCELoss,
+    criterion: nn.CrossEntropyLoss,
     device: torch.device,
     epochs: int,
     taskRun: TaskRun,
-    modelPath: Path
+    modelPath: Path,
+    imageSize: int
 ) -> None:
 
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode = "min", factor = 0.3, patience = max(5, int(epochs * 0.05)))
     earlyStopping = EarlyStopping(max(10, int(epochs * 0.1)))
     bestLoss: Optional[torch.Tensor] = None
+    exampleInput = torch.randn(1, 3, imageSize, imageSize)
 
     for epoch in range(epochs):
         trainingLoss, trainingAccuracy = trainEpoch(trainLoader, model, optimizer, criterion,  device)
@@ -115,10 +117,13 @@ def runTraining(
             bestLoss = validationLoss
 
             # Save the best model
-            torch.save(model.state_dict(), modelPath / "best.pt")
+            tsModel = torch.jit.trace(model, exampleInput)
+            tsModel.save(modelPath / "best.pt")
 
         # Save the latest model
-        torch.save(model.state_dict(), modelPath / "last.pt")
+        tsModel = torch.jit.trace(model, exampleInput)
+        tsModel.save(modelPath / "last.pt")
 
         if not modelPath.joinpath("best.pt").exists():
-            torch.save(model.state_dict(), modelPath / "best.pt")
+            tsModel = torch.jit.trace(model, exampleInput)
+            tsModel.save(modelPath / "best.pt")

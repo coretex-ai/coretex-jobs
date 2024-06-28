@@ -71,7 +71,8 @@ def main() -> None:
         device,
         epochs,
         taskRun,
-        modelPath
+        modelPath,
+        imageSize
     )
     logging.info(">> [Orientation] Finished Training")
 
