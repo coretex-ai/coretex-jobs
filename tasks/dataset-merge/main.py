@@ -19,8 +19,8 @@ def customDatasetMerge(datasets: list[CustomDataset], taskRunId: int, projectId:
     return mergeDataset
 
 
-def imageDatasetMerge(datasets: list[ImageDataset], taskTunId: int, projectId: int) -> NetworkDataset:
-    mergeDataset = ImageDataset.createDataset(f"{taskTunId}-merge-image-dataset", projectId)
+def imageDatasetMerge(datasets: list[ImageDataset], taskRunId: int, projectId: int) -> NetworkDataset:
+    mergeDataset = ImageDataset.createDataset(f"{taskRunId}-merge-image-dataset", projectId)
 
     allClasses = ImageDatasetClasses()
 
