@@ -5,6 +5,7 @@ from coretex import currentTaskRun, ImageDataset, CustomDataset, SequenceDataset
 from src.customDatasetSplit import customDatasetSplit
 from src.imageDatasetSplit import imageDatasetSplit
 from src.sequenceDatasetSplit import sequenceDatasetSplit
+from src.utils import DatasetType
 
 
 def main() -> None:
@@ -20,7 +21,7 @@ def main() -> None:
     if datasetParts < 2:
         raise ValueError("Dataset can be divided into at least two parts")
 
-    splitDatasets: list[NetworkDataset]
+    splitDatasets: list[DatasetType]
 
     if isinstance(originalDataset, ImageDataset):
         logging.info(f">> [Dataset Split] Splitting ImageDataset {originalDataset.name}...")
@@ -28,12 +29,10 @@ def main() -> None:
 
     if isinstance(originalDataset, CustomDataset):
         try:
-            """
-            "If setDatasetType(SequenceDataset) cannot be executed, it raises a FileNotFoundError,
-            and then the dataset is split as CustomDataset.
-            The difference between SequenceDataset and CustomDataset is that
-            SequenceDataset requires a metadata file."
-            """
+            # "If setDatasetType(SequenceDataset) cannot be executed, it raises a FileNotFoundError,
+            # and then the dataset is split as CustomDataset.
+            # The difference between SequenceDataset and CustomDataset is that
+            # SequenceDataset requires a metadata file."
 
             taskRun.setDatasetType(SequenceDataset)
             originalDataset = taskRun.dataset

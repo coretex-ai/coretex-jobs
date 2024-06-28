@@ -2,7 +2,7 @@ import logging
 
 from coretex import ImageDataset, ImageSample
 
-from .utils import splitOriginalSamples, validateAndCorectEntityName
+from .utils import splitOriginalSamples
 
 
 def imageDatasetSplit(originalDataset: ImageDataset, datasetParts: int, taskRunId: int, projectId: int) -> list[ImageDataset]:
@@ -16,7 +16,8 @@ def imageDatasetSplit(originalDataset: ImageDataset, datasetParts: int, taskRunI
 
         for sample in sampleChunk:
             sample.unzip()
-            addedSample = splitDataset.add(sample.imagePath, validateAndCorectEntityName(sample.name))
+
+            addedSample = splitDataset.add(sample.imagePath)
             logging.info(f">> [Dataset Split] The sample \"{sample.name}\" has been added to the dataset \"{splitDataset.name}\"")
 
             tmpAnotation = sample.load().annotation
