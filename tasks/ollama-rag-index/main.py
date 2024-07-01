@@ -67,7 +67,7 @@ def loadCorpus(dataset: CustomDataset) -> np.ndarray:
     return np.array(corpus)
 
 
-def main():
+def main() -> None:
     taskRun = currentTaskRun()
     taskRun.dataset.download()
 

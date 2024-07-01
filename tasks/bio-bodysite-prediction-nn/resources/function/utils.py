@@ -47,7 +47,7 @@ def oneHotEncoding(vector: Union[np.ndarray, int], numClasses: Optional[int] = N
 
 
 def convertFromOneHot(matrix: np.ndarray) -> np.ndarray:
-    numOfRows = len(matrix) if isinstance(matrix, list) else matrix.shape[0]
+    numOfRows = matrix.shape[0]
     if not numOfRows > 0:
         raise RuntimeError(f">> [MicrobiomeForensics] Encountered array with {numOfRows} rows when decoding one hot vector")
 

@@ -45,11 +45,11 @@ def processResult(result: Results, classes: ImageDatasetClasses, savePath: Path)
 
 def isSampleValid(sample: ImageSample) -> bool:
     try:
-        instances = sample.load().annotation.instances
-        if instances is None:
+        annotation = sample.load().annotation
+        if annotation is None:
             return False
 
-        for instance in instances:
+        for instance in annotation.instances:
             if any(len(segmentation) < DIMENSION_THRESHOLD for segmentation in instance.segmentations):
                 return False
     except Exception as e:
@@ -59,7 +59,7 @@ def isSampleValid(sample: ImageSample) -> bool:
     return True
 
 
-def predictBatch(model: YOLO, dataset: ImageDataset, startIdx: int, endIdx: int, resultPath: Path):
+def predictBatch(model: YOLO, dataset: ImageDataset, startIdx: int, endIdx: int, resultPath: Path) -> None:
     batch = [sample for sample in dataset.samples[startIdx:endIdx] if isSampleValid(sample)]
 
     results: Results = model.predict([sample.imagePath for sample in batch], save = True, project = "./results")

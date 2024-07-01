@@ -16,7 +16,7 @@ from coretex import TaskRun
 from utils import convertFromOneHot
 
 
-class GatingLayer(tf.keras.layers.Layer):
+class GatingLayer(tf.keras.layers.Layer):  # type: ignore[misc]
 
     def __init__(
         self,
@@ -83,7 +83,7 @@ class GatingLayer(tf.keras.layers.Layer):
         return x
 
 
-class Model(tf.keras.Model):
+class Model(tf.keras.Model):  # type: ignore[misc]
 
     def __init__(
         self,
@@ -325,7 +325,7 @@ class Model(tf.keras.Model):
         return y_pred_hot
 
 
-    def predict(self, data: tf.data.Dataset, batches: int):
+    def predict(self, data: tf.data.Dataset, batches: int) -> np.ndarray:
         y_pred: list[list[int]] = []
 
         for i, batch in enumerate(data):
@@ -363,7 +363,7 @@ class Model(tf.keras.Model):
         if type(X) == sparse.csr_matrix:
             X = X.toarray().astype(np.float32)
 
-        return self.soft_to_hot(self._predict_from_array(X)).numpy()
+        return self.soft_to_hot(self._predict_from_array(X)).numpy()  # type: ignore[no-any-return]
 
 
     @tf.function

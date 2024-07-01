@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union, Any
 from pathlib import Path
 
 import csv
@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from coretex import CustomDataset, TaskRun, Model, folder_manager
 
 
-def jsonPretty(data, savePath) -> None:
+def jsonPretty(data: dict[str, Any], savePath: Path) -> None:
     with open(savePath, "w") as write_file:
         json.dump(data, write_file, indent=4)
 
@@ -262,7 +262,7 @@ def oneHotEncoding(vector: Union[np.ndarray, int], numClasses: Optional[int] = N
 
 
 def convertFromOneHot(matrix: np.ndarray) -> np.ndarray:
-    numOfRows = len(matrix) if isinstance(matrix, list) else matrix.shape[0]
+    numOfRows = matrix.shape[0]
     if not numOfRows > 0:
         raise RuntimeError(f">> [MicrobiomeForensics] Encountered array with {numOfRows} rows when decoding one hot vector")
 

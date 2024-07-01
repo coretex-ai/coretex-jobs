@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any
 from pathlib import Path
 
 import csv
@@ -16,7 +16,7 @@ from coretex import CustomDataset, TaskRun, Model, folder_manager
 from .objects import Sample
 
 
-def jsonPretty(data, savePath) -> None:
+def jsonPretty(data: dict[str, Any], savePath: Path) -> None:
     with open(savePath, "w") as write_file:
         json.dump(data, write_file, indent=4)
 
