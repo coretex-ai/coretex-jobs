@@ -1,3 +1,4 @@
 coretex
 ultralytics @ git+https://github.com/THU-MIG/yolov10
 pyyaml
+huggingface_hub
