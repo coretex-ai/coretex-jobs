@@ -1,9 +1,9 @@
 import logging
 
-from coretex import currentTaskRun, NetworkDataset, CustomDataset, ImageDataset, ImageDatasetClasses
+from coretex import currentTaskRun, CustomDataset, ImageDataset, ImageDatasetClasses
 
 
-def customDatasetMerge(datasets: list[CustomDataset], taskRunId: int, projectId: int) -> NetworkDataset:
+def customDatasetMerge(datasets: list[CustomDataset], taskRunId: int, projectId: int) -> CustomDataset:
     mergeDataset = CustomDataset.createDataset(f"{taskRunId}-merge-custom-dataset", projectId)
 
     for dataset in datasets:
@@ -19,13 +19,12 @@ def customDatasetMerge(datasets: list[CustomDataset], taskRunId: int, projectId:
     return mergeDataset
 
 
-def imageDatasetMerge(datasets: list[ImageDataset], taskRunId: int, projectId: int) -> NetworkDataset:
+def imageDatasetMerge(datasets: list[ImageDataset], taskRunId: int, projectId: int) -> ImageDataset:
     mergeDataset = ImageDataset.createDataset(f"{taskRunId}-merge-image-dataset", projectId)
 
     allClasses = ImageDatasetClasses()
 
     for dataset in datasets:
-
         for oneClass in dataset.classes:
             if oneClass.label in allClasses.labels:
                 originalClass = [cls for cls in allClasses if oneClass.label == cls.label][0]
@@ -80,6 +79,7 @@ def main() -> None:
         mergeDataset = imageDatasetMerge(datasets, taskRunId, projectId)
 
     taskRun.submitOutput("mergeDataset", mergeDataset)
+
 
 if __name__ == "__main__":
     main()
