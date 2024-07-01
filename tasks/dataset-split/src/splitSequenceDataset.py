@@ -27,11 +27,11 @@ def detectEncodingCsv(filePath: Path) -> str:
 
 
 def checkSamplesInMetadata(
-        originalSamples: list[SequenceSample],
-        originalMetadata: list[dict[str, str]],
-        fieldNames: list[str],
-        indexId: int
-        ) -> list[SequenceSample]:
+    originalSamples: list[SequenceSample],
+    originalMetadata: list[dict[str, str]],
+    fieldNames: list[str],
+    indexId: int
+) -> list[SequenceSample]:
 
     prefixMetadata = [oneMetadata[fieldNames[indexId]].split("_")[0] for oneMetadata in originalMetadata]
 
@@ -39,11 +39,11 @@ def checkSamplesInMetadata(
 
 
 def checkMetadataInSamples(
-        originalSamples: list[SequenceSample],
-        originalMetadata: list[dict[str, str]],
-        fieldNames: list[str],
-        indexId: int
-        ) -> list[dict[str, str]]:
+    originalSamples: list[SequenceSample],
+    originalMetadata: list[dict[str, str]],
+    fieldNames: list[str],
+    indexId: int
+) -> list[dict[str, str]]:
 
     prefixSamples = [sample.name[:sample.name.rfind("-")] for sample in originalSamples]
 
