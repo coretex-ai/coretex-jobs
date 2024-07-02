@@ -1,9 +1,14 @@
+from typing import TypeVar
+
 import logging
 
 from coretex import currentTaskRun, ProjectType, NetworkDataset, CustomDataset, ImageDataset, ImageDatasetClasses
 
 
-def customDatasetMerge(datasets: list[CustomDataset], taskRunId: int, projectId: int) -> NetworkDataset:
+DatasetType = TypeVar("DatasetType", bound = NetworkDataset)
+
+
+def customDatasetMerge(datasets: list[CustomDataset], taskRunId: int, projectId: int) -> CustomDataset:
     mergeDataset = CustomDataset.createDataset(f"{taskRunId}-merge-custom-dataset", projectId)
 
     for dataset in datasets:
@@ -19,7 +24,7 @@ def customDatasetMerge(datasets: list[CustomDataset], taskRunId: int, projectId:
     return mergeDataset
 
 
-def imageDatasetMerge(datasets: list[ImageDataset], taskRunId: int, projectId: int) -> NetworkDataset:
+def imageDatasetMerge(datasets: list[ImageDataset], taskRunId: int, projectId: int) -> ImageDataset:
     mergeDataset = ImageDataset.createDataset(f"{taskRunId}-merge-image-dataset", projectId)
 
     allClasses = ImageDatasetClasses()
@@ -72,23 +77,26 @@ def main() -> None:
     datasets = taskRun.parameters["datasetsList"]
 
     if len(datasets) < 2:
-        raise ValueError("The number of datasets to merge must be at least two")
+        raise RuntimeError("The number of datasets to merge must be at least two")
+
+    mergeDataset: DatasetType
 
     if taskRun.projectType == ProjectType.computerVision:
         if sum([hasattr(dataset, "classes") for dataset in datasets]) == len(datasets):
             logging.info(">> [Dataset Merge] Merging ImageDatasets...")
             mergeDataset = imageDatasetMerge(datasets, taskRunId, projectId)
         else:
-            raise FileNotFoundError("The datasets you provided for merging are not of the ImageDataset type")
+            raise TypeError("The datasets you provided for merging are not of the ImageDataset type")
 
     elif taskRun.projectType == ProjectType.other:
         logging.info(">> [Dataset Merge] Merging CustomDatasets...")
         mergeDataset = customDatasetMerge(datasets, taskRunId, projectId)
 
     else:
-        raise ValueError(f"Currently, merging datasets is allowed for projects of the following types: ComputerVision and Other.\nYour project is of type: {taskRun.projectType}")
+        raise RuntimeError(f"Currently, merging datasets is allowed for projects of the following types: ComputerVision and Other.\nYour project is of type: {taskRun.projectType}")
 
     taskRun.submitOutput("mergeDataset", mergeDataset)
+
 
 if __name__ == "__main__":
     main()
