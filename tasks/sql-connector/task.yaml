@@ -1,0 +1,37 @@
+id: transfer-data-from-sql-database
+name: transfer-data-from-sql-database
+description: A task that will connect to the SQL database using credentials, fetch data from all tables, and insert it into a Cortex Dataset
+is_active: true
+project_type:
+param_groups:
+  - name: inputs
+    params:
+      - name: databaseType
+        value:
+          selected: 0
+          options:
+          - MySQL
+          - PostgreSQL
+        required: true
+        data_type: enum
+        description: The user selects the type of SQL database from which they want to fetch data
+      - name: credentials
+        value: null
+        required: true
+        data_type: credentials_secret
+        description: Credentials for accessing the SQL database
+      - name: host
+        value: null
+        required: true
+        data_type: str
+        description: SQL database host
+      - name: port
+        value: null
+        required: true
+        data_type: int
+        description: SQL database port
+      - name: database
+        value: null
+        required: true
+        data_type: str
+        description: SQL database name
