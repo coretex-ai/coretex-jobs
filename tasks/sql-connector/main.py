@@ -42,7 +42,7 @@ def fetchAllData(conn: Any, dataset: CustomDataset, queryGetTables: str, queryGe
     tables = [table[0] for table in tables]
 
     for table in tables:
-        tableData: list[dict] = []
+        tableData = []
 
         cursor.execute(queryGetRows + f"'{table}'")
         columnNames = list(cursor.fetchall())
@@ -56,7 +56,7 @@ def fetchAllData(conn: Any, dataset: CustomDataset, queryGetTables: str, queryGe
 
         sampleNameCSV = f"{table}.csv"
         with open(sampleNameCSV, "w", newline="") as file:
-            writer = csv.DictWriter(file, fieldnames=columnNames)
+            writer = csv.DictWriter(file, fieldnames = columnNames)
             writer.writeheader()
             writer.writerows(tableData)
 
