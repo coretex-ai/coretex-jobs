@@ -10,11 +10,10 @@ from psycopg2.extensions import connection
 import mysql.connector
 import psycopg2
 
-
 from coretex import currentTaskRun, CustomDataset
 
 
-def connectMysqlDatabase(connectionConfig: dict) -> CMySQLConnection:
+def connectMysqlDatabase(connectionConfig: dict[str, str]) -> CMySQLConnection:
     logging.info(f' >> [SQL Connector] Connecting with MySQL database "{connectionConfig["database"]}"...')
 
     try:
