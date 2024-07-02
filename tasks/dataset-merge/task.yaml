@@ -1,5 +1,5 @@
-id: merge-dataset
-name: merge-dataset
+id: merge-datasets
+name: merge-datasets
 description: This task is used to merge user-defined numbers of coretex datasets of the same
   type into a single coretex dataset
 is_active: true
@@ -7,7 +7,7 @@ project_type: 8
 param_groups:
   - name: inputs
     params:
-      - name: datasetsList
+      - name: datasets
         value: null
         required: true
         data_type: list[dataset]
