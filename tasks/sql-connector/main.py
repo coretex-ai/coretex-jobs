@@ -14,7 +14,7 @@ from coretex import currentTaskRun, CustomDataset
 
 
 def connectMysqlDatabase(connectionConfig: dict[str, str]) -> CMySQLConnection:
-    logging.info(f">> [SQL Connector] Connecting with MySQL database \"{connectionConfig["database"]}\"...")
+    logging.info(f">> [SQL Connector] Connecting with MySQL database \"{connectionConfig['database']}\"...")
 
     try:
         conn = mysql.connector.connect(**connectionConfig)
@@ -25,7 +25,7 @@ def connectMysqlDatabase(connectionConfig: dict[str, str]) -> CMySQLConnection:
 
 
 def connectPostgresqlDatabase(connectionConfig: dict[str, str]) -> connection:
-    logging.info(f">> [SQL Connector] Connecting with PostgreSQL database \"{connectionConfig["database"]}\"...")
+    logging.info(f">> [SQL Connector] Connecting with PostgreSQL database \"{connectionConfig['database']}\"...")
 
     try:
         conn = psycopg2.connect(**connectionConfig)
