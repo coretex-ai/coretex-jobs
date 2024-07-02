@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Union
 
 import logging
 import csv
@@ -35,7 +35,7 @@ def connectPostgresqlDatabase(connectionConfig: dict[str, str]) -> connection:
     return conn
 
 
-def fetchAllData(conn: Any, dataset: CustomDataset, queryGetTables: str, queryGetRows: str) -> None:
+def fetchAllData(conn: Union[CMySQLConnection, connection], dataset: CustomDataset, queryGetTables: str, queryGetRows: str) -> None:
     cursor = conn.cursor()
     cursor.execute(queryGetTables)
     tables = cursor.fetchall()
@@ -54,18 +54,18 @@ def fetchAllData(conn: Any, dataset: CustomDataset, queryGetTables: str, queryGe
         for row in rows:
             tableData.append(dict(zip(columnNames, list(row))))
 
-        sampleNameCSV = f"{table}.csv"
-        with open(sampleNameCSV, "w", newline="") as file:
+        sampleNameCsv = f"{table}.csv"
+        with open(sampleNameCsv, "w", newline="") as file:
             writer = csv.DictWriter(file, fieldnames = columnNames)
             writer.writeheader()
             writer.writerows(tableData)
 
-        sampleNameZIP = f"{table}.zip"
-        with zipfile.ZipFile(sampleNameZIP, "w") as zipFile:
-            zipFile.write(sampleNameCSV)
+        sampleNameZip = f"{table}.zip"
+        with zipfile.ZipFile(sampleNameZip, "w") as zipFile:
+            zipFile.write(sampleNameCsv)
 
-        dataset.add(sampleNameZIP)
-        logging.info(f">> [SQL Connector] The sample \"{sampleNameZIP}\" has been added to the dataset \"{dataset.name}\"")
+        dataset.add(sampleNameZip)
+        logging.info(f">> [SQL Connector] The sample \"{sampleNameZip}\" has been added to the dataset \"{dataset.name}\"")
 
     cursor.close()
     conn.close()
@@ -74,7 +74,7 @@ def fetchAllData(conn: Any, dataset: CustomDataset, queryGetTables: str, queryGe
 
 def main() -> None:
     taskRun = currentTaskRun()
-    databaseType = taskRun.parameters["database_type"]
+    databaseType = taskRun.parameters["databaseType"]
 
     credentials = taskRun.parameters["credentials"]
     host = taskRun.parameters["host"]
@@ -97,11 +97,10 @@ def main() -> None:
             queryGetTables = f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{database}'"
             queryGetRows = f"SELECT column_name FROM information_schema.columns WHERE table_schema = '{database}' AND table_name = "
             fetchAllData(conn, dataset, queryGetTables, queryGetRows)
-
         else:
             logging.warning(">> [SQL Connector] Problem with the database connection")
 
-    if databaseType == "PostgreSQL":
+    elif databaseType == "PostgreSQL":
         conn = connectPostgresqlDatabase(connectionConfig)
 
         if conn:
@@ -109,7 +108,6 @@ def main() -> None:
             queryGetTables = f"SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
             queryGetRows = f"SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = "
             fetchAllData(conn, dataset, queryGetTables, queryGetRows)
-
         else:
             logging.warning(">> [SQL Connector] Problem with the database connection")
 
