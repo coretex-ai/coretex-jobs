@@ -86,7 +86,7 @@ def main() -> None:
         mergeDataset = customDatasetMerge(datasets, taskRunId, projectId)
 
     else:
-        raise ValueError("Currently, merging datasets is allowed for projects of the following types: ComputerVision and Other")
+        raise ValueError(f"Currently, merging datasets is allowed for projects of the following types: ComputerVision and Other.\nYour project is of type: {taskRun.projectType}")
 
     taskRun.submitOutput("mergeDataset", mergeDataset)
 
