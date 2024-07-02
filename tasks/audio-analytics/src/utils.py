@@ -7,7 +7,7 @@ import json
 import logging
 
 from coretex import CustomSample, cache, TaskRun, folder_manager
-from coretex.nlp import Token
+from coretex.nlp import Token  # type: ignore[attr-defined]
 
 from .occurence import NamedEntityRecognitionResult
 

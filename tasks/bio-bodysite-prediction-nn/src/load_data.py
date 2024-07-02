@@ -187,9 +187,9 @@ def loadDataAtlas(
     sampleOrigin: list[str],
     sequencingTechnique: list[str],
     useCache: bool,
-    validBodySites: dict[str, int] = None,
-    validTaxons: dict[str, int] = None
-) -> tuple[Path, dict[str, int], dict[str, int], int]:
+    validBodySites: Optional[dict[str, int]] = None,
+    validTaxons: Optional[dict[str, int]] = None
+) -> tuple[dict[str, int], dict[str, int], int]:
 
     """
         Loads the dataset and returns it ready for training.
@@ -230,6 +230,9 @@ def loadDataAtlas(
     sampleInfoObj = readEnvInfo(infoPath, sampleOrigin, sequencingTechnique)
 
     workerCount = os.cpu_count()  # This value should not exceed the total number of CPU cores
+    if workerCount is None:
+        workerCount = 1
+
     logging.info(f">> [MicrobiomeForensics] Using {workerCount} CPU cores to read the dataset")
 
     fileSize = mappedPath.stat().st_size
@@ -261,8 +264,9 @@ def loadDataAtlas(
                 The future object of the process from ProcessPoolExecutor
         """
 
-        if future.exception() is not None:
-            raise future.exception()
+        exception = future.exception()
+        if exception is not None:
+            raise exception
 
         processClassDistribution, processTaxonDistribution = future.result()
 
@@ -341,4 +345,4 @@ def loadDataAtlas(
             taskRun.projectId
         )
 
-    return  uniqueBodySite, uniqueTaxons, datasetLen
+    return uniqueBodySite, uniqueTaxons, datasetLen

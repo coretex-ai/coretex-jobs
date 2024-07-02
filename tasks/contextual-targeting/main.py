@@ -4,7 +4,7 @@ from pathlib import Path
 import logging
 
 from coretex import CustomDataset, TaskRun, CustomSample, currentTaskRun, folder_manager
-from coretex.nlp import AudioTranscriber, Transcription
+from coretex.nlp import AudioTranscriber, Transcription  # type: ignore[attr--defined]
 
 import matplotlib.pyplot as plt
 
@@ -17,7 +17,7 @@ MODEL_NAME = "deepspeech-0.8.2-model.pbmm"
 MODEL_SCORER_NAME = "deepspeech-0.8.2-model.scorer"
 
 
-def transcribe(dataset: CustomDataset, parameters: Dict[str, Any]) -> List[Tuple[CustomSample, Transcription]]:
+def transcribe(dataset: CustomDataset, parameters: Dict[str, Any]) -> Transcription:
     modelFile = fetchModelFile(parameters["modelUrl"], MODEL_NAME, ".pbmm")
     modelScorerFile = fetchModelFile(parameters["modelScorerUrl"], MODEL_SCORER_NAME, ".scorer")
 

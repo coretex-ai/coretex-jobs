@@ -11,14 +11,14 @@ def copyDir(src: Path, dst: Path, directoryName: str) -> None:
     shutil.copytree(src, dst / directoryName, copy_function = os.link)
 
 
-def getIndexPath(dataset: CustomDataset):
+def getIndexPath(dataset: CustomDataset) ->  Path:
     sample = dataset.samples[0]
     sample.unzip()
 
     return sample.path / "embeddings.index"
 
 
-def main():
+def main() -> None:
     taskRun = currentTaskRun()
 
     model = Model.createModel(f"{taskRun.id}-rag-chatbot", taskRun.id, 1.0, {})

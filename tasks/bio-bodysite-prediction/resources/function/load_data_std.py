@@ -6,7 +6,7 @@ import pickle
 import numpy as np
 
 
-def loadDataStd(inputPath: Path, modelDir: Path, level: int) -> tuple[int, int, dict[str, int], list[int]]:
+def loadDataStd(inputPath: Path, modelDir: Path, level: int) -> tuple[np.ndarray, dict[str, int], list[str]]:
     with open(modelDir / "uniqueTaxons.pkl", "rb") as f:
         uniqueTaxons = pickle.load(f)
 

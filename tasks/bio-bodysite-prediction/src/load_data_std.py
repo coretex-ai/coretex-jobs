@@ -10,7 +10,7 @@ from coretex import TaskRun, CustomDataset, TaskRunStatus, folder_manager
 from .utils import savePlotFig
 
 
-def loadDataStd(dataset: CustomDataset, taskRun: TaskRun[CustomDataset]) -> tuple[int, int, dict[str, int], dict[str, int], list[int]]:
+def loadDataStd(dataset: CustomDataset, taskRun: TaskRun[CustomDataset]) -> tuple[int, int, dict[str, int], dict[str, int]]:
     logging.info(">> [MicrobiomeForensics] Downloading dataset...")
     taskRun.updateStatus(TaskRunStatus.inProgress, "Downloading dataset...")
     dataset.download()
@@ -37,15 +37,15 @@ def loadDataStd(dataset: CustomDataset, taskRun: TaskRun[CustomDataset]) -> tupl
         samplePath = glob.glob(os.path.join(sample.path, f"*.json"))[0]
 
         with open(samplePath, "r") as f:
-            sample = json.load(f)
+            sampleDict = json.load(f)
 
-        if not sample["body_site"] in uniqueBodySites:
-            uniqueBodySites[sample["body_site"]] = len(uniqueBodySites)
-            classDistribution[sample["body_site"]] = 1
+        if not sampleDict["body_site"] in uniqueBodySites:
+            uniqueBodySites[sampleDict["body_site"]] = len(uniqueBodySites)
+            classDistribution[sampleDict["body_site"]] = 1
         else:
-            classDistribution[sample["body_site"]] += 1
+            classDistribution[sampleDict["body_site"]] += 1
 
-        for bacteria in sample["97"]:
+        for bacteria in sampleDict["97"]:
             taxons = bacteria["taxon"].split(";")
             taxon = taxons[level]
 
@@ -83,7 +83,7 @@ def loadDataStd(dataset: CustomDataset, taskRun: TaskRun[CustomDataset]) -> tupl
     return level, datasetLen, uniqueTaxons, uniqueBodySites
 
 
-def prepareForTrainingStd(level: int, datasetLen: int, uniqueTaxons: dict, uniqueBodySites: dict, taskRun: TaskRun[CustomDataset]) -> tuple[np.ndarray, np.ndarray]:
+def prepareForTrainingStd(level: int, datasetLen: int, uniqueTaxons: dict, uniqueBodySites: dict, taskRun: TaskRun[CustomDataset]) -> tuple[np.ndarray, np.ndarray, list[str]]:
     inputMatrix = np.zeros((datasetLen, len(uniqueTaxons)))
     outputMatrix = np.zeros((datasetLen, 1))
 
@@ -97,10 +97,10 @@ def prepareForTrainingStd(level: int, datasetLen: int, uniqueTaxons: dict, uniqu
         samplePath = glob.glob(os.path.join(sample.path, f"*.json"))[0]
 
         with open(samplePath, "r") as f:
-            sample = json.load(f)
+            sampleDict = json.load(f)
 
-        for bacteria in sample["97"]:
-            sampleIdList.append(sample["_id"]["$oid"])
+        for bacteria in sampleDict["97"]:
+            sampleIdList.append(sampleDict["_id"]["$oid"])
 
             taxons = bacteria["taxon"].split(";")
             taxon = taxons[level]
@@ -109,6 +109,6 @@ def prepareForTrainingStd(level: int, datasetLen: int, uniqueTaxons: dict, uniqu
             c = bacteria["count"]
             inputMatrix[i, encodedTaxon] += c
 
-            outputMatrix[i, 0] = uniqueBodySites[sample["body_site"]]
+            outputMatrix[i, 0] = uniqueBodySites[sampleDict["body_site"]]
 
     return inputMatrix, outputMatrix, sampleIdList

@@ -18,13 +18,16 @@ def getJsonName(datasetName: str, sampleOrigin: list[str], sequencingTechnique: 
 
     suffix = f"{origins}-{techniques}"
 
-    return hashCacheName(datasetName, suffix)
+    return hashCacheName(datasetName, suffix)[:20]
 
 
 def loadJsonCache(cacheName: str) -> JsonTuple:
     logging.info(">> [MicrobiomeForensics] Loading assembled dataset from cache")
 
     cache = getJsonCache(cacheName)
+    if cache is None:
+        raise ValueError(">> [MicrobiomeForensics] Failed to retrieve cache")
+
     cache.download()
     cache.samples[0].unzip()
     cachePath = Path(cache.samples[0].path)

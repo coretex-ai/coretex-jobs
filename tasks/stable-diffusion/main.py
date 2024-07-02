@@ -60,7 +60,7 @@ def generateImages(
         width = width,
         height = height,
         seed = seed
-    ).images  # type: ignore
+    ).images
 
     imagePaths: list[Path] = []
 

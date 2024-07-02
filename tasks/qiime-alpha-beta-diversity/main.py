@@ -1,3 +1,4 @@
+from typing import Optional
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -24,7 +25,7 @@ def diversityCoreMetricsPhylogeneticSample(
     samplingDepth: int,
     metadataPath: Path,
     outputDir: Path,
-    threads
+    threads: Optional[int]
 ) -> Path:
 
     phylogenyPath = sample.joinPath("rooted-tree.qza")
@@ -54,7 +55,7 @@ def diversityAlphaGroupSignificance(
     outputDataset: CustomDataset,
     outputPath: Path,
     taskRun: TaskRun
-):
+) -> None:
 
     ctx_qiime2.diversityAlphaGroupSignificance(
         str(alphaDiversityPath),
@@ -79,7 +80,7 @@ def diversityBetaGroupSignificance(
     outputDataset: CustomDataset,
     outputPath: Path,
     taskRun: TaskRun
-):
+) -> None:
 
     ctx_qiime2.diversityBetaGroupSignificance(
         str(distanceMatrixPath),
@@ -105,7 +106,7 @@ def emperorPlot(
     outputDataset: CustomDataset,
     outputPath: Path,
     taskRun: TaskRun
-):
+) -> None:
 
     ctx_qiime2.emperorPlot(
         str(pcoaPath),
@@ -132,7 +133,7 @@ def diversityAlphaRarefaction(
     outputDataset: CustomDataset,
     outputPath: Path,
     taskRun: TaskRun
-):
+) -> None:
     ctx_qiime2.diversityAlphaRarefaction(
         str(tablePath),
         str(phylogenyPath),
@@ -158,7 +159,7 @@ def processSample(
     taskRun: TaskRun,
     outputDataset: CustomDataset,
     outputDir: Path
-):
+) -> None:
 
     sample.unzip()
     metadataSample.unzip()

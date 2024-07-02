@@ -1,4 +1,4 @@
-from coretex.nlp import Token
+from coretex.nlp import Token  # type: ignore[attr-defined]
 
 from .occurence import EntityOccurrence
 

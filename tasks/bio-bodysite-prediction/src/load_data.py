@@ -70,7 +70,7 @@ def readByteBlockUntilNewLine(file: BinaryIO, blockSize: int) -> Optional[bytes]
     return content + remainder
 
 
-def processByteBatch(envInfoData: dict[str, str], filePath: Path, start: int, end: int) -> JsonTuple:
+def processByteBatch(envInfoData: dict[str, str], filePath: Path, start: int, end: int) -> tuple[list[Sample], set[str], set[str]]:
 
     """
         Called as a process by ProcessPoolExecutor for parallel processing.
@@ -149,7 +149,7 @@ def processByteBatch(envInfoData: dict[str, str], filePath: Path, start: int, en
                     int(count)
                 ))
 
-    return JsonTuple(sampleData, uniqueBodySites, uniqueTaxons)
+    return sampleData, uniqueBodySites, uniqueTaxons
 
 
 def removeBadSamples(sampleData: list[Sample], uniqueTaxons: dict[str, int], uniqueBodySites: dict[str, int]) -> list[Sample]:
@@ -321,7 +321,7 @@ def loadDataAtlas(
     validate = taskRun.parameters["validation"]
 
     cacheNameMatrix = getMatrixName(
-        dataset.name,
+        dataset.name[:42],
         sampleOrigin,
         sequencingTechnique,
         taskRun.parameters["percentile"],
@@ -334,7 +334,7 @@ def loadDataAtlas(
         return loadMatrixCache(cacheNameMatrix, validate)
 
     cacheNameJson = getJsonName(
-        dataset.name,
+        dataset.name[:42],
         sampleOrigin,
         sequencingTechnique
     )
@@ -358,6 +358,9 @@ def loadDataAtlas(
     sampleInfoObj = readEnvInfo(infoPath, sampleOrigin, sequencingTechnique)
 
     workerCount = os.cpu_count()  # This value should not exceed the total number of CPU cores
+    if workerCount is None:
+        workerCount = 1
+
     logging.info(f">> [MicrobiomeForensics] Using {workerCount} CPU cores to read the dataset")
 
     fileSize = mappedPath.stat().st_size
@@ -367,11 +370,11 @@ def loadDataAtlas(
     step = fileSize // workerCount
     remainder = fileSize % workerCount
 
-    sampleData: list[Sample] = []
+    sampleData: list[Sample] = []  # type: ignore[no-redef]
 
     # These two dictionaries represent the mapping between the names and encoded integers of the bodysites and taxons respectively
-    uniqueBodySite: dict[str, int] = {}
-    uniqueTaxons: dict[str, int] = {}
+    uniqueBodySite: dict[str, int] = {}  # type: ignore[no-redef]
+    uniqueTaxons: dict[str, int] = {}  # type: ignore[no-redef]
 
     if validate:
         # In the case of validation the same dictionaries will be used as during training
@@ -395,8 +398,9 @@ def loadDataAtlas(
                 The future object of the process from ProcessPoolExecutor
         """
 
-        if future.exception() is not None:
-            raise future.exception()
+        exception = future.exception()
+        if exception is not None:
+            raise exception
 
         processSampleData, processUniqueBodySite, processUniqueTaxons = future.result()
 
@@ -510,10 +514,11 @@ def prepareForTrainingAtlas(
     if quantize:
         for i, num in enumerate(matrixData):
             if num > 65535: matrixData[i] = 65535
-        matrixData = np.array(matrixData).astype(np.ushort)
+
+        matrixDataU16 = np.array(matrixData).astype(np.ushort)
 
         # Assemble the input matrix in a sparse representation
-        inputMatrix = sparse.csr_matrix((matrixData, (rowIndices, columnIndices)), inputMatrixShape, dtype = np.ushort)
+        inputMatrix = sparse.csr_matrix((matrixDataU16, (rowIndices, columnIndices)), inputMatrixShape, dtype = np.ushort)
     else:
         inputMatrix = sparse.csr_matrix((matrixData, (rowIndices, columnIndices)), inputMatrixShape, dtype = np.int32)
 

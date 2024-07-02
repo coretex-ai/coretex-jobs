@@ -9,7 +9,7 @@ from coretex import CustomDataset, TaskRun, Model, folder_manager, currentTaskRu
 from src.dataset import extractTestTrainData, loadDataset
 
 
-def saveModel(taskRun: TaskRun[CustomDataset], accuracy: float, trainColumnCount: int, labels: list[str]):
+def saveModel(taskRun: TaskRun[CustomDataset], accuracy: float, trainColumnCount: int, labels: list[str]) -> None:
     model = Model.createModel(taskRun.generateEntityName(), taskRun.id, accuracy, {})
     modelPath = folder_manager.temp / "model"
 

@@ -13,7 +13,7 @@ param_groups:
   params:
   - name: dataset
     description: The image dataset from which images will be taken for augmentation.
-    value: null
+    value: 38168
     data_type: dataset
     required: true
 - name: outputs
@@ -27,7 +27,7 @@ param_groups:
   params:
   - name: numOfImages
     description: The number of augmented images each of the input images will generate.
-    value: 5
+    value: 1
     data_type: int
     required: true
   - name: flipHorizontalPrc

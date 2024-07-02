@@ -21,7 +21,7 @@ def loadDataStd(
     level: int,
     validBodySites: Optional[dict[str, int]] = None,
     validTaxons: Optional[dict[str, int]] = None
-) -> tuple[int, int, dict[str, int], dict[str, int], list[int]]:
+) -> tuple[dict[str, int], dict[str, int], int]:
 
     logging.info(">> [MicrobiomeForensics] Downloading dataset...")
     taskRun.updateStatus(TaskRunStatus.inProgress, "Downloading dataset...")
@@ -50,19 +50,19 @@ def loadDataStd(
         samplePath = glob.glob(os.path.join(sample.path, f"*.json"))[0]
 
         with open(samplePath, "r") as f:
-            sample = json.load(f)
+            sampleDict = json.load(f)
 
-        if validBodySites is not None and sample["body_site"] not in validBodySites:
+        if validBodySites is not None and sampleDict["body_site"] not in validBodySites:
             continue
 
-        sampleObj = Sample(sample["_id"]["$oid"], sample["body_site"], None, [])
+        sampleObj = Sample(sampleDict["_id"]["$oid"], sampleDict["body_site"], None, [])
 
-        if not sample["body_site"] in classDistribution:
-            classDistribution[sample["body_site"]] = 1
+        if not sampleDict["body_site"] in classDistribution:
+            classDistribution[sampleDict["body_site"]] = 1
         else:
-            classDistribution[sample["body_site"]] += 1
+            classDistribution[sampleDict["body_site"]] += 1
 
-        taxons = loadTaxons(sample, level)
+        taxons = loadTaxons(sampleDict, level)
 
         if validTaxons is not None and any(taxon not in validTaxons for taxon in taxons.keys()):
             continue
@@ -78,7 +78,7 @@ def loadDataStd(
         with datasetPath.joinpath(sampleObj.sampleId).open("wb") as file:
             pickle.dump(sampleObj, file)
 
-    if validBodySites is not None and uniqueTaxons is not None:
+    if validBodySites is not None and validTaxons is not None:
         uniqueBodySites = validBodySites
         uniqueTaxons = validTaxons
     else:
