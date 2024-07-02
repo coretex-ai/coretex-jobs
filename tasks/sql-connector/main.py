@@ -39,6 +39,9 @@ def fetchAllData(conn: Union[CMySQLConnection, connection], dataset: CustomDatas
     cursor = conn.cursor()
     cursor.execute(queryGetTables)
     tables = cursor.fetchall()
+    if len(tables) < 1:
+        raise RuntimeError("In the database, there are no tables")
+
     tables = [table[0] for table in tables]
 
     for table in tables:
@@ -75,7 +78,6 @@ def fetchAllData(conn: Union[CMySQLConnection, connection], dataset: CustomDatas
 def main() -> None:
     taskRun = currentTaskRun()
     databaseType = taskRun.parameters["databaseType"]
-
     credentials = taskRun.parameters["credentials"]
     host = taskRun.parameters["host"]
     port = taskRun.parameters["port"]
