@@ -14,23 +14,23 @@ from coretex import currentTaskRun, CustomDataset
 
 
 def connectMysqlDatabase(connectionConfig: dict[str, str]) -> CMySQLConnection:
-    logging.info(f' >> [SQL Connector] Connecting with MySQL database "{connectionConfig["database"]}"...')
+    logging.info(f">> [SQL Connector] Connecting with MySQL database \"{connectionConfig["database"]}\"...")
 
     try:
         conn = mysql.connector.connect(**connectionConfig)
     except mysql.connector.errors.Error as e:
-        logging.error(f" >> [SQL Connector] Error while connecting to database: {e}")
+        logging.error(f">> [SQL Connector] Error while connecting to database: {e}")
 
     return conn
 
 
-def connectPostgresqlDatabase(connectionConfig: dict) -> connection:
-    logging.info(f' >> [SQL Connector] Connecting with PostgreSQL database "{connectionConfig["database"]}"...')
+def connectPostgresqlDatabase(connectionConfig: dict[str, str]) -> connection:
+    logging.info(f">> [SQL Connector] Connecting with PostgreSQL database \"{connectionConfig["database"]}\"...")
 
     try:
         conn = psycopg2.connect(**connectionConfig)
     except psycopg2._psycopg.Error as e:
-        logging.error(f" >> [SQL Connector] Error while connecting to database: {e}")
+        logging.error(f">> [SQL Connector] Error while connecting to database: {e}")
 
     return conn
 
@@ -65,11 +65,11 @@ def fetchAllData(conn: Any, dataset: CustomDataset, queryGetTables: str, queryGe
             zipFile.write(sampleNameCSV)
 
         dataset.add(sampleNameZIP)
-        logging.info(f' >> [SQL Connector] The sample "{sampleNameZIP}" has been added to the dataset "{dataset.name}"')
+        logging.info(f">> [SQL Connector] The sample \"{sampleNameZIP}\" has been added to the dataset \"{dataset.name}\"")
 
     cursor.close()
     conn.close()
-    logging.info(" >> [SQL Connector] Connection with database is closed")
+    logging.info(">> [SQL Connector] Connection with database is closed")
 
 
 def main() -> None:
@@ -99,7 +99,7 @@ def main() -> None:
             fetchAllData(conn, dataset, queryGetTables, queryGetRows)
 
         else:
-            logging.warning(" >> [SQL Connector] Problem with the database connection")
+            logging.warning(">> [SQL Connector] Problem with the database connection")
 
     if databaseType == "PostgreSQL":
         conn = connectPostgresqlDatabase(connectionConfig)
@@ -111,7 +111,7 @@ def main() -> None:
             fetchAllData(conn, dataset, queryGetTables, queryGetRows)
 
         else:
-            logging.warning(" >> [SQL Connector] Problem with the database connection")
+            logging.warning(">> [SQL Connector] Problem with the database connection")
 
 
 if __name__ == "__main__":
