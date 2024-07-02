@@ -8,6 +8,9 @@ from coretex import currentTaskRun, ProjectType, NetworkDataset, CustomDataset, 
 DatasetType = TypeVar("DatasetType", bound = NetworkDataset)
 
 
+ALLOWED_PROJECT_TYPES = [ProjectType.computerVision, ProjectType.other]
+
+
 def customDatasetMerge(datasets: list[CustomDataset], taskRunId: int, projectId: int) -> CustomDataset:
     mergeDataset = CustomDataset.createDataset(f"{taskRunId}-merge-custom-dataset", projectId)
 
@@ -79,21 +82,21 @@ def main() -> None:
     if len(datasets) < 2:
         raise RuntimeError("The number of datasets to merge must be at least two")
 
+    if taskRun.projectType not in ALLOWED_PROJECT_TYPES:
+        raise RuntimeError(f"Currently, merging datasets is allowed for projects of the following types: {ALLOWED_PROJECT_TYPES}.\nYour project is of type: {taskRun.projectType}")
+
     mergeDataset: DatasetType
 
     if taskRun.projectType == ProjectType.computerVision:
-        if sum([hasattr(dataset, "classes") for dataset in datasets]) == len(datasets):
-            logging.info(">> [Dataset Merge] Merging ImageDatasets...")
-            mergeDataset = imageDatasetMerge(datasets, taskRunId, projectId)
-        else:
+        if False in [hasattr(dataset, "classes") for dataset in datasets]:
             raise TypeError("The datasets you provided for merging are not of the ImageDataset type")
+
+        logging.info(">> [Dataset Merge] Merging ImageDatasets...")
+        mergeDataset = imageDatasetMerge(datasets, taskRunId, projectId)
 
     elif taskRun.projectType == ProjectType.other:
         logging.info(">> [Dataset Merge] Merging CustomDatasets...")
         mergeDataset = customDatasetMerge(datasets, taskRunId, projectId)
-
-    else:
-        raise RuntimeError(f"Currently, merging datasets is allowed for projects of the following types: ComputerVision and Other.\nYour project is of type: {taskRun.projectType}")
 
     taskRun.submitOutput("mergeDataset", mergeDataset)
 
