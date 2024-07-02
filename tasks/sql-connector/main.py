@@ -42,7 +42,7 @@ def fetchAllData(conn: Any, dataset: CustomDataset, queryGetTables: str, queryGe
     tables = [table[0] for table in tables]
 
     for table in tables:
-        tableData = []
+        tableData: list[dict[str, str]] = []
 
         cursor.execute(queryGetRows + f"'{table}'")
         columnNames = list(cursor.fetchall())
