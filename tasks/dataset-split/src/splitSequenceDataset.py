@@ -81,7 +81,7 @@ def splitSequenceDataset(originalDataset: SequenceDataset, datasetParts: int, ta
     if len(samples) <= datasetParts:
         raise ValueError("Number of valid samples is smaller than the number you want to divide the dataset")
 
-    metadata = checkMetadataInSamples(originalDataset.samples, originalMetadata, fieldNames, indexId)
+    metadata = checkMetadataInSamples(samples, originalMetadata, fieldNames, indexId)
     splitSamples = splitOriginalSamples(samples, datasetParts)
 
     splitDatasets: list[CustomDataset] = []
