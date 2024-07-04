@@ -23,7 +23,7 @@ def calculateAverageScores(qualityScores: list[list[int]]) -> list[int]:
 def analyzeFastq(sequencePath: Path) -> list[int]:
     qualityScores: list[list[int]] = []
     with sequencePath.open("r") as file:
-        for record in SeqIO.parse(file, "fastq"):
+        for record in SeqIO.parse(file, "fastq"):  # type: ignore[no-untyped-call]
             qualityScores.append(record.letter_annotations["phred_quality"])
 
     return calculateAverageScores(qualityScores)

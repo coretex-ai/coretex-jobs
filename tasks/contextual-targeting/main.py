@@ -4,7 +4,7 @@ from pathlib import Path
 import logging
 
 from coretex import CustomDataset, TaskRun, CustomSample, currentTaskRun, folder_manager
-from coretex.nlp import AudioTranscriber, Transcription  # type: ignore[attr--defined]
+from coretex.nlp import AudioTranscriber, Transcription  # type: ignore[attr-defined]
 
 import matplotlib.pyplot as plt
 

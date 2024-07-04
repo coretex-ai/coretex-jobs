@@ -18,7 +18,7 @@ from coretex import TaskRun, CustomDataset, TaskRunStatus, folder_manager
 from .utils import savePredictionFile
 
 
-class Progress(TrainingCallback):  # type: ignore[misc]
+class Progress(TrainingCallback):
 
     """
     Callback function for XGBoost showing the loss and accuracy of the model at the current epoch.\n

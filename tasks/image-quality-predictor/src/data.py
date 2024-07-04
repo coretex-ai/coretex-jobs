@@ -87,7 +87,11 @@ class ImageQualityDataset(Dataset):
     def __getitem__(self, idx: int) -> tuple[Any, float]:
         sample, quality = self.data[idx]
 
-        image = ImageOps.exif_transpose(Image.open(sample.imagePath)).convert("RGB")
+        image = ImageOps.exif_transpose(Image.open(sample.imagePath))
+        if image is None:
+            raise ValueError(f">> [ImageQuality] Failed to open image {sample.name}")
+
+        image = image.convert("RGB")
 
         if self.transform:
             image = self.transform(image)

@@ -27,14 +27,18 @@ class EarlyStopping:
 def getMeanAndStd(directory: Path) -> tuple[list[float], list[float]]:
     channelsSum, channelsSquaredSum, numImages = 0, 0, 0
 
-    for image_file in directory.glob("*.png"):
-        image = np.array(ImageOps.exif_transpose(Image.open(image_file)).convert("RGB"), dtype = np.float32) / 255.0  # Normalize pixel values to [0, 1]
+    for imagePath in directory.glob("*.png"):
+        image = ImageOps.exif_transpose(Image.open(imagePath))
+        if image is None:
+            raise ValueError(f"Failed to read image {imagePath.name}")
 
-        channelsSum += np.mean(image, axis = (0, 1))
-        channelsSquaredSum += np.mean(np.square(image), axis = (0, 1))
+        imageArray = np.array(image.convert("RGB"), dtype = np.float32) / 255.0  # Normalize pixel values to [0, 1]
+
+        channelsSum += np.mean(imageArray, axis = (0, 1))
+        channelsSquaredSum += np.mean(np.square(imageArray), axis = (0, 1))
         numImages += 1
 
-    mean = channelsSum / numImages
+    mean = np.array(channelsSum / numImages)
     std = np.sqrt(channelsSquaredSum / numImages - np.square(mean))
 
     return mean.tolist(), std.tolist()

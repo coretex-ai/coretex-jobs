@@ -41,6 +41,8 @@ def run(modelPath: Path, dataset: list[tuple[ImageSample, float]], transform: tr
         for sample, quality in dataset:
             logging.info(f">> [ImageQuality] Validating sample \"{sample.name}\"...")
             image = ImageOps.exif_transpose(Image.open(sample.imagePath).convert("RGB"))
+            if image is None:
+                raise ValueError(f">> [ImageQuality] Failed to open image {sample.name}")
 
             if quality == 0:
                 logging.warning("\tSample has quality == 0")
