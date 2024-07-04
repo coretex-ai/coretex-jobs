@@ -18,7 +18,7 @@ MODEL_ID = "stabilityai/stable-diffusion-2-1"
 
 def loadModel(device: str) -> StableDiffusionPipeline:
     dtype = torch.float16 if device == "cuda" else torch.float32
-    pipe = StableDiffusionPipeline.from_pretrained(MODEL_ID, torch_dtype = dtype)
+    pipe: StableDiffusionPipeline = StableDiffusionPipeline.from_pretrained(MODEL_ID, torch_dtype = dtype)
     pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
     return pipe.to(device)
 
