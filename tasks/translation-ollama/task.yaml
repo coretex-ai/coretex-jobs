@@ -1,0 +1,26 @@
+id: translate-with-llm
+name: translate-with-llm
+description: This task is used for translating .pdf 
+  files into the desired language using the Ollama chatbot.
+is_active: true
+project_type: 8
+param_groups:
+  - name: inputs
+    params:
+      - name: dataset
+        value: null
+        required: true
+        data_type: dataset
+        description: Dataset containing .pdf documents that need to be translated
+      - name: language
+        value: Serbian
+        required: true
+        data_type: str
+        description: The user inputs the language they want to translate the text into.
+  - name: outputs
+    params:
+      - name: translatedDataset
+        value: null
+        required: false
+        data_type: dataset
+        description: Dataset containing .txt documents that are translations of .pdf files into the selected language
