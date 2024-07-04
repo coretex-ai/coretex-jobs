@@ -246,7 +246,7 @@ tryFilterAndTrim <- function(
 
     if (length(forward_read_paths) != length(reverse_read_paths)) {
         stop(paste0(
-            "ERROR: Number forward reads ",
+            "ERROR: Number of forward reads ",
             "(", length(forward_read_paths), ") ",
             "does not match number of reverse reads",
             "(", length(reverse_read_paths), ")"
