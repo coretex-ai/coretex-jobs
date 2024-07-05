@@ -337,7 +337,7 @@ main <- function(taskRun) {
 
     # Store the phyloseq object into an output dataset
     output_dataset <- ctx$CustomDataset$createDataset(
-        paste0(taskRun$id, " - R Step 1: DADA2 and Phyloseq object"),
+        paste0(taskRun$id, "-r-step-1-dada2-and-phyloseq-object"),
         taskRun$projectId
     )
 

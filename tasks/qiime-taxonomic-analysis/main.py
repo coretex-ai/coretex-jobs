@@ -105,7 +105,7 @@ def main() -> None:
     outputDir = folder_manager.createTempFolder("taxonomy_output")
 
     outputDatasetName = f"{taskRun.id}-step-5-taxonomic-analysis"
-    with createDataset(CustomDataset, outputDatasetName,taskRun.projectId) as outputDataset:
+    with createDataset(CustomDataset, outputDatasetName, taskRun.projectId) as outputDataset:
         for sample in denoisedSamples:
             index = ctx_qiime2.sampleNumber(sample)
 

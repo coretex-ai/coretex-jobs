@@ -126,7 +126,7 @@ def main() -> None:
     savedModelUrl = taskRun.parameters["savedModelUrl"]
     savedModelFilename = "multipose_savedModel.zip"
 
-    coretexModel = Model.createModel(f"{taskRun.id}-{taskRun.name}", taskRun.projectId, 0.9139)
+    coretexModel = Model.createModel(taskRun.generateEntityName(), taskRun.projectId, 0.9139, {})
     logging.info(f">> [Task] Model accuracy is: {coretexModel.accuracy}")
 
     savedModelPath = fetchModelFile(savedModelUrl, savedModelFilename)

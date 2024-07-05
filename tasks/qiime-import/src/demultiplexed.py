@@ -83,7 +83,7 @@ def importDemultiplexed(
     outputDir: Path
 ) -> None:
 
-    outputDatasetName = f"{taskRun.id} - Step 1: Import - Demultiplexed"
+    outputDatasetName = f"{taskRun.id}-step-1-import-demultiplexed"
     with createDataset(CustomDataset, outputDatasetName, taskRun.projectId) as outputDataset:
 
         logging.info(">> [Qiime: Import] Preparing demultiplexed data for import into Qiime2")

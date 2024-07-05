@@ -32,7 +32,7 @@ def saveModel(
 
     labels = list(uniqueBodySites.keys())
 
-    model = Model.createModel(f"{taskRun.id}-{taskRun.name}", taskRun.projectId, accuracy)
+    model = Model.createModel(taskRun.generateEntityName(), taskRun.projectId, accuracy, {})
     contents = {
         "project_task": taskRun.projectId,
         "labels": labels,
