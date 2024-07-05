@@ -38,14 +38,14 @@ def run(taskRun: TaskRun, model: KerasModel, dataset: ImageDataset) -> None:
 
         fig, axes = plt.subplots(1, 3)
 
-        axes[0].set_title("Input image")
-        axes[0].imshow(resized)
+        axes[0].set_title("Input image")  # type: ignore[index]
+        axes[0].imshow(resized)  # type: ignore[index]
 
-        axes[1].set_title("Groundtruth mask")
-        axes[1].imshow(groundtruth)
+        axes[1].set_title("Groundtruth mask")  # type: ignore[index]
+        axes[1].imshow(groundtruth)  # type: ignore[index]
 
-        axes[2].set_title("Predicted mask")
-        axes[2].imshow(prediction)
+        axes[2].set_title("Predicted mask")  # type: ignore[index]
+        axes[2].imshow(prediction)  # type: ignore[index]
 
         plotPath = folder_manager.temp / f"{sample.id}.png"
 
