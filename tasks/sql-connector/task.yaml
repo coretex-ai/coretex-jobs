@@ -2,7 +2,7 @@ id: transfer-data-from-sql-database
 name: transfer-data-from-sql-database
 description: A task that will connect to the SQL database using credentials, fetch data from all tables, and insert it into a Cortex Dataset
 is_active: true
-project_type:
+project_type: 8
 param_groups:
   - name: inputs
     params:
