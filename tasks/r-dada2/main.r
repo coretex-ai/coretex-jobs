@@ -73,9 +73,6 @@ library(DECIPHER)
 
 # Step3.1: Input files - start with files after removing primers
 
-forward_pattern <- "L001_R1_001.fastq.gz"
-reverse_pattern <- "L001_R2_001.fastq.gz"
-
 getSampleIdColumnName <- function(metadata) {
     caseInsensitiveColumnNames <- c(
         "id", "sampleid", "sample id", "sample-id", "sample_id", "sample.id", "featureid", "feature id", "feature-id"
@@ -330,6 +327,16 @@ tryFilterAndTrim <- function(
     )
 }
 
+getSampleName <- function(forward_path, metadata) {
+    for (sampleId in metadata$sampleId) {
+        if (startsWith(basename(forward_path), sampleId)) {
+            return(sampleId)
+        }
+    }
+
+    return(NULL)
+}
+
 main <- function(taskRun) {
     output_path <- builtins$str(ctx_folder_manager$temp)
 
@@ -352,16 +359,19 @@ main <- function(taskRun) {
 
         forward_path <- builtins$str(sample$forwardPath)
         reverse_path <- builtins$str(sample$reversePath)
-        sample_name <- strsplit(basename(forward_path), "_")[[1]][1]
+
+        # sample_name <- strsplit(basename(forward_path), "_")[[1]][1]
+        sample_name <- getSampleName(forward_path, metadata)
+        if (is.null(sample_name)) {
+            print(paste0("WARNING: Skipping ", sample$name, ". Reason: Not present in metadata file!"))
+            next
+        }
+
         print(paste0("Processing sample ", sample_name))
 
-        if (any(grepl(sample_name, metadata$sampleId))) {
-            forward_read_paths <- c(forward_read_paths, forward_path)
-            reverse_read_paths <- c(reverse_read_paths, reverse_path)
-            sample_names <- c(sample_names, sample_name)
-        } else {
-            print(paste0("WARNING: Skipping ", sample_name, ". Reason: Not present in metadata file!"))
-        }
+        forward_read_paths <- c(forward_read_paths, forward_path)
+        reverse_read_paths <- c(reverse_read_paths, reverse_path)
+        sample_names <- c(sample_names, sample_name)
     }
 
     # Check if samples in the dataset and in the metadata match
