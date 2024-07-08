@@ -29,8 +29,8 @@ def mergeImageDataset(datasets: list[ImageDataset], taskRunId: int, projectId: i
 
     for dataset in datasets:
         for oneClass in dataset.classes:
-            if oneClass.label in allClasses.labels:
-                originalClass = [cls for cls in allClasses if oneClass.label == cls.label][0]
+            originalClass = allClasses.classByLabel(oneClass.label)
+            if originalClass is not None:
                 originalClass.classIds.extend(oneClass.classIds)
                 originalClass.classIds = list(set(originalClass.classIds))
             else:
