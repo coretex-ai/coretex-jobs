@@ -14,7 +14,7 @@ param_groups:
         description: A list of datasets of the same type that need to be merged into one dataset
   - name: outputs
     params:
-      - name: mergeDataset
+      - name: mergedDataset
         value: null
         required: false
         data_type: dataset
