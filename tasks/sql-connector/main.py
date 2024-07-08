@@ -40,7 +40,7 @@ def fetchAllData(conn: Union[CMySQLConnection, connection], dataset: CustomDatas
     cursor.execute(queryGetTables)
     tables = cursor.fetchall()
     if len(tables) < 1:
-        raise RuntimeError("In the database, there are no tables")
+        raise RuntimeError("There are no tables in the database")
 
     tables = [table[0] for table in tables]
 
@@ -58,7 +58,7 @@ def fetchAllData(conn: Union[CMySQLConnection, connection], dataset: CustomDatas
             tableData.append(dict(zip(columnNames, list(row))))
 
         sampleNameCsv = f"{table}.csv"
-        with open(sampleNameCsv, "w", newline="") as file:
+        with open(sampleNameCsv, "w", newline = "") as file:
             writer = csv.DictWriter(file, fieldnames = columnNames)
             writer.writeheader()
             writer.writerows(tableData)
@@ -101,7 +101,6 @@ def main() -> None:
             fetchAllData(conn, dataset, queryGetTables, queryGetRows)
         else:
             logging.warning(">> [SQL Connector] Problem with the database connection")
-
     elif databaseType == "PostgreSQL":
         conn = connectPostgresqlDatabase(connectionConfig)
 
