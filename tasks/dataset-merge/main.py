@@ -7,23 +7,23 @@ ALLOWED_PROJECT_TYPES = [ProjectType.computerVision, ProjectType.other]
 
 
 def mergeCustomDataset(datasets: list[CustomDataset], taskRunId: int, projectId: int) -> CustomDataset:
-    mergeDataset = CustomDataset.createDataset(f"{taskRunId}-merge-custom-dataset", projectId)
+    mergedDataset = CustomDataset.createDataset(f"{taskRunId}-merge-custom-dataset", projectId)
 
     for dataset in datasets:
         dataset.download()
         samples = dataset.samples
 
         for sample in samples:
-            addedSample = mergeDataset.add(sample.zipPath)
-            logging.info(f">> [Dataset Merge] The sample \"{addedSample.name}\" has been added to the dataset \"{mergeDataset.name}\"")
+            addedSample = mergedDataset.add(sample.zipPath)
+            logging.info(f">> [Dataset Merge] The sample \"{addedSample.name}\" has been added to the dataset \"{mergedDataset.name}\"")
 
-    logging.info(f">> [Dataset Merge] New dataset named \"{mergeDataset.name}\" contains {mergeDataset.count} samples")
+    logging.info(f">> [Dataset Merge] New dataset named \"{mergedDataset.name}\" contains {mergedDataset.count} samples")
 
-    return mergeDataset
+    return mergedDataset
 
 
-def mergeImagdeDataset(datasets: list[ImageDataset], taskRunId: int, projectId: int) -> ImageDataset:
-    mergeDataset = ImageDataset.createDataset(f"{taskRunId}-merge-image-dataset", projectId)
+def mergeImageDataset(datasets: list[ImageDataset], taskRunId: int, projectId: int) -> ImageDataset:
+    mergedDataset = ImageDataset.createDataset(f"{taskRunId}-merge-image-dataset", projectId)
 
     allClasses = ImageDatasetClasses()
 
@@ -35,9 +35,9 @@ def mergeImagdeDataset(datasets: list[ImageDataset], taskRunId: int, projectId: 
                 originalClass.classIds = list(set(originalClass.classIds))
             else:
                 allClasses.append(oneClass)
-                logging.info(f">> [Dataset Merge] The class \"{oneClass.label}\" has been saved to the new dataset \"{mergeDataset.name}\"")
+                logging.info(f">> [Dataset Merge] The class \"{oneClass.label}\" has been saved to the new dataset \"{mergedDataset.name}\"")
 
-    mergeDataset.saveClasses(allClasses)
+    mergedDataset.saveClasses(allClasses)
 
     for dataset in datasets:
         dataset.download()
@@ -45,8 +45,8 @@ def mergeImagdeDataset(datasets: list[ImageDataset], taskRunId: int, projectId: 
 
         for sample in samples:
             sample.unzip()
-            addedSample = mergeDataset.add(sample.imagePath)
-            logging.info(f">> [Dataset Merge] The sample \"{addedSample.name}\" has been added to the dataset \"{mergeDataset.name}\"")
+            addedSample = mergedDataset.add(sample.imagePath)
+            logging.info(f">> [Dataset Merge] The sample \"{addedSample.name}\" has been added to the dataset \"{mergedDataset.name}\"")
 
             tmpAnotation = sample.load().annotation
             if tmpAnotation is not None:
@@ -62,9 +62,9 @@ def mergeImagdeDataset(datasets: list[ImageDataset], taskRunId: int, projectId: 
             except ValueError:
                 logging.info(f">> [Dataset Merge] Invalid metadata type for sample \"{addedSample.name}\"")
 
-    logging.info(f">> [Dataset Merge] New dataset named \"{mergeDataset.name}\" contains {mergeDataset.count} samples")
+    logging.info(f">> [Dataset Merge] New dataset named \"{mergedDataset.name}\" contains {mergedDataset.count} samples")
 
-    return mergeDataset
+    return mergedDataset
 
 
 def main() -> None:
@@ -79,19 +79,19 @@ def main() -> None:
     if taskRun.projectType not in ALLOWED_PROJECT_TYPES:
         raise RuntimeError(f"Currently, merging datasets is allowed for projects of the following types: {ALLOWED_PROJECT_TYPES}.\nYour project is of type: {taskRun.projectType}")
 
-    mergeDataset: NetworkDataset
+    mergedDataset: NetworkDataset
 
     if taskRun.projectType == ProjectType.computerVision:
         if False in [hasattr(dataset, "classes") for dataset in datasets]:
             raise TypeError("The datasets you provided for merging are not of the ImageDataset type")
 
         logging.info(">> [Dataset Merge] Merging ImageDatasets...")
-        mergeDataset = mergeImagdeDataset(datasets, taskRunId, projectId)
+        mergedDataset = mergeImageDataset(datasets, taskRunId, projectId)
     elif taskRun.projectType == ProjectType.other:
         logging.info(">> [Dataset Merge] Merging CustomDatasets...")
-        mergeDataset = mergeCustomDataset(datasets, taskRunId, projectId)
+        mergedDataset = mergeCustomDataset(datasets, taskRunId, projectId)
 
-    taskRun.submitOutput("mergeDataset", mergeDataset)
+    taskRun.submitOutput("mergedDataset", mergedDataset)
 
 
 if __name__ == "__main__":
