@@ -11,7 +11,7 @@ def splitImageDataset(originalDataset: ImageDataset, datasetParts: int, taskRunI
 
     for index, sampleChunk in enumerate(splitSamples):
         splitDataset = ImageDataset.createDataset(f"{taskRunId}-split-dataset-{index}", projectId)
-        splitDataset.saveClasses(ImageDatasetClasses())
+        splitDatasetClasses = ImageDatasetClasses()
 
         for sample in sampleChunk:
             sample.unzip()
@@ -23,9 +23,10 @@ def splitImageDataset(originalDataset: ImageDataset, datasetParts: int, taskRunI
             if tmpAnotation is not None:
                 for instance in tmpAnotation.instances:
                     instanceClass = originalDataset.classes.classById(instance.classId)
-                    if instanceClass is not None and instanceClass not in splitDataset.classes:
-                        splitDataset.classes.extend([instanceClass])
-                        splitDataset.saveClasses(splitDataset.classes)
+                    if instanceClass is not None and instanceClass not in splitDatasetClasses:
+                        splitDatasetClasses.extend([instanceClass])
+
+                splitDataset.saveClasses(splitDatasetClasses)
 
                 addedSample.saveAnnotation(tmpAnotation)
                 logging.info(f">> [Dataset Split] The anotation for sample \"{sample.name}\" has been added")
