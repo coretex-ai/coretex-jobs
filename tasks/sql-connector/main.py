@@ -19,18 +19,18 @@ def connectMysqlDatabase(connectionConfig: dict[str, str]) -> CMySQLConnection:
     try:
         conn = mysql.connector.connect(**connectionConfig)
     except mysql.connector.errors.Error as e:
-        logging.error(f">> [SQL Connector] Error while connecting to database: {e}")
+        raise mysql.connector.errors.Error(f">> [SQL Connector] Error while connecting to database: {e}")
 
-    return conn
+    return conn  # type: ignore[return-value]
 
 
 def connectPostgresqlDatabase(connectionConfig: dict[str, str]) -> connection:
     logging.info(f">> [SQL Connector] Connecting with PostgreSQL database \"{connectionConfig['database']}\"...")
 
     try:
-        conn = psycopg2.connect(**connectionConfig)
+        conn: connection = psycopg2.connect(**connectionConfig)  # type: ignore[call-overload]
     except psycopg2._psycopg.Error as e:
-        logging.error(f">> [SQL Connector] Error while connecting to database: {e}")
+        raise psycopg2._psycopg.Error(f">> [SQL Connector] Error while connecting to database: {e}")
 
     return conn
 
@@ -42,28 +42,26 @@ def fetchAllData(conn: Union[CMySQLConnection, connection], dataset: CustomDatas
     if len(tables) < 1:
         raise RuntimeError("There are no tables in the database")
 
-    tables = [table[0] for table in tables]
-
-    for table in tables:
+    for table in [table[0] for table in tables]:
         tableData: list[dict[str, str]] = []
 
-        cursor.execute(queryGetRows + f"'{table}'")
+        cursor.execute(queryGetRows + f"'{table}'")  # type: ignore[str-bytes-safe]
         columnNames = list(cursor.fetchall())
         columnNames = [name[0] for name in columnNames]
 
-        cursor.execute(f"SELECT * FROM {table}")
+        cursor.execute(f"SELECT * FROM {table}")  # type: ignore[str-bytes-safe]
         rows = list(cursor.fetchall())
 
         for row in rows:
-            tableData.append(dict(zip(columnNames, list(row))))
+            tableData.append(dict(zip(columnNames, list(row))))  # type: ignore[arg-type]
 
-        sampleNameCsv = f"{table}.csv"
+        sampleNameCsv = f"{table}.csv"  # type: ignore[str-bytes-safe]
         with open(sampleNameCsv, "w", newline = "") as file:
             writer = csv.DictWriter(file, fieldnames = columnNames)
             writer.writeheader()
-            writer.writerows(tableData)
+            writer.writerows(tableData)  # type: ignore[arg-type]
 
-        sampleNameZip = f"{table}.zip"
+        sampleNameZip = f"{table}.zip"  # type: ignore[str-bytes-safe]
         with zipfile.ZipFile(sampleNameZip, "w") as zipFile:
             zipFile.write(sampleNameCsv)
 
@@ -92,23 +90,23 @@ def main() -> None:
     }
 
     if databaseType == "MySQL":
-        conn: Union[CMySQLConnection, connection] = connectMysqlDatabase(connectionConfig)
+        mySqlConn = connectMysqlDatabase(connectionConfig)
 
-        if conn.is_connected():
+        if mySqlConn.is_connected():
             dataset = CustomDataset.createDataset(f"{taskRun.id}-{database}", taskRun.projectId)
             queryGetTables = f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{database}'"
             queryGetRows = f"SELECT column_name FROM information_schema.columns WHERE table_schema = '{database}' AND table_name = "
-            fetchAllData(conn, dataset, queryGetTables, queryGetRows)
+            fetchAllData(mySqlConn, dataset, queryGetTables, queryGetRows)
         else:
             logging.warning(">> [SQL Connector] Problem with the database connection")
     elif databaseType == "PostgreSQL":
-        conn = connectPostgresqlDatabase(connectionConfig)
+        postgreSqlConn = connectPostgresqlDatabase(connectionConfig)
 
-        if conn:
+        if postgreSqlConn:
             dataset = CustomDataset.createDataset(f"{taskRun.id}-{database}", taskRun.projectId)
             queryGetTables = f"SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
             queryGetRows = f"SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = "
-            fetchAllData(conn, dataset, queryGetTables, queryGetRows)
+            fetchAllData(postgreSqlConn, dataset, queryGetTables, queryGetRows)
         else:
             logging.warning(">> [SQL Connector] Problem with the database connection")
 
