@@ -212,6 +212,8 @@ def main() -> None:
 
         taskRun.createArtifact(path, path.name)
 
+    taskRun.submitOutput("outputModel", ctxModel)
+
 
 if __name__ == "__main__":
     main()

@@ -1,3 +1,7 @@
+# tidytree package has a lot of noise/strange logs to stderr
+# so we disable it for this Task
+sink(file("/dev/null", "w"), type = "message")
+
 args <- commandArgs(trailingOnly = TRUE)
 library(reticulate)
 py_config()
