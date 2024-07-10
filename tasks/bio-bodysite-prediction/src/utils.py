@@ -35,7 +35,7 @@ def saveModel(
 
     labels = list(uniqueBodySites.keys())
 
-    model = Model.createModel(taskRun.generateEntityName(), taskRun.id, accuracy, {})
+    model = Model.createModel(taskRun.generateEntityName(), taskRun.projectId, accuracy, {})
     contents = {
         "project_task": taskRun.projectType,
         "labels": labels,

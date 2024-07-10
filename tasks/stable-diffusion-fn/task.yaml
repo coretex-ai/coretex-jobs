@@ -1,5 +1,12 @@
 id: stable-diffusion-fn
 name: "Stable Diffusion - Endpoint"
-description: This template uploads an endpoint for Stable Diffusion
+description: This template uploads an Model which can be used for creating Endpoint for Stable Diffusion
 is_active: true
 project_type: 1
+  - name: outputs
+    params:
+      - name: outputModel
+        description: Model which can be used for creating Endpoint
+        value: null
+        data_type: model
+        required: false
