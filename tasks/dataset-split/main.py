@@ -2,9 +2,9 @@ import logging
 
 from coretex import currentTaskRun, ImageDataset, CustomDataset, SequenceDataset
 
-from src.splitCustomDataset import splitCustomDataset
-from src.splitImageDataset import splitImageDataset
-from src.splitSequenceDataset import splitSequenceDataset
+from split_custom_dataset import splitCustomDataset
+from split_image_dataset import splitImageDataset
+from split_sequence_dataset import splitSequenceDataset
 from src.utils import DatasetType
 
 
