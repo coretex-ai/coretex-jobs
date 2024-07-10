@@ -13,16 +13,29 @@ from src.data import ImageQualityDataset, loadDataset, split
 from src.model import CNNModel
 
 
+def fetchArtifacts(validationArtifacts: list[int]) -> list[Artifact]:
+    artifacts: list[Artifact] = []
+
+    for taskRunId in validationArtifacts:
+        taskRunArtifacts = [artifact for artifact in Artifact.fetchAll(taskRunId) if artifact.remoteFilePath == "sample_results.csv"]
+
+        if len(taskRunArtifacts) == 0:
+            logging.error(f">> [ImageQuality] Failed to find artifact \"sample_results.csv\" for Task Run ({taskRunId})")
+            continue
+
+        if len(taskRunArtifacts) != 1:
+            logging.error(f">> [ImageQuality] Found more than one artifact for Task Run ({taskRunId}) with path \"sample_results.csv\"")
+            continue
+
+        artifacts.append(taskRunArtifacts[0])
+
+    return artifacts
+
+
 def main() -> None:
     taskRun = currentTaskRun()
-    artifacts = [artifact for artifact in Artifact.fetchAll(taskRun.parameters["validationArtifacts"]) if artifact.remoteFilePath == "sample_results.csv"]
 
-    if len(artifacts) == 0:
-        raise RuntimeError("Failed to find artifact \"sample_results.csv\"")
-
-    if len(artifacts) != 1:
-        raise RuntimeError("Found more than one artifact with path \"sample_results.csv\"")
-
+    artifacts = fetchArtifacts(taskRun.parameters["validationArtifacts"])
     epochs: int = taskRun.parameters["epochs"]
     batchSize: int = taskRun.parameters["batchSize"]
 
@@ -30,7 +43,7 @@ def main() -> None:
     if imageSize < 224:
         raise ValueError("Image size cannot be lower than 224")
 
-    dataset = loadDataset(artifacts[0])
+    dataset = loadDataset(artifacts)
     trainData, validData = split(taskRun.parameters["validationPct"], dataset)
 
     # Define transformations for your dataset
