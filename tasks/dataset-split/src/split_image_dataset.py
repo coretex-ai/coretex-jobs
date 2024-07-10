@@ -10,7 +10,13 @@ def splitImageDataset(originalDataset: ImageDataset, datasetParts: int, taskRunI
     splitDatasets: list[ImageDataset] = []
 
     for index, sampleChunk in enumerate(splitSamples):
-        splitDataset = ImageDataset.createDataset(f"{taskRunId}-split-dataset-{index}", projectId)
+        dependencies = [str(taskRunId), str(originalDataset.id), str(datasetParts), str(projectId), str(index)]
+        try:
+            splitDataset = ImageDataset.fetchCachedDataset(dependencies)
+            splitDatasets.append(splitDataset)
+        except ValueError:
+            splitDataset = ImageDataset.createCacheDataset("split-dataset", dependencies, projectId)
+
         splitDatasetClasses = ImageDatasetClasses()
 
         for sample in sampleChunk:

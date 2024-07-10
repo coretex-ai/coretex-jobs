@@ -11,7 +11,12 @@ def splitCustomDataset(originalDataset: CustomDataset, datasetParts: int, taskRu
     splitDatasets: list[CustomDataset] = []
 
     for index, sampleChunk in enumerate(splitSamples):
-        splitDataset = CustomDataset.createDataset(f"{taskRunId}-split-dataset-{index}", projectId)
+        dependencies = [str(taskRunId), str(originalDataset.id), str(datasetParts), str(projectId), str(index)]
+        try:
+            splitDataset = CustomDataset.fetchCachedDataset(dependencies)
+            splitDatasets.append(splitDataset)
+        except ValueError:
+            splitDataset = CustomDataset.createCacheDataset("split-dataset", dependencies, projectId)
 
         for sample in sampleChunk:
             splitDataset.add(sample.zipPath)
