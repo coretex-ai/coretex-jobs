@@ -11,6 +11,11 @@ param_groups:
     value: null
     data_type: dataset
     required: true
+  - name: trainedModel
+    description: Model id used for image segmentation.
+    value: null
+    data_type: model
+    required: true
 - name: outputs
   params:
   - name: model
