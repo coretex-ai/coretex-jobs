@@ -96,6 +96,7 @@ def splitSequenceDataset(originalDataset: SequenceDataset, datasetParts: int, ta
 
             splitMetadatas: list[dict[str, str]] = []
             for sample in sampleChunk:
+                sample.download()
                 sample.unzip()
                 splitDataset.add(sample.zipPath)
                 logging.info(f">> [Dataset Split] The sample \"{sample.name}\" has been added to the dataset \"{splitDataset.name}\"")

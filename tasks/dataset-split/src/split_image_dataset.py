@@ -20,6 +20,7 @@ def splitImageDataset(originalDataset: ImageDataset, datasetParts: int, taskRunI
             splitDatasetClasses = ImageDatasetClasses()
 
             for sample in sampleChunk:
+                sample.download()
                 sample.unzip()
 
                 addedSample = splitDataset.add(sample.imagePath)
