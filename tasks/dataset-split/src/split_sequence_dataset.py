@@ -87,35 +87,40 @@ def splitSequenceDataset(originalDataset: SequenceDataset, datasetParts: int, ta
     splitDatasets: list[CustomDataset] = []
 
     for index, sampleChunk in enumerate(splitSamples):
-        splitDataset = CustomDataset.createDataset(f"{taskRunId}-split-dataset-{index}", projectId)
+        dependencies = [str(originalDataset.id), str(datasetParts), str(projectId), str(index)]
+        try:
+            splitDataset = CustomDataset.fetchCachedDataset(dependencies)
+            logging.info(f">> [Dataset Split] The dataset with the name \"{splitDataset.name}\" has been fetched ")
+        except ValueError:
+            splitDataset = CustomDataset.createCacheDataset("split-dataset", dependencies, projectId)
 
-        splitMetadatas: list[dict[str, str]] = []
-        for sample in sampleChunk:
-            sample.unzip()
-            splitDataset.add(sample.zipPath)
-            logging.info(f">> [Dataset Split] The sample \"{sample.name}\" has been added to the dataset \"{splitDataset.name}\"")
+            splitMetadatas: list[dict[str, str]] = []
+            for sample in sampleChunk:
+                sample.unzip()
+                splitDataset.add(sample.zipPath)
+                logging.info(f">> [Dataset Split] The sample \"{sample.name}\" has been added to the dataset \"{splitDataset.name}\"")
 
-            for data in metadata:
-                prefixSampleName = data[fieldNames[indexId]].split("_")[0]
-                if sample.name.startswith(prefixSampleName):
-                    splitMetadatas.append(data)
+                for data in metadata:
+                    prefixSampleName = data[fieldNames[indexId]].split("_")[0]
+                    if sample.name.startswith(prefixSampleName):
+                        splitMetadatas.append(data)
 
-        csvMetadataName = f"metadata-{index}.csv"
-        csvMetadata = folder_manager.temp / csvMetadataName
-        with open(csvMetadata, "w", newline = "") as file:
-            writer = csv.DictWriter(file, fieldnames = fieldNames)
-            writer.writeheader()
-            writer.writerows(splitMetadatas)
+            csvMetadataName = f"metadata-{index}.csv"
+            csvMetadata = folder_manager.temp / csvMetadataName
+            with open(csvMetadata, "w", newline = "") as file:
+                writer = csv.DictWriter(file, fieldnames = fieldNames)
+                writer.writeheader()
+                writer.writerows(splitMetadatas)
 
-        zipMetadataName = f"metadata-{index}.zip"
-        zipMetadata = folder_manager.temp / zipMetadataName
-        with zipfile.ZipFile(zipMetadata, "w") as zipFile:
-            zipFile.write(csvMetadata, zipMetadataName)
+            zipMetadataName = f"metadata-{index}.zip"
+            zipMetadata = folder_manager.temp / zipMetadataName
+            with zipfile.ZipFile(zipMetadata, "w") as zipFile:
+                zipFile.write(csvMetadata, zipMetadataName)
 
-        splitDataset.add(zipMetadata)
-        logging.info(f">> [Dataset Split] The _metadata sample \"{zipMetadataName}\" has been added to the dataset \"{splitDataset.name}\"")
+            splitDataset.add(zipMetadata)
+            logging.info(f">> [Dataset Split] The _metadata sample \"{zipMetadataName}\" has been added to the dataset \"{splitDataset.name}\"")
 
         splitDatasets.append(splitDataset)
-        logging.info(f">> [Dataset Split] New dataset named \"{splitDataset.name}\" contains {len(sampleChunk)} samples")
+        logging.info(f">> [Dataset Split] New dataset named \"{splitDataset.name}\" contains {splitDataset.count} samples")
 
     return splitDatasets
