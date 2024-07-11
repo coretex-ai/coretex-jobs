@@ -11,6 +11,24 @@ import onnx
 import numpy as np
 
 
+def linkFolder(source: Path, destination: Path) -> None:
+    destination.mkdir(exist_ok = True)
+    for item in source.rglob('*'):
+        destItem = destination / item.relative_to(source)
+
+        if item.is_dir():
+            continue
+        elif item.is_file():
+            destItem.parent.mkdir(parents=True, exist_ok=True)
+
+            try:
+                item.link_to(destItem)
+            except AttributeError:
+                destItem.hardlink_to(item)  # type: ignore[attr-defined]
+            except Exception as e:
+                logging.error(f">> [ZKML] Failed to link {item} to {destItem}: {e}")
+
+
 def generateDummyInput(onnxModelPath: Path) -> dict[str, list[float]]:
     model = onnx.load(onnxModelPath)
 
@@ -50,26 +68,28 @@ def main() -> None:
     ctxOnnxModel: Model = taskRun.parameters["onnxModel"]
     ctxOnnxModel.download()
 
-    modelDir = folder_manager.createTempFolder("model")
-
-    onnxPaths = list(ctxOnnxModel.path.glob("*.onnx"))
+    onnxPaths = list(ctxOnnxModel.path.rglob("*.onnx"))
     if len(onnxPaths) != 1:
-        raise ValueError(f">> [ZKLMConversion] Model files have to contain exactly one .onnx file. Found {len(onnxPaths)}")
+        raise ValueError(f">> [ZKML] Model files have to contain exactly one .onnx file. Found {len(onnxPaths)}")
 
     onnxPath = onnxPaths[0]
 
-    try:
-        onnxPath.link_to(modelDir / onnxPath.name)
-    except AttributeError:
-        modelDir.joinpath(onnxPath.name).hardlink_to(onnxPath)  # type: ignore[attr-defined]
+    modelDir = folder_manager.createTempFolder("model")
+    linkFolder(ctxOnnxModel.path, modelDir)
+
+    compiledModelDir = modelDir / "compiledModel"
+    if ctxOnnxModel.path.joinpath(compiledModelDir.name).exists():
+        raise FileExistsError(">> [ZKML] Output directory \"compiledModel\" found in the input Model. This will cause issues when copying input Model files to output Model")
+
+    compiledModelDir.mkdir()
 
     # Define paths
-    compiledModelPath = modelDir / "model.compiled"
-    proofKey = modelDir / "prove.pk"
-    verifKey = modelDir / "verify.pk"
-    settingsPath = modelDir / "settings.json"
+    compiledModelPath = compiledModelDir / "model.compiled"
+    proofKey = compiledModelDir / "prove.pk"
+    verifKey = compiledModelDir / "verify.pk"
+    settingsPath = compiledModelDir / "settings.json"
 
-    logging.info(">> [ZKLMConversion] Setting up EZKL")
+    logging.info(">> [ZKML] Setting up EZKL")
 
     visibilities = [
         taskRun.parameters["inputVisibility"],
@@ -78,21 +98,21 @@ def main() -> None:
     ]
 
     if visibilities.count(False) > 1:
-        raise ValueError("[ZKLMConversion] Only one of three visibility parameters can be private (False)")
+        raise ValueError(">> [ZKML] Only one of three visibility parameters can be private (False)")
 
     pyRunArgs = ezkl.PyRunArgs()
     pyRunArgs.input_visibility = "public" if visibilities[0] else "private"
     pyRunArgs.output_visibility = "public" if visibilities[1] else "private"
     pyRunArgs.param_visibility = "fixed" if visibilities[2] else "private"
 
-    logging.info(">> [ZKLMConversion] Generating settings")
+    logging.info(">> [ZKML] Generating settings")
     ezkl.gen_settings(onnxPath, settingsPath, py_run_args = pyRunArgs)
 
-    logging.info(">> [ZKLMConversion] Compiling model")
+    logging.info(">> [ZKML] Compiling model")
     asyncio.run(compileModel(onnxPath, settingsPath, compiledModelPath, verifKey, proofKey))
 
-    logging.info(">> [ZKLMConversion] EZKL setup complete")
-    logging.info(">> [ZKLMConversion] Uploading model and EZKL files")
+    logging.info(">> [ZKML] EZKL setup complete")
+    logging.info(">> [ZKML] Uploading model and EZKL files")
     ctxModel = Model.createModel(taskRun.generateEntityName(), taskRun.projectId, ctxOnnxModel.accuracy, {})
     ctxModel.upload(modelDir)
 
