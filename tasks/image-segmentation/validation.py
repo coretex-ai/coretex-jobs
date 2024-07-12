@@ -171,7 +171,7 @@ def validation() -> None:
         writer.writeheader()
         writer.writerows(csvSamplesData)
 
-    logging.info(f">> [Image Segmentation] The sample_results.csv file add to the artifacts.")
+    logging.info(f">> [Image Segmentation] The .csv file with sample results added to the artifacts.")
 
     iouScore = meanIouScore(iouScores)
     fieldNamesDataset = ["IoU Score", "IoU STD", "Accuracy"]
@@ -182,7 +182,7 @@ def validation() -> None:
         writer.writeheader()
         writer.writerow(csvDatasetData)
 
-    logging.info(f">> [Image Segmentation] The dataset_results.csv file add to the artifacts.")
+    logging.info(f">> [Image Segmentation] The .csv file with dataset results added to the artifacts.")
 
 
 if __name__ == "__main__":

@@ -144,5 +144,5 @@ def main() -> None:
     taskRun.submitOutput("model", coretexModel)
 
 
-#if __name__ == "__main__":
-#    main()
+if __name__ == "__main__":
+    main()
