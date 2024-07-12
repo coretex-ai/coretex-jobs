@@ -13,13 +13,13 @@ import numpy as np
 
 def linkFolder(source: Path, destination: Path) -> None:
     destination.mkdir(exist_ok = True)
-    for item in source.rglob('*'):
+    for item in source.rglob("*"):
         destItem = destination / item.relative_to(source)
 
         if item.is_dir():
             continue
         elif item.is_file():
-            destItem.parent.mkdir(parents=True, exist_ok=True)
+            destItem.parent.mkdir(parents = True, exist_ok = True)
 
             try:
                 item.link_to(destItem)
