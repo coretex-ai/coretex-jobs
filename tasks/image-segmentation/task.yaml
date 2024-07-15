@@ -1,5 +1,4 @@
 id: image-segmentation
-name: image-segmentation
 description: TODO
 is_active: true
 project_type: 1
@@ -28,7 +27,7 @@ param_groups:
   - name: validation
     description: Whether to perform training or validation for image segmentation. If true, only validation
       will be performed; if false, only training will be performed
-    value: true
+    value: false
     data_type: bool
     required: true
   - name: epochs

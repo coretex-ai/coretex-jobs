@@ -125,7 +125,7 @@ def predictionPrepare(batchSamples: list[ImageSample], imageSize: int, classes: 
 
     testImages = np.array(testImgs)
 
-    return (testImages, testMasks, testMasksPadding)
+    return testImages, testMasks, testMasksPadding
 
 
 def loadModel(modelPath: Path) -> tf.lite.Interpreter:
@@ -139,6 +139,9 @@ def validation(taskRun: TaskRun) -> None:
     batchSize: int = taskRun.parameters["batchSize"]
     dataset.classes.exclude(taskRun.parameters["excludedClasses"])
 
+    if taskRun.parameters["trainedModel"] is None:
+        raise RuntimeError("Model id used for image segmentation that needs validation is not valid")
+
     model: Model = taskRun.parameters["trainedModel"]
     model.download()
     modelInterpreter = loadModel(model.path)
@@ -148,7 +151,7 @@ def validation(taskRun: TaskRun) -> None:
     csvSamplesData: list[dict[str, str]] = []
 
     for startIndex in range(0, dataset.count, batchSize):
-        batchSamples = dataset.samples[startIndex : startIndex + batchSize]
+        batchSamples = dataset.samples[startIndex:startIndex + batchSize]
         testImages, testMasks, testMasksPadding = predictionPrepare(batchSamples, imageSize, dataset.classes)
 
         prediction = run(modelInterpreter, testImages)

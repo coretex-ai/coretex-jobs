@@ -68,6 +68,11 @@ def saveModelDescriptor(
 
 
 def train(taskRun: TaskRun) -> None:
+    if taskRun.parameters["epochs"] is None:
+        raise RuntimeError("The number of epochs for training the model is not defined")
+    if taskRun.parameters["validationSplit"] is None:
+        raise RuntimeError("The percentage of data from the dataset to be used for validation during model training is not defined")
+
     taskRun.createMetrics([
         Metric.create("loss", "epoch", MetricType.int, "value", MetricType.float, [0, taskRun.parameters["epochs"]]),
         Metric.create("accuracy", "epoch", MetricType.int, "value", MetricType.float, [0, taskRun.parameters["epochs"]], [0, 1]),
