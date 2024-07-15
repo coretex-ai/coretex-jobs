@@ -12,5 +12,6 @@ def main() -> None:
     else:
         train(taskRun)
 
+
 if __name__ == "__main__":
     main()

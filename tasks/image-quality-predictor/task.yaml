@@ -8,9 +8,9 @@ param_groups:
 - name: inputs
   params:
   - name: validationArtifacts
-    description: Task Run ID which contains artifact file which has information about image quality
+    description: Task Run IDs which contains artifact file "sample_results.csv" which has information about image quality
     value: null
-    data_type: int
+    data_type: list[int]
     required: true
 - name: outputs
   params:

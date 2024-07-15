@@ -21,7 +21,7 @@ def getIndexPath(dataset: CustomDataset):
 def main():
     taskRun = currentTaskRun()
 
-    model = Model.createModel(f"{taskRun.id}-rag-chatbot", taskRun.id, 1.0, {})
+    model = Model.createModel(f"{taskRun.id}-rag-chatbot", taskRun.id, 1.0)
 
     modelFunction = Path(".", "resources", "function")
     resDir = folder_manager.createTempFolder("resDir")

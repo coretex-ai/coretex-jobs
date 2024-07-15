@@ -73,9 +73,6 @@ library(DECIPHER)
 
 # Step3.1: Input files - start with files after removing primers
 
-forward_pattern <- "L001_R1_001.fastq.gz"
-reverse_pattern <- "L001_R2_001.fastq.gz"
-
 getSampleIdColumnName <- function(metadata) {
     caseInsensitiveColumnNames <- c(
         "id", "sampleid", "sample id", "sample-id", "sample_id", "sample.id", "featureid", "feature id", "feature-id"
@@ -112,18 +109,14 @@ getSampleIdColumnName <- function(metadata) {
 }
 
 loadMetadata <- function(metadataSample) {
+    metadataSample$unzip()
+
     metadata_csv_path <- builtins$str(
         metadataSample$joinPath("metadata.csv")
     )
 
     if (file.exists(metadata_csv_path)) {
-        # Default SampleSheet.csv format
-        metadata <- read.table(
-            metadata_csv_path,
-            sep = ",",
-            header = TRUE,
-            check.names = TRUE
-        )
+        metadata <- fread(metadata_csv_path, data.table=FALSE)
     } else {
         # Format accepted by qiime2
         metadata_tsv_path <- builtins$str(
@@ -157,16 +150,11 @@ loadMetadata <- function(metadataSample) {
     print("Renaming metadata sample ID/name column to \"sampleId\"")
     names(metadata)[names(metadata) == sampleIdColumn] <- "sampleId"
 
-    print("Metadata")
-    print(colnames(metadata))
-    print(head(metadata))
-
-    print(metadata$sampleId)
-
     # assign the names of samples (01Sat1...) to metadata rows instead of 1,2,3...
     row.names(metadata) <- metadata$sampleId
     metadata$sampleId <- as.factor(metadata$sampleId)
 
+    print(colnames(metadata))
     return(metadata)
 }
 
@@ -177,17 +165,24 @@ valiateSamplesAndMetadata <- function(sample_names, metadata) {
     ids_not_in_sample_ids <- setdiff(metadata$sampleId, sample_names)
 
     if(length(ids_not_in_metadata) > 0 || length(ids_not_in_sample_ids) > 0) {
-        error_message <- "Sample files in dataset do not match metadata:"
-
         if(length(ids_not_in_metadata) > 0) {
-            error_message <- paste0(error_message, "\nSamples in dataset not in metadata: ", paste(ids_not_in_metadata, collapse=", "))
+            print(paste0("Samples in dataset not in metadata: ", paste(ids_not_in_metadata, collapse=", ")))
         }
 
         if(length(ids_not_in_sample_ids) > 0) {
-            error_message <- paste0(error_message, "\nSamples in metadata not in dataset: ", paste(ids_not_in_sample_ids, collapse=", "))
+            print(paste0("Samples in metadata not in dataset: ", paste(ids_not_in_sample_ids, collapse=", ")))
         }
-        stop(error_message)
+
+        print("\tRemoving...")
     }
+
+    # Step 1: Filter sample_names
+    sample_names_filtered <- intersect(sample_names, metadata$sampleId)
+
+    # Step 2: Filter metadata
+    metadata_filtered <- metadata[metadata$sampleId %in% sample_names_filtered, ]
+
+    return(list(sample_names_filtered, metadata_filtered))
 }
 
 trackPctColumns <- function(names, track_matrix) {
@@ -245,6 +240,34 @@ tryFilterAndTrim <- function(
     multithread = TRUE,
     matchIDs = FALSE
 ) {
+
+    if (length(forward_read_paths) != length(reverse_read_paths)) {
+        stop(paste0(
+            "ERROR: Number of forward reads ",
+            "(", length(forward_read_paths), ") ",
+            "does not match number of reverse reads",
+            "(", length(reverse_read_paths), ")"
+        ))
+    }
+
+    if (length(forward_read_paths) != length(filtered_forward_read_paths)) {
+        stop(paste0(
+            "ERROR: Input count for forward reads ",
+            "(", length(forward_read_paths), ") ",
+            "does not match output count for forward reads",
+            "(", length(filtered_forward_read_paths), ")"
+        ))
+    }
+
+    if (length(reverse_read_paths) != length(filtered_reverse_read_paths)) {
+        stop(paste0(
+            "ERROR: Input count for reverse reads ",
+            "(", length(reverse_read_paths), ") ",
+            "does not match output count for reverse reads",
+            "(", length(filtered_forward_read_paths), ")"
+        ))
+    }
+
     tryCatch(
         expr = {
             filtering_results <- filterAndTrim(
@@ -304,39 +327,57 @@ tryFilterAndTrim <- function(
     )
 }
 
+getSampleName <- function(forward_path, metadata) {
+    for (sampleId in metadata$sampleId) {
+        if (startsWith(basename(forward_path), sampleId)) {
+            return(sampleId)
+        }
+    }
+
+    return(NULL)
+}
+
 main <- function(taskRun) {
     output_path <- builtins$str(ctx_folder_manager$temp)
-    taskRun$parameters[["dataset"]]$download()
 
+    taskRun$setDatasetType(ctx$SequenceDataset)
+    taskRun$dataset$download()
+
+    # Load metadata file
+    metadata <- loadMetadata(taskRun$dataset$metadata)
+
+    sample_names <- c()
     forward_read_paths <- c()
     reverse_read_paths <- c()
 
-    for (sample in taskRun$parameters[["dataset"]]$samples) {
+    for (sample in taskRun$dataset$samples) {
         sample$unzip()
 
         if (startsWith(sample$name, "_metadata") || startsWith(sample$name, "Undetermined")) {
             next
         }
 
-        forward_path <- builtins$str(builtins$list(sample$path$glob(paste0("*", forward_pattern)))[[1]])
-        reverse_path <- builtins$str(builtins$list(sample$path$glob(paste0("*", reverse_pattern)))[[1]])
+        forward_path <- builtins$str(sample$forwardPath)
+        reverse_path <- builtins$str(sample$reversePath)
+
+        # sample_name <- strsplit(basename(forward_path), "_")[[1]][1]
+        sample_name <- getSampleName(forward_path, metadata)
+        if (is.null(sample_name)) {
+            print(paste0("WARNING: Skipping ", sample$name, ". Reason: Not present in metadata file!"))
+            next
+        }
+
+        print(paste0("Processing sample ", sample_name))
 
         forward_read_paths <- c(forward_read_paths, forward_path)
         reverse_read_paths <- c(reverse_read_paths, reverse_path)
-    }
-
-    # Load metadata file
-    metadata <- loadMetadata(taskRun$dataset$getSample("_metadata"))
-
-    # Step 3.2.2: Extract sample names
-    sample_names <- c()
-    sample_ids <- sapply(strsplit(basename(forward_read_paths), "_"), function(x) x[1])
-    for (sample_id in sample_ids) {
-        sample_names <- c(sample_names, grep(sample_id, metadata$sampleId, value = TRUE))
+        sample_names <- c(sample_names, sample_name)
     }
 
     # Check if samples in the dataset and in the metadata match
-    valiateSamplesAndMetadata(sample_names, metadata)
+    validateResult <- valiateSamplesAndMetadata(sample_names, metadata)
+    sample_names <- validateResult[[1]]
+    metadata <- validateResult[[2]]
 
     metadata_path <- file.path(output_path, "metadata.rds")
     saveRDS(metadata, file = metadata_path)
@@ -529,9 +570,6 @@ main <- function(taskRun) {
 
     print("Sequence table non-chimeric dim")
     print(dim(seqtab_nochim))
-
-    print("Sequence table non-chimeric head")
-    print(head(seqtab_nochim))
 
     # Check the frequency of non-chimeras
     print("Frequency of non-chimeras")
