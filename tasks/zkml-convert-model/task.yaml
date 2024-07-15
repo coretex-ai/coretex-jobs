@@ -19,18 +19,18 @@ param_groups:
     required: false
 - name: parameters
   params:
-  - name: inputVisibility
-    description: Weather the input data is public (otherwise private). Only one variable can be private
-    value: true
+  - name: privateInput
+    description: Weather the input data is private (otherwise public). Only one variable can be private
+    value: false
     data_type: bool
     required: true
-  - name: outputVisibility
-    description: Weather the outputs are public (otherwise private). Only one variable can be private
-    value: true
+  - name: privateOutput
+    description: Weather the outputs are private (otherwise public). Only one variable can be private
+    value: false
     data_type: bool
     required: true
-  - name: modelVisibility
-    description: Weather the model parameters are public (otherwise private). Only one variable can be private
-    value: true
+  - name: privateModel
+    description: Weather the model parameters are private (otherwise public). Only one variable can be private
+    value: false
     data_type: bool
     required: true

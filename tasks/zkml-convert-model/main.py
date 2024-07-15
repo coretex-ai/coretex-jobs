@@ -18,15 +18,15 @@ def linkFolder(source: Path, destination: Path) -> None:
 
         if item.is_dir():
             continue
-        elif item.is_file():
-            destItem.parent.mkdir(parents = True, exist_ok = True)
 
-            try:
-                item.link_to(destItem)
-            except AttributeError:
-                destItem.hardlink_to(item)  # type: ignore[attr-defined]
-            except Exception as e:
-                logging.error(f">> [ZKML] Failed to link {item} to {destItem}: {e}")
+        destItem.parent.mkdir(parents = True, exist_ok = True)
+
+        try:
+            item.link_to(destItem)
+        except AttributeError:
+            destItem.hardlink_to(item)  # type: ignore[attr-defined]
+        except Exception as e:
+            logging.error(f">> [ZKML] Failed to link {item} to {destItem}: {e}")
 
 
 def generateDummyInput(onnxModelPath: Path) -> dict[str, list[float]]:
@@ -92,18 +92,18 @@ def main() -> None:
     logging.info(">> [ZKML] Setting up EZKL")
 
     visibilities = [
-        taskRun.parameters["inputVisibility"],
-        taskRun.parameters["outputVisibility"],
-        taskRun.parameters["modelVisibility"]
+        taskRun.parameters["privateInput"],
+        taskRun.parameters["privateOutput"],
+        taskRun.parameters["privateModel"]
     ]
 
-    if visibilities.count(False) > 1:
-        raise ValueError(">> [ZKML] Only one of three visibility parameters can be private (False)")
+    if visibilities.count(True) > 1:
+        raise ValueError(">> [ZKML] Only one of three privacy parameters can be True")
 
     pyRunArgs = ezkl.PyRunArgs()
-    pyRunArgs.input_visibility = "public" if visibilities[0] else "private"
-    pyRunArgs.output_visibility = "public" if visibilities[1] else "private"
-    pyRunArgs.param_visibility = "fixed" if visibilities[2] else "private"
+    pyRunArgs.input_visibility = "private" if visibilities[0] else "public"
+    pyRunArgs.output_visibility = "private" if visibilities[1] else "public"
+    pyRunArgs.param_visibility = "private" if visibilities[2] else "fixed"
 
     logging.info(">> [ZKML] Generating settings")
     ezkl.gen_settings(onnxPath, settingsPath, py_run_args = pyRunArgs)
@@ -115,6 +115,9 @@ def main() -> None:
     logging.info(">> [ZKML] Uploading model and EZKL files")
     ctxModel = Model.createModel(taskRun.generateEntityName(), taskRun.projectId, ctxOnnxModel.accuracy, {})
     ctxModel.upload(modelDir)
+    ctxModel.addTag("verified")
+
+    taskRun.submitOutput("outputCircuit", ctxModel)
 
 
 if __name__ == "__main__":
