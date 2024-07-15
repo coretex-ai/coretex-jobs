@@ -5,7 +5,7 @@ from coretex import CustomDataset, CustomSample
 from .utils import splitOriginalSamples
 
 
-def splitCustomDataset(originalDataset: CustomDataset, datasetParts: int, taskRunId: int, projectId: int) -> list[CustomDataset]:
+def splitCustomDataset(originalDataset: CustomDataset, datasetParts: int, projectId: int) -> list[CustomDataset]:
     splitSamples: list[list[CustomSample]] = splitOriginalSamples(originalDataset.samples, datasetParts)
 
     splitDatasets: list[CustomDataset] = []

@@ -40,7 +40,7 @@ def main() -> None:
             splitDatasets = splitSequenceDataset(originalDataset, datasetParts, taskRunId, projectId)
         except FileNotFoundError:
             logging.info(f">> [Dataset Split] Splitting CustomDataset {originalDataset.name}...")
-            splitDatasets = splitCustomDataset(originalDataset, datasetParts, taskRunId, projectId)
+            splitDatasets = splitCustomDataset(originalDataset, datasetParts, projectId)
 
     outputDatasets = [dataset.id for dataset in splitDatasets]
     taskRun.submitOutput("outputDatasets", outputDatasets)
