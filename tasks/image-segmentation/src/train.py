@@ -10,7 +10,7 @@ import tensorflow as tf
 import tensorflowjs as tfjs
 import coremltools
 
-from coretex import TaskRunStatus, Model, ImageDataset, TaskRun, Metric, MetricType, currentTaskRun, folder_manager
+from coretex import TaskRunStatus, Model, ImageDataset, TaskRun, Metric, MetricType, folder_manager
 
 from src import detect
 from src.model import UNetModel
@@ -67,9 +67,7 @@ def saveModelDescriptor(
     })
 
 
-def main() -> None:
-    taskRun: TaskRun[ImageDataset] = currentTaskRun()
-
+def train(taskRun: TaskRun) -> None:
     taskRun.createMetrics([
         Metric.create("loss", "epoch", MetricType.int, "value", MetricType.float, [0, taskRun.parameters["epochs"]]),
         Metric.create("accuracy", "epoch", MetricType.int, "value", MetricType.float, [0, taskRun.parameters["epochs"]], [0, 1]),
@@ -142,7 +140,3 @@ def main() -> None:
 
     coretexModel.upload(folder_manager.temp / "model")
     taskRun.submitOutput("model", coretexModel)
-
-
-if __name__ == "__main__":
-    main()

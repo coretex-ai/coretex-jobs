@@ -3,7 +3,7 @@ from pathlib import Path
 import logging
 import csv
 
-from coretex import currentTaskRun, TaskRun, ImageDataset, ImageSample, ImageDatasetClasses, Model
+from coretex import TaskRun, ImageSample, ImageDatasetClasses, Model
 from coretex.utils import resizeWithPadding
 
 import numpy as np
@@ -48,7 +48,7 @@ def iouScoreImage(testMask: np.ndarray, predictedMask: np.ndarray) -> float:
 
     classLabels = np.unique(testMask)
     if np.any(classLabels == 0) and len(classLabels) == 1:
-        return 0
+        return 0.0
 
     for label in classLabels:
         if label > 0:
@@ -133,8 +133,7 @@ def loadModel(modelPath: Path) -> tf.lite.Interpreter:
     return modelInterpreter
 
 
-def validation() -> None:
-    taskRun: TaskRun[ImageDataset] = currentTaskRun()
+def validation(taskRun: TaskRun) -> None:
     dataset = taskRun.dataset
     imageSize: int = taskRun.parameters["imageSize"]
     batchSize: int = taskRun.parameters["batchSize"]
@@ -171,7 +170,7 @@ def validation() -> None:
         writer.writeheader()
         writer.writerows(csvSamplesData)
 
-    logging.info(f">> [Image Segmentation] The .csv file with sample results added to the artifacts.")
+    logging.info(f">> [Image Segmentation] The .csv file with sample results has been added to the artifacts.")
 
     iouScore = meanIouScore(iouScores)
     fieldNamesDataset = ["IoU Score", "IoU STD", "Accuracy"]
@@ -182,8 +181,4 @@ def validation() -> None:
         writer.writeheader()
         writer.writerow(csvDatasetData)
 
-    logging.info(f">> [Image Segmentation] The .csv file with dataset results added to the artifacts.")
-
-
-if __name__ == "__main__":
-    validation()
+    logging.info(f">> [Image Segmentation] The .csv file with dataset results has been added to the artifacts.")
