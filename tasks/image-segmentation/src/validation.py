@@ -3,7 +3,7 @@ from pathlib import Path
 import logging
 import csv
 
-from coretex import TaskRun, ImageSample, ImageDatasetClasses, Model
+from coretex import TaskRun, ImageSample, ImageDatasetClasses, Model, folder_manager
 from coretex.utils import resizeWithPadding
 
 import numpy as np
@@ -17,7 +17,7 @@ def meanIouScore(iouScores: list[float]) -> float:
     return sum(iouScores) / len(iouScores)
 
 
-def plotImageSegmentation(realImage: np.ndarray, trueSegmentation: np.ndarray, predictedSeqmentation: np.ndarray, iouScore: float, name: str) -> None:
+def plotImageSegmentation(realImage: np.ndarray, trueSegmentation: np.ndarray, predictedSeqmentation: np.ndarray, iouScore: float, name: str, taskRun: TaskRun) -> None:
     fig, axes = plt.subplots(1, 3, figsize = (15, 5))
 
     axes[0].imshow(realImage, cmap = "summer")
@@ -32,7 +32,8 @@ def plotImageSegmentation(realImage: np.ndarray, trueSegmentation: np.ndarray, p
     axes[2].set_title(f"Predicted segmentation\n IoU Score: {iouScore}")
     axes[2].axis("off")
 
-    plt.savefig(f"{name}.jpg")
+    plt.savefig(f"{folder_manager.temp / name}.jpg")
+    taskRun.createArtifact(f"{folder_manager.temp / name}.jpg", f"images/{name}.jpg")
     plt.close()
 
 
@@ -164,24 +165,28 @@ def validation(taskRun: TaskRun) -> None:
         iouScores.extend(batchIouScore)
 
         for testImg, testSeg, predSeg, iou, sample in zip(testImages, testMasks, predictedMasks, batchIouScore, batchSamples):
-            plotImageSegmentation(testImg, testSeg, predSeg, round(iou, 2), str(sample.id))
+            plotImageSegmentation(testImg, testSeg, predSeg, round(iou, 2), str(sample.id), taskRun)
             logging.info(f">> [Image Segmentation] The results image for sample {sample.name} (sample id: {sample.id}) add to the artifacts.")
             csvSamplesData.append(dict(zip(fieldNamesSamples, [str(sample.id), sample.name, str(round(iou, 2)), str(round(iou * 100))])))
 
-    with open("sample_results.csv", "w", newline = "") as csvFile:
+    sampleResultsPath = f"{folder_manager.temp}/sample_results.csv"
+    with open(sampleResultsPath, "w", newline = "") as csvFile:
         writer = csv.DictWriter(csvFile, fieldNamesSamples)
         writer.writeheader()
         writer.writerows(csvSamplesData)
 
+    taskRun.createArtifact(sampleResultsPath, "sample_results.csv")
     logging.info(f">> [Image Segmentation] The .csv file with sample results has been added to the artifacts.")
 
     iouScore = meanIouScore(iouScores)
     fieldNamesDataset = ["IoU Score", "IoU STD", "Accuracy"]
     csvDatasetData = dict(zip(fieldNamesDataset, [round(iouScore, 2), round(np.std(iouScores), 2), round(iouScore * 100)]))
 
-    with open("dataset_results.csv", "w", newline = "") as csvFile:
+    datasetResultsPath = f"{folder_manager.temp}/dataset_results.csv"
+    with open(datasetResultsPath, "w", newline = "") as csvFile:
         writer = csv.DictWriter(csvFile, fieldNamesDataset)
         writer.writeheader()
         writer.writerow(csvDatasetData)
 
+    taskRun.createArtifact(datasetResultsPath, "dataset_results.csv")
     logging.info(f">> [Image Segmentation] The .csv file with dataset results has been added to the artifacts.")
