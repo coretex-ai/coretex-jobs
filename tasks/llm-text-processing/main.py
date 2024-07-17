@@ -1,3 +1,5 @@
+from typing import Optional
+
 import time
 import logging
 import subprocess
@@ -38,7 +40,7 @@ def checkOllamaServer() -> bool:
         return False
 
 
-def launchOllamaServer() -> subprocess.Popen[bytes]:
+def launchOllamaServer() -> Optional[subprocess.Popen[bytes]]:
     if not isOllamaInstalled():
         installOllama()
 
@@ -105,7 +107,7 @@ def main() -> None:
 
         logging.info(f">> [LLMTextProcessing] Prompt: {prompt}")
 
-        responseContent = response["message"]["content"]
+        responseContent = response["message"]["content"]  # type: ignore[index]
         logging.info(f">> [LLMTextProcessing] Response: {responseContent}")
 
         responseTextPath = folder_manager.temp / "response.txt"

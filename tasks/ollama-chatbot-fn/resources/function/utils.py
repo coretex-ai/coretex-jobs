@@ -15,6 +15,6 @@ def loadCorpusAndIndex(dirPath: Path) -> tuple[np.ndarray, Any]:
     return corpus, index
 
 
-def retrieveDocuments(queryEmbedding: np.ndarray, index: faiss.IndexFlatL2, corpus: np.ndarray, k: int):
+def retrieveDocuments(queryEmbedding: np.ndarray, index: faiss.IndexFlatL2, corpus: np.ndarray, k: int) -> list[tuple[str, int]]:
     distances, indices = index.search(queryEmbedding, k)
     return [(corpus[i], distances[0][j]) for j, i in enumerate(indices[0])]

@@ -31,7 +31,7 @@ param_groups:
       \ \"Microbiome Forensics\r\n      Institute Zurich\". Coretex.ai sample must\
       \ contain only a single json file\r\n      which contains data for a single\
       \ BioInformatics sample."
-    value: null
+    value: 6327
     data_type: dataset
     required: true
   - name: trainedModel
@@ -166,6 +166,6 @@ param_groups:
       \ uploaded to\r\n       Coretex.ai just before training has started. This cache\
       \ depends on\r\n       the same parameters as the 1st step cache, as well as\
       \ \"quantize\" and\r\n       \"percentile\" parameters"
-    value: true
+    value: false
     data_type: bool
     required: true

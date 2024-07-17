@@ -56,7 +56,7 @@ def runValidation(
     taskRun: TaskRun
 ) -> float:
 
-    model = torch.jit.load(modelPath)
+    model = torch.jit.load(modelPath)  # type: ignore[no-untyped-call]
     model.to(device)
     model.eval()
 
