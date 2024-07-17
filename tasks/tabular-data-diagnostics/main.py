@@ -38,6 +38,7 @@ def saveModel(taskRun: TaskRun[CustomDataset], accuracy: float, trainColumnCount
     })
 
     model.upload(modelPath)
+    taskRun.submitOutput("trainedModel", model)
 
 
 def main() -> None:

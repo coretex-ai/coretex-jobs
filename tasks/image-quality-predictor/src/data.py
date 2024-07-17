@@ -46,28 +46,29 @@ def split(
     return dataset[:trainCount], dataset[trainCount:]
 
 
-def loadDataset(artifact: Artifact) -> list[tuple[ImageSample, float]]:
+def loadDataset(artifacts: list[Artifact]) -> list[tuple[ImageSample, float]]:
     logging.info(">> [ImageQuality] Loading dataset...")
 
-    artifact.localFilePath.parent.mkdir(exist_ok = True)
-    if not artifact.download():
-        raise RuntimeError(f"Failed to download artifact {artifact.taskRunId} - {artifact.remoteFilePath}")
+    dataset: list[tuple[ImageSample, float]] = []
 
-    with artifact.localFilePath.open("r") as file:
-        dataset: list[tuple[ImageSample, float]] = []
+    for artifact in artifacts:
+        artifact.localFilePath.parent.mkdir(exist_ok = True)
+        if not artifact.download():
+            raise RuntimeError(f"Failed to download artifact {artifact.taskRunId} - {artifact.remoteFilePath}")
 
-        for row in csv.DictReader(file):
-            sampleId = int(row["id"])
-            logging.info(f"\tLoading sample {sampleId}...")
+        with artifact.localFilePath.open("r") as file:
+            for row in csv.DictReader(file):
+                sampleId = int(row["id"])
+                logging.info(f"\tLoading sample {sampleId}...")
 
-            sample = ImageSample.fetchById(sampleId)
-            sample.download()
-            sample.unzip()
+                sample = ImageSample.fetchById(sampleId)
+                sample.download()
+                sample.unzip()
 
-            value = (sample, float(row["total_iou"]))
-            dataset.append(value)
+                value = (sample, float(row["total_iou"]))
+                dataset.append(value)
 
-        return dataset
+    return dataset
 
 
 class ImageQualityDataset(Dataset):

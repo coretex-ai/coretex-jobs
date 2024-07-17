@@ -11,6 +11,13 @@ param_groups:
     value: null
     data_type: dataset
     required: true
+- name: outputs
+  params:
+    - name: trainedModel
+      description: Model trained as a result of this Task
+      value: null
+      data_type: model
+      required: false
 - name: parameters
   params:
   - name: validationSplit
