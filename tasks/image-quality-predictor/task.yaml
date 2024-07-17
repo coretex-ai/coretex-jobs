@@ -1,5 +1,4 @@
 id: image-quality-predictor
-name: image-quality-predictor
 description: Task template for training a model for predicting the quality
   of images based on a score with range(0, 1).
 is_active: true
@@ -9,9 +8,14 @@ param_groups:
   params:
   - name: validationArtifacts
     description: Task Run IDs which contains artifact file "sample_results.csv" which has information about image quality
-    value: null
+    value: [1351]
     data_type: list[int]
     required: true
+  - name: trainedModel
+    description: Model id used for image quality prediction that needs validation
+    value: 167
+    data_type: model
+    required: false
 - name: outputs
   params:
   - name: model
@@ -21,13 +25,19 @@ param_groups:
     required: false
 - name: parameters
   params:
+  - name: validation
+    description: Whether to perform training or validation for image quality predictor. If true, only validation
+      will be performed; if false, only training will be performed
+    value: true
+    data_type: bool
+    required: true
   - name: epochs
     description: Number of passes that the model will make through the dataset while
       training. Higher values increase training time and accuracy, while lower
       values decrease training time, but they might also decrease accuracy.
     value: 100
     data_type: int
-    required: true
+    required: false
   - name: batchSize
     description: Number of segments into which the dataset is split before the training.
       During the training a single epoch passes through all of the segments
@@ -55,4 +65,4 @@ param_groups:
       will go for validation, while the rest (80%) will go for training.
     value: 0.5
     data_type: float
-    required: true
+    required: false

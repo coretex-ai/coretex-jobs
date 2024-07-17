@@ -6,6 +6,7 @@ import logging
 from coretex import ImageSample, folder_manager
 from PIL import Image, ImageOps
 
+import numpy as np
 import torch
 import torchvision.transforms as transforms
 
@@ -13,22 +14,21 @@ from .model import CNNModel
 
 
 def calculateAccuracy(prediction: float, groundtruth: float) -> float:
-    if groundtruth == 0:
-        accuracy = 1 - prediction
-    elif prediction < groundtruth:
-        accuracy = prediction / groundtruth
-    else:
-        accuracy = groundtruth / prediction
+    sigma = 0.5 / 3.5
 
-    if accuracy > 1:
-        accuracy = max(1 - (accuracy - 1), 0)
+    # Calculating the value of the Gaussian normal distribution function, translated so that the peak corresponds to the groundtruth, for the predicted value
+    accuracy = float(np.exp(-0.5 * ((prediction - groundtruth) / sigma)**2))
+    #if prediction < groundtruth:
+    #    accuracy = max(0, 3*prediction+1-3*groundtruth)
+    #else:
+    #    accuracy = max(0, -3*prediction+1+3*groundtruth)
 
     return accuracy * 100
 
 
 def run(modelPath: Path, dataset: list[tuple[ImageSample, float]], transform: transforms.Compose) -> tuple[Path, float]:
     model = CNNModel()
-    model.load_state_dict(torch.load(modelPath))
+    model.load_state_dict(torch.load(modelPath, map_location=torch.device('cpu')))
     model.eval()
 
     sampleResultsPath = folder_manager.temp / "sample_results.csv"
@@ -51,7 +51,7 @@ def run(modelPath: Path, dataset: list[tuple[ImageSample, float]], transform: tr
             writer.writerow({
                 "id": sample.id,
                 "name": sample.name,
-                "prediction": output,
+                "prediction": f"{output:.2f}",
                 "groundtruth": quality,
                 "accuracy": f"{accuracy:.2f}"
             })
