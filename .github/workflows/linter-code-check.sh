@@ -2,14 +2,11 @@
 
 eval "$(conda shell.bash hook)"
 dir=$1
-echo "DIR is = $dir"
-# for dir in tasks/* ; do
 echo "Checking directory: $dir"
 
 # Skip the directory if no .mypy.ini file is found
 if [ ! -f "$dir/.mypy.ini" ]; then
   echo "No .mypy.ini file found in $dir, skipping..."
-  # continue
   exit 0
 fi
 
