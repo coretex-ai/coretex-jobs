@@ -16,7 +16,7 @@ if [ ! -f "$dir/.mypy.ini" ]; then
   # continue
   exit 0
 fi
-date1=$(date +"%s")
+
 if [ -f "$dir/environment.yml" ]; then
   echo "Setting up conda environment for $dir"
   conda env create -n $(basename "$dir") -f "$dir/environment.yml"
@@ -52,7 +52,5 @@ elif [ -f "$dir/requirements.txt" ]; then
   deactivate
   rm -rf "$dir/venv"
 fi
-date2=$(date +"%s")
-DIFF=$(($date2-$date1))
-echo "Duration in $dir: $(($DIFF / 3600 )) hours $((($DIFF % 3600) / 60)) minutes $(($DIFF % 60)) seconds"
+
 # done
