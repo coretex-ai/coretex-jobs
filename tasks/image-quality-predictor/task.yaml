@@ -26,8 +26,9 @@ param_groups:
 - name: parameters
   params:
   - name: validation
-    description: Whether to perform training or validation for image quality predictor. If true, only validation
-      will be performed; if false, only training will be performed
+    description: If the value of the this parameter is true, then only the validation of the
+      provided trained model is performed. If the value of the this parameter is false,
+      then a new model for image quality prediction is trained.
     value: false
     data_type: bool
     required: true

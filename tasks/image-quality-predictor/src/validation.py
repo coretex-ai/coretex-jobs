@@ -14,7 +14,7 @@ from .model import CNNModel
 
 
 def calculateAccuracy(prediction: float, groundtruth: float) -> float:
-    sigma = 0.5 / 3.5
+    sigma = 0.5 / 3.5 # This value was chosen because the width of the Gaussian distribution function graph is the most suitable for the strictness of the metric
 
     # Calculating the value of the Gaussian normal distribution function, translated so that the peak corresponds to the groundtruth, for the predicted value
     accuracy = float(np.exp(-0.5 * ((prediction - groundtruth) / sigma)**2))
@@ -24,7 +24,7 @@ def calculateAccuracy(prediction: float, groundtruth: float) -> float:
 
 def run(modelPath: Path, dataset: list[tuple[ImageSample, float]], transform: transforms.Compose) -> tuple[Path, float]:
     model = CNNModel()
-    model.load_state_dict(torch.load(modelPath, map_location=torch.device('cpu')))
+    model.load_state_dict(torch.load(modelPath, map_location = torch.device('cpu')))
     model.eval()
 
     sampleResultsPath = folder_manager.temp / "sample_results.csv"

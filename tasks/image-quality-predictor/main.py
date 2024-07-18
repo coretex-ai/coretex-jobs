@@ -52,6 +52,7 @@ def main() -> None:
         # training model
         if taskRun.parameters["epochs"] is None:
             raise RuntimeError("The number of epochs for training the model is not defined")
+
         if taskRun.parameters["validationPct"] is None:
             raise RuntimeError("validationSplit parameter is not defined")
 
@@ -117,7 +118,7 @@ def main() -> None:
             raise RuntimeError("Model id used for image quality prediction that needs validation is not valid")
 
         modelVal: Model = taskRun.parameters["trainedModel"]
-        #modelVal.download()
+        modelVal.download()
 
         # Calculate model accuracy
         logging.info(">> [ImageQuality] Validating model...")
