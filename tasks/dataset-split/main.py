@@ -1,11 +1,12 @@
+from typing import Sequence
+
 import logging
 
-from coretex import currentTaskRun, ImageDataset, CustomDataset, SequenceDataset
+from coretex import currentTaskRun, ImageDataset, CustomDataset, SequenceDataset, NetworkDataset
 
-from split_custom_dataset import splitCustomDataset
-from split_image_dataset import splitImageDataset
-from split_sequence_dataset import splitSequenceDataset
-from src.utils import DatasetType
+from src.split_custom_dataset import splitCustomDataset
+from src.split_image_dataset import splitImageDataset
+from src.split_sequence_dataset import splitSequenceDataset
 
 
 def main() -> None:
@@ -21,7 +22,7 @@ def main() -> None:
     if datasetParts < 2:
         raise ValueError("Dataset can be divided into at least two parts")
 
-    splitDatasets: list[DatasetType]
+    splitDatasets: Sequence[NetworkDataset]
 
     if isinstance(originalDataset, ImageDataset):
         logging.info(f">> [Dataset Split] Splitting ImageDataset {originalDataset.name}...")
