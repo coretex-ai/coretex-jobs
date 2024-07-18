@@ -111,12 +111,6 @@ def main() -> None:
 
         taskRun.submitOutput("model", ctxModel)
 
-
-
-
-
-
-
     else:
         # validation of the provided model
         if taskRun.parameters["trainedModel"] is None:

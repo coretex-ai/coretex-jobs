@@ -57,11 +57,7 @@ def loadDataset(artifacts: list[Artifact]) -> list[tuple[ImageSample, float]]:
             raise RuntimeError(f"Failed to download artifact {artifact.taskRunId} - {artifact.remoteFilePath}")
 
         with artifact.localFilePath.open("r") as file:
-            i=0
             for row in csv.DictReader(file):
-                if i>10:
-                    break
-                i+=1
                 sampleId = int(row["id"])
                 logging.info(f"\tLoading sample {sampleId}...")
 

@@ -8,12 +8,12 @@ param_groups:
   params:
   - name: validationArtifacts
     description: Task Run IDs which contains artifact file "sample_results.csv" which has information about image quality
-    value: [1351]
+    value: null
     data_type: list[int]
     required: true
   - name: trainedModel
     description: Model id used for image quality prediction that needs validation
-    value: 167
+    value: null
     data_type: model
     required: false
 - name: outputs
@@ -28,7 +28,7 @@ param_groups:
   - name: validation
     description: Whether to perform training or validation for image quality predictor. If true, only validation
       will be performed; if false, only training will be performed
-    value: true
+    value: false
     data_type: bool
     required: true
   - name: epochs

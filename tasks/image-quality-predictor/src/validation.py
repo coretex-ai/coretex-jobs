@@ -18,10 +18,6 @@ def calculateAccuracy(prediction: float, groundtruth: float) -> float:
 
     # Calculating the value of the Gaussian normal distribution function, translated so that the peak corresponds to the groundtruth, for the predicted value
     accuracy = float(np.exp(-0.5 * ((prediction - groundtruth) / sigma)**2))
-    #if prediction < groundtruth:
-    #    accuracy = max(0, 3*prediction+1-3*groundtruth)
-    #else:
-    #    accuracy = max(0, -3*prediction+1+3*groundtruth)
 
     return accuracy * 100
 
