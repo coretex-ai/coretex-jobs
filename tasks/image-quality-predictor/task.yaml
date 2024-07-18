@@ -12,7 +12,7 @@ param_groups:
     data_type: list[int]
     required: true
   - name: trainedModel
-    description: Model id used for image quality prediction that needs validation
+    description: Model used for validation
     value: null
     data_type: model
     required: false

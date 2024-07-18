@@ -14,7 +14,7 @@ from .model import CNNModel
 
 
 def calculateAccuracy(prediction: float, groundtruth: float) -> float:
-    sigma = 0.5 / 3.5 # This value was chosen because the width of the Gaussian distribution function graph is the most suitable for the strictness of the metric
+    sigma = 0.5 / 3.5  # This value was chosen because the width of the Gaussian distribution function graph is the most suitable for the strictness of the metric
 
     # Calculating the value of the Gaussian normal distribution function, translated so that the peak corresponds to the groundtruth, for the predicted value
     accuracy = float(np.exp(-0.5 * ((prediction - groundtruth) / sigma)**2))
