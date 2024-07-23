@@ -17,7 +17,14 @@ def meanIouScore(iouScores: list[float]) -> float:
     return sum(iouScores) / len(iouScores)
 
 
-def plotImageSegmentation(realImage: np.ndarray, trueSegmentation: np.ndarray, predictedSeqmentation: np.ndarray, iouScore: float, name: str, taskRun: TaskRun) -> None:
+def plotImageSegmentation(
+    realImage: np.ndarray,
+    trueSegmentation: np.ndarray,
+    predictedSeqmentation: np.ndarray,
+    iouScore: float, name: str,
+    taskRun: TaskRun
+) -> None:
+
     fig, axes = plt.subplots(1, 3, figsize = (15, 5))
 
     axes[0].imshow(realImage, cmap = "summer")
@@ -32,8 +39,10 @@ def plotImageSegmentation(realImage: np.ndarray, trueSegmentation: np.ndarray, p
     axes[2].set_title(f"Predicted segmentation\n IoU Score: {iouScore}")
     axes[2].axis("off")
 
-    plt.savefig(f"{folder_manager.temp / name}.jpg")
-    taskRun.createArtifact(f"{folder_manager.temp / name}.jpg", f"images/{name}.jpg")
+    plt.savefig(folder_manager.temp / f"{name}.jpg")
+    if taskRun.createArtifact(folder_manager.temp / f"{name}.jpg", f"images/{name}.jpg") is None:
+        logging.error(f">> [Image Segmentation] Failed to create artifact \"images/{name}.jpg\"")
+
     plt.close()
 
 
@@ -134,16 +143,12 @@ def loadModel(modelPath: Path) -> tf.lite.Interpreter:
     return modelInterpreter
 
 
-def validation(taskRun: TaskRun) -> None:
+def validation(taskRun: TaskRun, model: Model) -> float:
     dataset = taskRun.dataset
     imageSize: int = taskRun.parameters["imageSize"]
     batchSize: int = taskRun.parameters["batchSize"]
     dataset.classes.exclude(taskRun.parameters["excludedClasses"])
 
-    if taskRun.parameters["trainedModel"] is None:
-        raise RuntimeError("Model id used for image segmentation that needs validation is not valid")
-
-    model: Model = taskRun.parameters["trainedModel"]
     model.download()
     modelInterpreter = loadModel(model.path)
 
@@ -169,7 +174,7 @@ def validation(taskRun: TaskRun) -> None:
             logging.info(f">> [Image Segmentation] The results image for sample {sample.name} (sample id: {sample.id}) add to the artifacts.")
             csvSamplesData.append(dict(zip(fieldNamesSamples, [str(sample.id), sample.name, str(round(iou, 2)), str(round(iou * 100))])))
 
-    sampleResultsPath = f"{folder_manager.temp}/sample_results.csv"
+    sampleResultsPath = folder_manager.temp / "sample_results.csv"
     with open(sampleResultsPath, "w", newline = "") as csvFile:
         writer = csv.DictWriter(csvFile, fieldNamesSamples)
         writer.writeheader()
@@ -180,9 +185,9 @@ def validation(taskRun: TaskRun) -> None:
 
     iouScore = meanIouScore(iouScores)
     fieldNamesDataset = ["IoU Score", "IoU STD", "Accuracy"]
-    csvDatasetData = dict(zip(fieldNamesDataset, [round(iouScore, 2), round(np.std(iouScores), 2), round(iouScore * 100)]))
+    csvDatasetData = dict(zip(fieldNamesDataset, [round(iouScore, 2), round(np.std(iouScores), 2), round(iouScore * 100, 2)]))
 
-    datasetResultsPath = f"{folder_manager.temp}/dataset_results.csv"
+    datasetResultsPath = folder_manager.temp / "dataset_results.csv"
     with open(datasetResultsPath, "w", newline = "") as csvFile:
         writer = csv.DictWriter(csvFile, fieldNamesDataset)
         writer.writeheader()
@@ -190,3 +195,5 @@ def validation(taskRun: TaskRun) -> None:
 
     taskRun.createArtifact(datasetResultsPath, "dataset_results.csv")
     logging.info(f">> [Image Segmentation] The .csv file with dataset results has been added to the artifacts.")
+
+    return round(iouScore * 100, 2)

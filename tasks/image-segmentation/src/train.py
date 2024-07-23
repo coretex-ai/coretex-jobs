@@ -12,7 +12,7 @@ import coremltools
 
 from coretex import TaskRunStatus, Model, ImageDataset, TaskRun, Metric, MetricType, folder_manager
 
-from src import detect
+from src import validation
 from src.model import UNetModel
 from src.dataset import loadDataset, createBatches
 from src.callbacks import DisplayCallback
@@ -118,12 +118,13 @@ def train(taskRun: TaskRun) -> None:
     except tf.errors.ResourceExhaustedError:
         raise MemoryError(">> [Image Segmentation] Ran out of memory. Potential solutions: reduce batch size and image size parameters; simplify model architecture")
 
-    detect.run(taskRun, model, taskRun.dataset)
+    #detect.run(taskRun, model, taskRun.dataset)
+    acc = validation.validation(taskRun, model)
 
     coretexModel = Model.createModel(
         taskRun.generateEntityName(),
         taskRun.id,
-        history.history["val_accuracy"][-1]  # gets the validation accuracy after last epoch
+        acc
     )
 
     logging.info(f">> [Image Segmentation] Model accuracy is: {coretexModel.accuracy}")

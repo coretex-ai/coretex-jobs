@@ -22,7 +22,7 @@ param_groups:
     value: null
     data_type: model
     required: false
-- name: parameters
+- name: shared parameters
   params:
   - name: validation
     description: Whether to perform training or validation for image segmentation. If true, only validation
@@ -30,22 +30,11 @@ param_groups:
     value: false
     data_type: bool
     required: true
-  - name: epochs
-    description: Number of times the data is run throught the model. Used only for training.
-    value: 10
-    data_type: int
-    required: false
   - name: batchSize
     description: Number of segments into which dataset is split during the training or validation
     value: 16
     data_type: int
     required: true
-  - name: validationSplit
-    description: Percentage of data from the dataset which will be used as validation
-      data during training
-    value: 0.2
-    data_type: float
-    required: false
   - name: imageSize
     description: Size to which the images from the dataset will be resized for training or validation
     value: 128
@@ -56,4 +45,17 @@ param_groups:
       model or from validation
     value: []
     data_type: list[str]
+    required: false
+- name: train parameters
+  params:
+  - name: epochs
+    description: Number of times the data is run throught the model. Used only for training.
+    value: 10
+    data_type: int
+    required: false
+  - name: validationSplit
+    description: Percentage of data from the dataset which will be used as validation
+      data during training
+    value: 0.2
+    data_type: float
     required: false

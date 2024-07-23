@@ -8,7 +8,9 @@ def main() -> None:
     taskRun: TaskRun[ImageDataset] = currentTaskRun()
 
     if taskRun.parameters["validation"]:
-        validation(taskRun)
+        if taskRun.parameters["trainedModel"] is None:
+            raise RuntimeError("Model used for image segmentation that needs validation is not valid")
+        validation(taskRun, taskRun.parameters["trainedModel"])
     else:
         train(taskRun)
 
