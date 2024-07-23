@@ -166,51 +166,67 @@ def main() -> None:
     configurationPath = folder_manager.temp / "dataset_configuration.yaml"
     generateDatasetYaml(datasetPath, trainPath, validPath, configurationPath, taskRun.dataset.classes)
 
-    ctxModel: Optional[Model] = taskRun.parameters.get("model")
-    if ctxModel is None:
-        # Start training from specified YoloV8 weights
-        weights = taskRun.parameters.get("weights", "yolov8n.pt")
-        logging.info(f">> [ObjectDetection] Using \"{weights}\" for training the model")
+    if not taskRun.parameters["validation"]:
+        ctxModel: Optional[Model] = taskRun.parameters.get("model")
+        if ctxModel is None:
+            # Start training from specified YoloV8 weights
+            weights = taskRun.parameters.get("weights", "yolov8n.pt")
+            logging.info(f">> [ObjectDetection] Using \"{weights}\" for training the model")
 
-        model = YOLO(taskRun.parameters.get("weights", "yolov8n.pt"))
+            model = YOLO(taskRun.parameters.get("weights", "yolov8n.pt"))
+        else:
+            logging.info(f">> [ObjectDetection] Using \"{ctxModel.name}\" for training the model")
+
+            # Start training from specified model checkpoint
+            ctxModel.download()
+            model = YOLO(ctxModel.path / "best.pt")
+
+        model.add_callback("on_train_start", cb.onTrainStart)
+        model.add_callback("on_train_epoch_end", cb.onEpochEnd)
+
+        logging.info(">> [ObjectDetection] Training the model")
+        results: DetMetrics = model.train(
+            project = "results",
+            data = configurationPath,
+            epochs = taskRun.parameters["epochs"],
+            batch = taskRun.parameters["batchSize"],
+            imgsz = taskRun.parameters["imageSize"],
+            patience = getPatience(taskRun)
+        )
+
+        logging.info(">> [ObjectDetection] Running prediction on training dataset")
+        predictPath = folder_manager.createTempFolder("predict")
+        acc = predict.run(taskRun, model, taskRun.dataset, predictPath, taskRun.parameters["batchSize"])
+
+        ctxModel = Model.createModel(taskRun.generateEntityName(), taskRun.projectId, acc, {})
+        ctxModel.upload(Path(".", "results", "train", "weights"))
+
+        for path in predictPath.iterdir():
+            if not path.is_file():
+                continue
+
+            if taskRun.createArtifact(path, path.name) is None:
+                logging.error(f">> [ObjectDetection] Failed to create artifact \"{path.name}\"")
+
+        taskRun.submitOutput("outputModel", ctxModel)
     else:
-        logging.info(f">> [ObjectDetection] Using \"{ctxModel.name}\" for training the model")
+        ctxModelVal: Optional[Model] = taskRun.parameters.get("model")
+        if ctxModelVal is None:
+            raise RuntimeError("Model used for image segmentation that needs validation is not valid")
 
-        # Start training from specified model checkpoint
-        ctxModel.download()
-        model = YOLO(ctxModel.path / "best.pt")
+        ctxModelVal.download()
+        modelVal = YOLO(ctxModelVal.path / "best.pt")
 
-    model.add_callback("on_train_start", cb.onTrainStart)
-    model.add_callback("on_train_epoch_end", cb.onEpochEnd)
+        logging.info(">> [ObjectDetection] Running prediction on validation dataset")
+        predictPath = folder_manager.createTempFolder("predict")
+        predict.run(taskRun, modelVal, taskRun.dataset, predictPath, taskRun.parameters["batchSize"])
 
-    logging.info(">> [ObjectDetection] Training the model")
-    results: DetMetrics = model.train(
-        project = "results",
-        data = configurationPath,
-        epochs = taskRun.parameters["epochs"],
-        batch = taskRun.parameters["batchSize"],
-        imgsz = taskRun.parameters["imageSize"],
-        patience = getPatience(taskRun)
-    )
+        for path in predictPath.iterdir():
+            if not path.is_file():
+                continue
 
-    precision = results.results_dict["metrics/precision(B)"]
-    recall = results.results_dict["metrics/recall(B)"]
-    f1 = calculateF1(precision, recall)
-
-    ctxModel = Model.createModel(taskRun.generateEntityName(), taskRun.projectId, f1, {})
-    ctxModel.upload(Path(".", "results", "train", "weights"))
-
-    logging.info(">> [ObjectDetection] Running prediction on training dataset")
-    predictPath = folder_manager.createTempFolder("predict")
-    predict.run(model, taskRun.dataset, predictPath, taskRun.parameters["batchSize"])
-
-    for path in predictPath.iterdir():
-        if not path.is_file():
-            continue
-
-        taskRun.createArtifact(path, path.name)
-
-    taskRun.submitOutput("outputModel", ctxModel)
+            if taskRun.createArtifact(path, f"predictions/{path.name}") is None:
+                logging.error(f">> [ObjectDetection] Failed to create artifact \"{path.name}\"")
 
 
 if __name__ == "__main__":
