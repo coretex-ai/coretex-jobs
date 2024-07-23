@@ -2,9 +2,9 @@ import logging
 
 from coretex import currentTaskRun, ImageDataset, CustomDataset, SequenceDataset
 
-from split_custom_dataset import splitCustomDataset
-from split_image_dataset import splitImageDataset
-from split_sequence_dataset import splitSequenceDataset
+from src.split_custom_dataset import splitCustomDataset
+from src.split_image_dataset import splitImageDataset
+from src.split_sequence_dataset import splitSequenceDataset
 from src.utils import DatasetType
 
 
@@ -40,7 +40,7 @@ def main() -> None:
             splitDatasets = splitSequenceDataset(originalDataset, datasetParts, taskRunId, projectId)
         except FileNotFoundError:
             logging.info(f">> [Dataset Split] Splitting CustomDataset {originalDataset.name}...")
-            splitDatasets = splitCustomDataset(originalDataset, datasetParts, taskRunId, projectId)
+            splitDatasets = splitCustomDataset(originalDataset, datasetParts, projectId)
 
     outputDatasets = [dataset.id for dataset in splitDatasets]
     taskRun.submitOutput("outputDatasets", outputDatasets)
