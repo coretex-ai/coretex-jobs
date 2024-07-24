@@ -65,7 +65,7 @@ def loadDataset(artifacts: list[Artifact]) -> list[tuple[ImageSample, float]]:
                 sample.download()
                 sample.unzip()
 
-                value = (sample, float(row["groundtruth"]))
+                value = (sample, float(row["total_iou"]))
                 dataset.append(value)
 
     return dataset

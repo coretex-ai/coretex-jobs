@@ -23,7 +23,7 @@ param_groups:
     value: null
     data_type: model
     required: false
-- name: parameters
+- name: sharedParameters
   params:
   - name: validation
     description: If the value of the this parameter is true, then only the validation of the
@@ -32,13 +32,6 @@ param_groups:
     value: false
     data_type: bool
     required: true
-  - name: epochs
-    description: Number of passes that the model will make through the dataset while
-      training. Higher values increase training time and accuracy, while lower
-      values decrease training time, but they might also decrease accuracy.
-    value: 100
-    data_type: int
-    required: false
   - name: batchSize
     description: Number of segments into which the dataset is split before the training.
       During the training a single epoch passes through all of the segments
@@ -58,6 +51,15 @@ param_groups:
     value: 224
     data_type: int
     required: true
+- name: trainParameters
+  params:
+  - name: epochs
+    description: Number of passes that the model will make through the dataset while
+      training. Higher values increase training time and accuracy, while lower
+      values decrease training time, but they might also decrease accuracy.
+    value: 100
+    data_type: int
+    required: false
   - name: validationPct
     description: Percentage of dataset which will be used for validation. Prefered value range is
       0.1 - 0.9, while the optimal value is 0.2. If values are close or equal to 0, or

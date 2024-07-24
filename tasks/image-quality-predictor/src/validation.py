@@ -24,7 +24,8 @@ def calculateAccuracy(prediction: float, groundtruth: float) -> float:
 
 def run(modelPath: Path, dataset: list[tuple[ImageSample, float]], transform: transforms.Compose) -> tuple[Path, float]:
     model = CNNModel()
-    model.load_state_dict(torch.load(modelPath, map_location = torch.device('cpu')))
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.load_state_dict(torch.load(modelPath, map_location = device))
     model.eval()
 
     sampleResultsPath = folder_manager.temp / "sample_results.csv"
