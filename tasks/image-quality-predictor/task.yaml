@@ -41,16 +41,6 @@ param_groups:
     value: 32
     data_type: int
     required: true
-  - name: imageSize
-    description: Size to which the images from the dataset will be resized to before training.
-      This affects input and output shapes of the model. Input and output image shapes
-      will be equal to "imageSize * imageSize * 3" where imageSize represents both width
-      and height of the image, while number 3 (RGB image) represents the number of channels.
-      Higher values increase training time, but they can increase model accuracy, while lower
-      values decrease training time, but they also can decrease model accuracy. Minimum value is 224.
-    value: 224
-    data_type: int
-    required: true
 - name: trainParameters
   params:
   - name: epochs
@@ -68,4 +58,14 @@ param_groups:
       will go for validation, while the rest (80%) will go for training.
     value: 0.5
     data_type: float
+    required: false
+  - name: imageSize
+    description: Size to which the images from the dataset will be resized to before training.
+      This affects input and output shapes of the model. Input and output image shapes
+      will be equal to "imageSize * imageSize * 3" where imageSize represents both width
+      and height of the image, while number 3 (RGB image) represents the number of channels.
+      Higher values increase training time, but they can increase model accuracy, while lower
+      values decrease training time, but they also can decrease model accuracy. Minimum value is 224.
+    value: 224
+    data_type: int
     required: false

@@ -3,7 +3,7 @@ from pathlib import Path
 import csv
 import logging
 
-from coretex import ImageSample, folder_manager
+from coretex import ImageSample, folder_manager, Model
 from PIL import Image, ImageOps
 
 import numpy as np
@@ -22,7 +22,7 @@ def calculateAccuracy(prediction: float, groundtruth: float) -> float:
     return accuracy * 100
 
 
-def run(modelPath: Path, dataset: list[tuple[ImageSample, float]], transform: transforms.Compose) -> tuple[Path, float]:
+def run(modelPath: Path, dataset: list[tuple[ImageSample, float]], transform: transforms.Compose) -> tuple[Path, Path, float]:
     model = CNNModel()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.load_state_dict(torch.load(modelPath, map_location = device))
@@ -59,4 +59,13 @@ def run(modelPath: Path, dataset: list[tuple[ImageSample, float]], transform: tr
             logging.info(f"\tPrediction: {output}")
             logging.info(f"\tAccuracy: {accuracy}")
 
-    return sampleResultsPath, sum(sampleAccuracies) / len(sampleAccuracies)
+    datasetResultsCsvPath = folder_manager.createTempFolder("dataset_results") / "dataset_results.csv"
+    with open(datasetResultsCsvPath, "w", newline = "") as file:
+        writer = csv.DictWriter(file, fieldnames = ["accuracy", "accuracy STD"])
+        writer.writeheader()
+        writer.writerow({
+            "accuracy": f"{sum(sampleAccuracies) / len(sampleAccuracies):.2f}",
+            "accuracy STD": f"{np.std(sampleAccuracies):.2f}"
+        })
+
+    return sampleResultsPath, datasetResultsCsvPath, sum(sampleAccuracies) / len(sampleAccuracies)
