@@ -1,4 +1,5 @@
 id: image-quality-predictor
+name: image-quality-predictor
 description: Task template for training a model for predicting the quality
   of images based on a score with range(0, 1).
 is_active: true
