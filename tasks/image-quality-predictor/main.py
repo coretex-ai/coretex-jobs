@@ -1,6 +1,7 @@
 import logging
+import json
 
-from coretex import currentTaskRun, Artifact, folder_manager, Model
+from coretex import currentTaskRun, Artifact, folder_manager, Model, TaskRun, ImageSample
 from torch.utils.data import DataLoader
 
 import torch
@@ -32,25 +33,30 @@ def fetchArtifacts(validationArtifacts: list[int]) -> list[Artifact]:
     return artifacts
 
 
-def main() -> None:
-    taskRun = currentTaskRun()
-
-    artifacts = fetchArtifacts(taskRun.parameters["validationArtifacts"])
-    epochs: int = taskRun.parameters["epochs"]
-    batchSize: int = taskRun.parameters["batchSize"]
+def train(taskRun: TaskRun, dataset: list[tuple[ImageSample, float]]) -> None:
+    if taskRun.parameters["imageSize"] is None:
+        raise RuntimeError("The imageSize for training is not defined")
 
     imageSize: int = taskRun.parameters["imageSize"]
     if imageSize < 224:
         raise ValueError("Image size cannot be lower than 224")
-
-    dataset = loadDataset(artifacts)
-    trainData, validData = split(taskRun.parameters["validationPct"], dataset)
 
     # Define transformations for your dataset
     transform = transforms.Compose([
         transforms.Resize((imageSize, imageSize)),
         transforms.ToTensor()
     ])
+
+    if taskRun.parameters["epochs"] is None:
+        raise RuntimeError("The number of epochs for training the model is not defined")
+
+    if taskRun.parameters["validationPct"] is None:
+        raise RuntimeError("validationSplit parameter is not defined")
+
+    epochs: int = taskRun.parameters["epochs"]
+    batchSize: int = taskRun.parameters["batchSize"]
+
+    trainData, validData = split(taskRun.parameters["validationPct"], dataset)
 
     # Assuming you have your dataset loaded and split into train and test sets
     trainDataset = ImageQualityDataset(trainData, transform)
@@ -86,7 +92,7 @@ def main() -> None:
         "projectName": taskRun.taskName,
         "epochs": epochs,
         "batchSize": batchSize,
-        "imageSize": imageSize
+        "imageSize": taskRun.parameters["imageSize"]
     })
 
     # Calculate model accuracy
@@ -102,6 +108,51 @@ def main() -> None:
     ctxModel.upload(modelPath)
 
     taskRun.submitOutput("model", ctxModel)
+
+
+def validate(taskRun: TaskRun, dataset: list[tuple[ImageSample, float]]) -> None:
+    if taskRun.parameters["trainedModel"] is None:
+        raise RuntimeError("Model id used for image quality prediction that needs validation is not valid")
+
+    modelVal: Model = taskRun.parameters["trainedModel"]
+    modelVal.download()
+    with open(modelVal.path / modelVal.modelDescriptorFileName(), "r") as file:
+        data = json.load(file)
+
+    try:
+        imageSize = data["imageSize"]
+    except KeyError:
+        raise KeyError("The model does not contain information about the imageSize parameter with which it was trained")
+
+    if imageSize < 224:
+        raise ValueError("Image size cannot be lower than 224")
+
+    # Define transformations for your dataset
+    transform = transforms.Compose([
+        transforms.Resize((imageSize, imageSize)),
+        transforms.ToTensor()
+    ])
+
+    # Calculate model accuracy
+    logging.info(">> [ImageQuality] Validating model...")
+    sampleResultsCsvPath, datasetResultsCsvPath, accuracy = validation.run(modelVal.path / "best.pt", dataset, transform)
+    logging.info(f">> [ImageQuality] Model accuracy: {accuracy:.2f}%")
+
+    if taskRun.createArtifact(sampleResultsCsvPath, sampleResultsCsvPath.name) is None:
+        logging.error(f">> [ImageQuality] Failed to create artifact \"{sampleResultsCsvPath.name}\"")
+
+    if taskRun.createArtifact(datasetResultsCsvPath, datasetResultsCsvPath.name) is None:
+        logging.error(f">> [ImageQuality] Failed to create artifact \"{sampleResultsCsvPath.name}\"")
+
+def main() -> None:
+    taskRun = currentTaskRun()
+    artifacts = fetchArtifacts(taskRun.parameters["validationArtifacts"])
+    dataset = loadDataset(artifacts)
+
+    if taskRun.parameters["validation"]:
+        validate(taskRun, dataset)
+    else:
+        train(taskRun, dataset)
 
 
 if __name__ == "__main__":
