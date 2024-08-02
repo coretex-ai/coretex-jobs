@@ -1,0 +1,5 @@
+coretex
+pillow
+ultralytics
+numpy
+pycocotools
