@@ -1,0 +1,68 @@
+id: image-segmentation-yolov8
+name: image-segmentation-yolov8
+description:
+is_active: true
+project_type: 1
+param_groups:
+- name: inputs
+  params:
+  - name: dataset
+    description: Dataset that is used for fetching dataset from coretex.
+    value: 2022
+    data_type: dataset
+    required: true
+  - name: trainedModel
+    description: Model used for image segmentation that needs validation
+    value: 701
+    data_type: model
+    required: false
+- name: outputs
+  params:
+  - name: model
+    description: Model trained by this Task
+    value: null
+    data_type: model
+    required: false
+- name: sharedParameters
+  params:
+  - name: validationMode
+    description: Whether to perform training or validation for image segmentation. If true, only validation
+      will be performed; if false, only training will be performed
+    value: false
+    data_type: bool
+    required: true
+  - name: batchSize
+    description: Number of segments into which dataset is split during the training
+    value: 16
+    data_type: int
+    required: true
+  - name: excludedClasses
+    description: Classes from the dataset which will be excluded from training the
+      model
+    value: ["gender", "date_of_birth", "last_name", "first_name"]
+    data_type: list[str]
+    required: false
+- name: trainParameters
+  params:
+  - name: epochs
+    description: Number of times the data is run throught the model
+    value: 5
+    data_type: int
+    required: true
+  - name: validationSplit
+    description: Percentage of data from the dataset which will be used as validation
+      data
+    value: 0.2
+    data_type: float
+    required: true
+  - name: imageSize
+    description: Size to which the images from the dataset will be resized for training
+    value: 128
+    data_type: int
+    required: true
+  - name: earlyStopping
+    description: Enable/disable early stopping of Run if loss hasn't decreased after
+      multiple epochs
+    value: true
+    data_type: bool
+    required: true
