@@ -4,7 +4,7 @@ library(reticulate)
 
 os <- import("os")
 ctx <- import("coretex")
-ctxFolderManager <- import("coretex.folder_manager")
+ctxFolderManager <- ctx$folder_manager
 
 main <- function(taskRun) {
     # FolderManager.temp is used for temporary file storage
