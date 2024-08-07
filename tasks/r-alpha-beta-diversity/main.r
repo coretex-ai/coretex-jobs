@@ -9,7 +9,7 @@ py_config()
 # Import python modules
 builtins <- import_builtins()
 ctx <- import("coretex")
-ctx_folder_manager <- coretex$folder_manager
+ctx_folder_manager <- ctx$folder_manager
 
 #Contents
 # 1. Set working directory
