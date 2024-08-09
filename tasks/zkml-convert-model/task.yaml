@@ -1,4 +1,5 @@
 id: zkml-model-conversion
+name: zkml-model-conversion
 description: Converts a onnx model to an EZKL circuit. Also copies all input model files to the output model allowing for endpoint creation
 is_active: true
 project_type: 8
