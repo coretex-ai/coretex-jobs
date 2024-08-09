@@ -51,6 +51,8 @@ def generateSample(
 
     image = Image.fromarray(data.image)
     backgroundImage = ImageOps.exif_transpose(Image.open(backgroundImagePath))
+    if backgroundImage is None:
+        raise ValueError(f"Failed to open background image. ID: {backgroundImagePath.parent.name}")
 
     # Resize image
     parentAnnotationWidth = int(backgroundImage.width * random.uniform(minImageSize, maxImageSize))

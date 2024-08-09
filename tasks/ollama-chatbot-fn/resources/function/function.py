@@ -30,8 +30,8 @@ def response(requestData: dict[str, Any]) -> dict[str, Any]:
     sessionPath =  memoryFolder / f"{sessionId}.json"
 
     query = requestData.get("query")
-    if query == None:
-        functions.badRequest("Query cannot be empty")
+    if not isinstance(query, str):
+        return functions.badRequest("Query cannot be empty")
 
     if inputSessionId is None or not sessionPath.exists():
         logging.debug(">>> Creating new session")
@@ -55,7 +55,7 @@ def response(requestData: dict[str, Any]) -> dict[str, Any]:
         }]
     else:
         with sessionPath.open("r") as file:
-            messages: list[dict[str, str]] = json.load(file)
+            messages: list[dict[str, str]] = json.load(file)  # type: ignore[no-redef]
 
     messages.append({
         "role": "user",

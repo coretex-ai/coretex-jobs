@@ -33,7 +33,7 @@ def installOllama() -> None:
 def isOllamaServerActiveAndRunning() -> bool:
     try:
         response = requests.get(OLLAMA_SERVER_URL)
-        return response.ok
+        return response.ok  # type: ignore[no-any-return]
     except requests.ConnectionError:
         return False
 

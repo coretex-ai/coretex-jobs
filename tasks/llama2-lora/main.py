@@ -31,7 +31,7 @@ def loadData(dataset: CustomDataset) -> Dataset:
 def runInference(trainer: SFTTrainer, tokenizer: AutoTokenizer, prompt: str) -> str:
     textGenerator = pipeline(task = "text-generation", model = trainer.model, tokenizer = tokenizer, max_length = 200)
     output = textGenerator(f"<s>[INST] {prompt} [/INST]")
-    return output[0]['generated_text']
+    return str(output[0]['generated_text'])
 
 
 def main() -> None:

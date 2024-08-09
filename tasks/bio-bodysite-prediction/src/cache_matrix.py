@@ -30,13 +30,16 @@ def getMatrixName(
 
     suffix = f"{origins}-{techniques}-{percentile}-{quantize}"
 
-    return hashCacheName(datasetName, suffix)
+    return hashCacheName(datasetName, suffix)[:20]
 
 
 def loadMatrixCache(cacheName: str, validation: bool) -> MatrixTuple:
     logging.info(">> [MicrobiomeForensics] Loading processed data from cache")
 
     cache = getMatrixCache(cacheName)
+    if cache is None:
+        raise ValueError(">> [MicrobiomeForensics] Failed to retrieve cache")
+
     cache.download()
     cache.samples[0].unzip()
     cachePath = Path(cache.samples[0].path)
@@ -104,7 +107,7 @@ def cacheMatrix(
             archive.write(cachePath.joinpath(f"{item}.pkl"), f"{item}.pkl")
 
     with createDataset(CustomDataset, cacheName, projectId) as cacheDataset:
-        if CustomSample().createCustomSample("zipedCache", cacheDataset.id, zipPath):
+        if cacheDataset.add(zipPath, "zipedCache"):
             logging.info(">> [MicrobiomeForensics] Successfuly cached processed data")
         else:
             logging.warning(">> [MicrobiomeForensics] Failed to cache processed data")

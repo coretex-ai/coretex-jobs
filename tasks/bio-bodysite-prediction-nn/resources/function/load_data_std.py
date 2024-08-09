@@ -9,12 +9,12 @@ from coretex import folder_manager
 from objects import Sample, Taxon
 
 
-def loadDataStd(inputPath: Path, modelDir: Path, level: int) -> tuple[int, int, dict[str, int], list[int]]:
+def loadDataStd(inputPath: Path, modelDir: Path, level: int) -> tuple[Path, dict[str, int], dict[str, int], list[str]]:
     with open(modelDir / "uniqueTaxons.pkl", "rb") as f:
-        uniqueTaxons = pickle.load(f)
+        uniqueTaxons: dict[str, int] = pickle.load(f)
 
     with open(modelDir / "uniqueBodySites.pkl", "rb") as f:
-        uniqueBodySites = pickle.load(f)
+        uniqueBodySites: dict[str, int] = pickle.load(f)
 
     datasetPath = folder_manager.createTempFolder("dataset")
 

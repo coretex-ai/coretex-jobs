@@ -1,6 +1,6 @@
 from coretex import currentTaskRun, Model
 
-def main():
+def main() -> None:
     taskRun = currentTaskRun()
 
     model = Model.createModel(taskRun.generateEntityName(), taskRun.projectId, 1.0, {})

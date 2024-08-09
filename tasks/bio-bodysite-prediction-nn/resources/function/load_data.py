@@ -73,6 +73,9 @@ def loadDataAtlas(
 ) -> tuple[Path, dict[str, int], dict[str, int], list[str]]:
 
     workerCount = os.cpu_count()  # This value should not exceed the total number of CPU cores
+    if workerCount is None:
+        workerCount = 1
+
     logging.info(f">> [MicrobiomeForensics] Using {workerCount} CPU cores to read the file")
 
     fileSize = inputPath.stat().st_size
@@ -89,8 +92,9 @@ def loadDataAtlas(
         uniqueBodySites = pickle.load(f)
 
     def onProcessingFinished(future: Future) -> None:
-        if future.exception() is not None:
-            raise future.exception()
+        exception = future.exception()
+        if exception is not None:
+            raise exception
 
     logging.info(f">> [MicrobiomeForensics] Reading: {inputPath}")
 

@@ -43,12 +43,12 @@ def loadDataset(datasetPath: Path, uniqueBodySites: dict[str, int], uniqueTaxons
             for taxon in sample.taxons:
                 x[uniqueTaxons[taxon.taxonId]] = np.log(taxon.count + 0.5)
 
-            y = oneHotEncoding(y, len(uniqueBodySites))
-            y = y.reshape(len(uniqueBodySites), )
+            yOneHot = oneHotEncoding(y, len(uniqueBodySites))
+            yOneHot = yOneHot.reshape(len(uniqueBodySites), )
 
             yield {
                 "features": tf.convert_to_tensor(x, dtype = tf.float32),
-                "labels": tf.convert_to_tensor(y, dtype = tf.float32)
+                "labels": tf.convert_to_tensor(yOneHot, dtype = tf.float32)
             }
 
     return tf.data.Dataset.from_generator(

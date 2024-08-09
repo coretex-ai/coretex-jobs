@@ -1,5 +1,5 @@
 from pathlib import Path
-from io import BufferedWriter
+from io import TextIOWrapper
 
 import logging
 
@@ -13,7 +13,7 @@ def argmax(array: list) -> int:
 
 
 def splitToFiles(inputFile: Path, readClasses: list[int], groups: list[Path]) -> None:
-    outFiles: list[BufferedWriter] = []
+    outFiles: list[TextIOWrapper] = []
     for group in groups:
         outFiles.append(open(group / inputFile.name, "a"))
 

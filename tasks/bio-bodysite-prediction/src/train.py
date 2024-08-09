@@ -1,3 +1,5 @@
+from typing import Any
+
 import logging
 import pickle
 import time
@@ -34,7 +36,7 @@ class Progress(TrainingCallback):
         self.eval = xgb.DMatrix(evalSet[0][0], label = evalSet[0][1])
         self.yEval = evalSet[0][1]
 
-    def after_iteration(self, model: XGBClassifier, epoch: int, evals_log) -> bool:
+    def after_iteration(self, model: XGBClassifier, epoch: int, evals_log: Any) -> bool:
         for data, metric in evals_log.items():
             for metricName, log in metric.items():
                 loss = log[-1]
@@ -134,4 +136,4 @@ def train(
     with open(modelPath / "uniqueBodySites.pkl", "wb") as f:
         pickle.dump(uniqueBodySites, f)
 
-    return accuracy
+    return float(accuracy)

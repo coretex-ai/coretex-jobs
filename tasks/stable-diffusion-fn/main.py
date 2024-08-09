@@ -3,7 +3,7 @@ import logging
 from coretex import currentTaskRun, Model
 
 
-def main():
+def main() -> None:
     taskRun = currentTaskRun()
 
     logging.info(">> [StableDiffusion] Creating Coretex model")

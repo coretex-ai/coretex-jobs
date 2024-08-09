@@ -29,17 +29,19 @@ class OrientedDataset(Dataset):
     def __len__(self) -> int:
         return len(self.sampleIds)
 
-    def __getitem__(self, idx) -> dict[str, Any]:
+    def __getitem__(self, idx: int) -> dict[str, Any]:
         imagePath = self.imagesDir / f"{self.sampleIds[idx]}.png"
         metadataPath = self.imagesDir / f"{self.sampleIds[idx]}.json"
 
         image = ImageOps.exif_transpose(Image.open(imagePath).convert("RGB"))
+        if image is None:
+            raise ValueError(f">> [ImageOrientation] Failed to open image {imagePath.name}")
+
         with metadataPath.open("r") as file:
             meta = json.load(file)
             flipped = meta.get(self.labelColumn, False)
 
-        label = [1, 0] if flipped else [0, 1]
-        label = torch.tensor(label).type(torch.float)
+        label = torch.tensor([1, 0] if flipped else [0, 1]).type(torch.float)
 
         if self.transform is not None:
             image = self.transform(image)
@@ -73,9 +75,9 @@ def prepareDataset(dataset: ImageDataset) -> tuple[Path, list[int]]:
     return imagesDir, sampleIds
 
 
-def splitDataset(dataset: OrientedDataset, validSplit: float) -> tuple["OrientedDataset", "OrientedDataset"]:
+def splitDataset(dataset: OrientedDataset, validSplit: float) -> tuple[OrientedDataset, OrientedDataset]:
     totalSize = len(dataset)
     trainSize = int((1.0 - validSplit) * totalSize)
     validationSize = totalSize - trainSize
 
-    return random_split(dataset, [trainSize, validationSize])
+    return random_split(dataset, [trainSize, validationSize])  # type: ignore[return-value]

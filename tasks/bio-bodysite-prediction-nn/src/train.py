@@ -108,4 +108,4 @@ def train(taskRun: TaskRun[CustomDataset], datasetPath: Path, uniqueBodySites: d
     with open(modelPath / "uniqueBodySites.pkl", "wb") as f:
         pickle.dump(uniqueBodySites, f)
 
-    return accuracy
+    return float(accuracy)

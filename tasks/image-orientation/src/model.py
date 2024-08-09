@@ -1,10 +1,12 @@
+from torch import Tensor
+
 import torch.nn as nn
 import torch.nn.functional as F
 
 
 class OrientationClassifier(nn.Module):
 
-    def __init__(self):
+    def __init__(self) -> None:
         super(OrientationClassifier, self).__init__()
         # Convolutional layers
         self.conv1 = nn.Conv2d(in_channels = 3, out_channels = 32, kernel_size = 3, padding = 1)
@@ -26,7 +28,7 @@ class OrientationClassifier(nn.Module):
         # Dropout
         self.dropout = nn.Dropout(0.25)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         x = self.pool1(F.leaky_relu(self.conv1(x)))
         x = self.pool2(F.leaky_relu(self.conv2(x)))
         x = self.pool3(F.leaky_relu(self.conv3(x)))

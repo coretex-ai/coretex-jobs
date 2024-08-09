@@ -10,7 +10,7 @@ class Taxon:
 
 class Sample:
 
-    def __init__(self, sampleId: str, bodySite: str, associationSite: str, taxons: Optional[list[Taxon]] = None) -> None:
+    def __init__(self, sampleId: str, bodySite: str, associationSite: Optional[str], taxons: Optional[list[Taxon]] = None) -> None:
         self.sampleId = sampleId
         self.bodySite = bodySite
         self.associationSite = associationSite

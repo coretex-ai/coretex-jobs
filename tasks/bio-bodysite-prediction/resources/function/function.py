@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Union
 from pathlib import Path
 from zipfile import ZipFile, is_zipfile
 
@@ -36,13 +36,17 @@ def response(requestData: dict[str, Any]) -> dict[str, Any]:
     with open(modelDir / "model_descriptor.json", "r") as jsonFile:
         modelDescriptor = json.load(jsonFile)
 
-    dataFormat = int(requestData.get("dataFormat"))  # 0 - MBA, 1 - Microbiome Forensics Institute Zuric
+    dataFormatRaw = requestData.get("dataFormat")
+    if not isinstance(dataFormatRaw, str) and not isinstance(dataFormatRaw, int):
+        return functions.badRequest("Invalid dataFormat. (0 - MBA, 1 - Microbiome Forensics Institute Zuric)")
+
+    dataFormat = int(dataFormatRaw)  # 0 - MBA, 1 - Microbiome Forensics Institute Zuric
     inputPath = requestData.get("inputFile")
 
     if not isinstance(inputPath, Path):
         return functions.badRequest("Invalid input data")
 
-    inputPath = unzip(inputPath)
+    inputPath = unzip(inputPath, dataFormat)
 
     if dataFormat == 0 and inputPath.is_file():
         percentile = modelDescriptor.get("percentile")
