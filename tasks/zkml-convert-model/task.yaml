@@ -1,0 +1,37 @@
+id: zkml-model-conversion
+name: zkml-model-conversion
+description: Converts a onnx model to an EZKL circuit. Also copies all input model files to the output model allowing for endpoint creation
+is_active: true
+project_type: 8
+param_groups:
+- name: inputs
+  params:
+  - name: onnxModel
+    description: ONNX model
+    value: null
+    data_type: model
+    required: true
+- name: outputs
+  params:
+  - name: outputCircuit
+    description: The dataset to which this TaskRun will output it's results
+    value: null
+    data_type: model
+    required: false
+- name: parameters
+  params:
+  - name: privateInput
+    description: Weather the input data is private (otherwise public). Only one variable can be private
+    value: false
+    data_type: bool
+    required: true
+  - name: privateOutput
+    description: Weather the outputs are private (otherwise public). Only one variable can be private
+    value: false
+    data_type: bool
+    required: true
+  - name: privateModel
+    description: Weather the model parameters are private (otherwise public). Only one variable can be private
+    value: false
+    data_type: bool
+    required: true
