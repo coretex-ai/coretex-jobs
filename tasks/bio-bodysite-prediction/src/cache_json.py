@@ -18,7 +18,7 @@ def getJsonName(datasetName: str, sampleOrigin: list[str], sequencingTechnique: 
 
     suffix = f"{origins}-{techniques}"
 
-    return hashCacheName(datasetName, suffix)[:20]
+    return hashCacheName(datasetName, suffix)
 
 
 def loadJsonCache(cacheName: str) -> JsonTuple:

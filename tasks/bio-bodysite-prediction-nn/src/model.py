@@ -13,7 +13,7 @@ import tensorflow as tf
 
 from coretex import TaskRun
 
-from utils import convertFromOneHot
+from .utils import convertFromOneHot
 
 
 class GatingLayer(tf.keras.layers.Layer):  # type: ignore[misc]

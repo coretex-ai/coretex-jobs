@@ -334,7 +334,7 @@ def loadDataAtlas(
         return loadMatrixCache(cacheNameMatrix, validate)
 
     cacheNameJson = getJsonName(
-        dataset.name[:42],
+        dataset.name,
         sampleOrigin,
         sequencingTechnique
     )

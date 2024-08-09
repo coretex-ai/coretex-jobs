@@ -21,5 +21,5 @@ param_groups:
       - name: outputDatasets
         value: null
         required: false
-        data_type: list[int]
+        data_type: list[dataset]
         description: List containing IDs of all parts of the provided dataset into which it was split

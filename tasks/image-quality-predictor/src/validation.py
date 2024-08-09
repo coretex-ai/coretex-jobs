@@ -3,9 +3,10 @@ from pathlib import Path
 import csv
 import logging
 
-from coretex import ImageSample, folder_manager
+from coretex import ImageSample, folder_manager, Model
 from PIL import Image, ImageOps
 
+import numpy as np
 import torch
 import torchvision.transforms as transforms
 
@@ -13,22 +14,18 @@ from .model import CNNModel
 
 
 def calculateAccuracy(prediction: float, groundtruth: float) -> float:
-    if groundtruth == 0:
-        accuracy = 1 - prediction
-    elif prediction < groundtruth:
-        accuracy = prediction / groundtruth
-    else:
-        accuracy = groundtruth / prediction
+    sigma = 0.5 / 3.5  # This value was chosen because the width of the Gaussian distribution function graph is the most suitable for the strictness of the metric
 
-    if accuracy > 1:
-        accuracy = max(1 - (accuracy - 1), 0)
+    # Calculating the value of the Gaussian normal distribution function, translated so that the peak corresponds to the groundtruth, for the predicted value
+    accuracy = float(np.exp(-0.5 * ((prediction - groundtruth) / sigma)**2))
 
     return accuracy * 100
 
 
-def run(modelPath: Path, dataset: list[tuple[ImageSample, float]], transform: transforms.Compose) -> tuple[Path, float]:
+def run(modelPath: Path, dataset: list[tuple[ImageSample, float]], transform: transforms.Compose) -> tuple[Path, Path, float]:
     model = CNNModel()
-    model.load_state_dict(torch.load(modelPath))
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.load_state_dict(torch.load(modelPath, map_location = device))
     model.eval()
 
     sampleResultsPath = folder_manager.temp / "sample_results.csv"
@@ -53,7 +50,7 @@ def run(modelPath: Path, dataset: list[tuple[ImageSample, float]], transform: tr
             writer.writerow({
                 "id": sample.id,
                 "name": sample.name,
-                "prediction": output,
+                "prediction": f"{output:.2f}",
                 "groundtruth": quality,
                 "accuracy": f"{accuracy:.2f}"
             })
@@ -64,4 +61,13 @@ def run(modelPath: Path, dataset: list[tuple[ImageSample, float]], transform: tr
             logging.info(f"\tPrediction: {output}")
             logging.info(f"\tAccuracy: {accuracy}")
 
-    return sampleResultsPath, sum(sampleAccuracies) / len(sampleAccuracies)
+    datasetResultsCsvPath = folder_manager.createTempFolder("dataset_results") / "dataset_results.csv"
+    with open(datasetResultsCsvPath, "w", newline = "") as file:
+        writer = csv.DictWriter(file, fieldnames = ["accuracy", "accuracy STD"])
+        writer.writeheader()
+        writer.writerow({
+            "accuracy": f"{sum(sampleAccuracies) / len(sampleAccuracies):.2f}",
+            "accuracy STD": f"{np.std(sampleAccuracies):.2f}"
+        })
+
+    return sampleResultsPath, datasetResultsCsvPath, sum(sampleAccuracies) / len(sampleAccuracies)
