@@ -107,7 +107,7 @@ def main() -> None:
 
         logging.info(f">> [LLMTextProcessing] Prompt: {prompt}")
 
-        responseContent = response["message"]["content"]  # type: ignore[index]
+        responseContent = response["message"]["content"]
         logging.info(f">> [LLMTextProcessing] Response: {responseContent}")
 
         responseTextPath = folder_manager.temp / "response.txt"
