@@ -97,11 +97,14 @@ def train(taskRun: TaskRun, dataset: list[tuple[ImageSample, float]]) -> None:
 
     # Calculate model accuracy
     logging.info(">> [ImageQuality] Validating model...")
-    sampleResultsCsvPath, accuracy = validation.run(modelPath / "best.pt", trainData + validData, transform)
+    sampleResultsCsvPath, datasetResultsCsvvPath, accuracy = validation.run(modelPath / "best.pt", trainData + validData, transform)
     logging.info(f">> [ImageQuality] Model accuracy: {accuracy:.2f}%")
 
     if taskRun.createArtifact(sampleResultsCsvPath, sampleResultsCsvPath.name) is None:
         logging.error(f">> [ImageQuality] Failed to create artifact \"{sampleResultsCsvPath.name}\"")
+
+    if taskRun.createArtifact(datasetResultsCsvvPath, datasetResultsCsvvPath.name) is None:
+        logging.error(f">> [ImageQuality] Failed to create artifact \"{datasetResultsCsvvPath.name}\"")
 
     logging.info(">> [ImageQuality] Uploading model...")
     ctxModel = Model.createModel(taskRun.generateEntityName(), taskRun.projectId, accuracy)
