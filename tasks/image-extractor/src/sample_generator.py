@@ -38,6 +38,12 @@ def generateSample(sample: ImageSample, parentClass: Optional[ImageDatasetClass]
                 with annotationPath.open("w") as file:
                     json.dump(transformedAnnotation.encode(), file)
 
+            if sample.metadataPath.exists():
+                try:
+                    sample.metadataPath.link_to(samplePath / "metadata.json")
+                except AttributeError as e:
+                    samplePath.joinpath("metadata.json").hardlink_to(sample.metadataPath)
+
             imagePaths.append(samplePath)
 
         return imagePaths

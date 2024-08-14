@@ -39,6 +39,14 @@ def copySamples(
                 if not copy.delete():
                     logging.error("\tFailed to delete sample")
 
+        try:
+            metadata = sample.loadMetadata()
+            copy.saveMetadata(metadata)
+        except FileNotFoundError:
+            logging.info(f"\tThe metadata for sample \"{sample.name}\" was not found")
+        except ValueError:
+            logging.info(f"\tInvalid metadata type for sample \"{sample.name}\"")
+
     return dataset
 
 

@@ -30,6 +30,16 @@ def uploadSample(path: Path, dataset: ImageDataset) -> None:
         if not generatedSample.saveAnnotation(annotation):
             logging.error(f">> [ImageExtractor] Failed to save annotation for generated sample \"{generatedSample.name}\"")
 
+    metadataPath = path / "metadata.json"
+    if metadataPath.exists():
+        with metadataPath.open("r") as file:
+            metadata = json.load(file)
+
+        try:
+            generatedSample.saveMetadata(metadata)
+        except ValueError:
+            logging.info(f">> [ImageExtractor] Invalid metadata type for sample \"{generatedSample.name}\"")
+
     logging.info(f">> [ImageExtractor] Generated sample \"{generatedSample.name}\"")
 
 
