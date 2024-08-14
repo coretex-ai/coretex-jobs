@@ -70,7 +70,7 @@ def main() -> None:
                 "role": "user",
                 "content": query
             }
-            response = ollama.chat(model = LLM, messages = [msg])  # type: ignore[list-item]
+            response = ollama.chat(model = LLM, messages = [msg])
             answer = response["message"]["content"]
             translatedText += answer + "\n"
 
