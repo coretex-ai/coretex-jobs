@@ -71,7 +71,7 @@ def main() -> None:
                 "content": query
             }
             response = ollama.chat(model = LLM, messages = [msg])  # type: ignore[list-item]
-            answer = response["message"]["content"]  # type: ignore[index]
+            answer = response["message"]["content"]
             translatedText += answer + "\n"
 
         txtFileName = f"file-{counter}.txt"
