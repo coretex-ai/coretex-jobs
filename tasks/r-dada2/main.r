@@ -328,9 +328,15 @@ tryFilterAndTrim <- function(
 }
 
 getSampleName <- function(forward_path, metadata) {
+    forward_name <- basename(forward_path)
+
     for (sampleId in metadata$sampleId) {
-        if (startsWith(basename(forward_path), sampleId)) {
-            return(sampleId)
+        sample_length <- nchar(sampleId)
+        if (substr(forward_name, 1, sample_length) == sampleId) {
+            next_char <- substr(forward_name, sample_length + 1, sample_length + 1)
+            if (!grepl("[[:alnum:]]", next_char)) {
+                return(sampleId)
+            }
         }
     }
 

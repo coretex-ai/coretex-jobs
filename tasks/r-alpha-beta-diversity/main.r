@@ -176,7 +176,6 @@ perpareSampleData <- function(phyloseqObject, targetColumn) {
 subset_samples_custom <- function(pseq, targetColumnValue) {
     metadata <- data.frame(sample_data(pseq))
     if (!targetColumnValue %in% unique(metadata$target)) {
-        print(paste("Could not find", targetColumnValue, "among the samples"))
         return(NULL)
     }
 
@@ -210,10 +209,13 @@ validateTargetValues <- function(sampleDataFrame, targetValues) {
 }
 
 genusAbundancePlot <- function(pseq_bac, target_column_value, output_path, taskRun) {
-    print(sprintf("Creating abundance plot for %s", target_column_value))
-
-    genus_col_index <- which(rank_names(pseq_bac) == "genus")
     sa <- subset_samples_custom(pseq_bac, target_column_value)
+    if (is.null(sa)) {
+        return()
+    }
+
+    print(sprintf("Creating abundance plot for %s", target_column_value))
+    genus_col_index <- which(rank_names(pseq_bac) == "genus")
 
     genus_sum = tapply(taxa_sums(sa), tax_table(sa)[, "genus"], sum, na.rm = FALSE)
     topgenera = names(sort(genus_sum, TRUE))[1:30]
@@ -269,7 +271,7 @@ validatePhyoseq <- function(phyloseqObject) {
         sampleName <- rownames(metadata)[counter + 1]
         if (asvCount == 0) {
             sample_data(phyloseqObject) <- subset(metadata, metadata$sampleId != sampleName)
-            print(paste0("Sample ", sampleName, " has 0 ASVs in the OTU table!"))
+            print(paste0("Sample ", sampleName, " has 0 ASVs in the OTU table! This sample will be skipped during processing!"))
         }
         counter <- counter + 1
     }
