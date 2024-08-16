@@ -83,4 +83,4 @@ def augmentImage(
         )
 
         augmentedImageName = f"{sample.name}-{i}" + sample.imagePath.suffix
-        uploadAugmentedImage(augmentedImageName, augmentedImage, annotation, outputDataset)
+        uploadAugmentedImage(augmentedImageName, augmentedImage, annotation, sample, outputDataset)

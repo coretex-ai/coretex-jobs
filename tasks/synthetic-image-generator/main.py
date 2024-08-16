@@ -21,13 +21,16 @@ def getRandomSamples(dataset: ImageDataset, count: int) -> list[ImageSample]:
 
 def didGenerateSample(dataset: ImageDataset, future: Future[tuple[Path, CoretexImageAnnotation]]) -> None:
     try:
-        imagePath, annotation = future.result()
+        imagePath, annotation, metadata = future.result()
         generatedSample = dataset.add(imagePath)
 
         if not generatedSample.saveAnnotation(annotation):
             logging.error(f">> [SyntheticImageGenerator] Failed to save annotation for generated sample \"{generatedSample.name}\"")
         else:
             logging.info(f">> [SyntheticImageGenerator] Generated sample \"{generatedSample.name}\"")
+
+        if metadata is not None:
+            generatedSample.saveMetadata(metadata)
     except BaseException as exception:
         logging.error(f">> [SyntheticImageGenerator] Failed to generate sample. Reason: {exception}")
         logging.debug(exception, exc_info = exception)

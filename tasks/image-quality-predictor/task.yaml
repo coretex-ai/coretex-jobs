@@ -12,6 +12,11 @@ param_groups:
     value: null
     data_type: list[int]
     required: true
+  - name: trainedModel
+    description: Model used for validation
+    value: null
+    data_type: model
+    required: false
 - name: outputs
   params:
   - name: model
@@ -19,14 +24,14 @@ param_groups:
     value: null
     data_type: model
     required: false
-- name: parameters
+- name: sharedParameters
   params:
-  - name: epochs
-    description: Number of passes that the model will make through the dataset while
-      training. Higher values increase training time and accuracy, while lower
-      values decrease training time, but they might also decrease accuracy.
-    value: 100
-    data_type: int
+  - name: validation
+    description: If the value of the this parameter is true, then only the validation of the
+      provided trained model is performed. If the value of the this parameter is false,
+      then a new model for image quality prediction is trained.
+    value: false
+    data_type: bool
     required: true
   - name: batchSize
     description: Number of segments into which the dataset is split before the training.
@@ -37,6 +42,24 @@ param_groups:
     value: 32
     data_type: int
     required: true
+- name: trainParameters
+  params:
+  - name: epochs
+    description: Number of passes that the model will make through the dataset while
+      training. Higher values increase training time and accuracy, while lower
+      values decrease training time, but they might also decrease accuracy.
+    value: 100
+    data_type: int
+    required: false
+  - name: validationPct
+    description: Percentage of dataset which will be used for validation. Prefered value range is
+      0.1 - 0.9, while the optimal value is 0.2. If values are close or equal to 0, or
+      close or equal to 1 unexpected errors can appear.
+      If value for "validationSplit" is 0.2, then that means that 20% of the dataset
+      will go for validation, while the rest (80%) will go for training.
+    value: 0.5
+    data_type: float
+    required: false
   - name: imageSize
     description: Size to which the images from the dataset will be resized to before training.
       This affects input and output shapes of the model. Input and output image shapes
@@ -46,13 +69,4 @@ param_groups:
       values decrease training time, but they also can decrease model accuracy. Minimum value is 224.
     value: 224
     data_type: int
-    required: true
-  - name: validationPct
-    description: Percentage of dataset which will be used for validation. Prefered value range is
-      0.1 - 0.9, while the optimal value is 0.2. If values are close or equal to 0, or
-      close or equal to 1 unexpected errors can appear.
-      If value for "validationSplit" is 0.2, then that means that 20% of the dataset
-      will go for validation, while the rest (80%) will go for training.
-    value: 0.5
-    data_type: float
-    required: true
+    required: false
