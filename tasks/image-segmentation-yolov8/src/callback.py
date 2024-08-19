@@ -1,4 +1,4 @@
-from coretex import currentTaskRun, Metric, MetricType, TaskRun
+from coretex import currentTaskRun, Metric, MetricType
 from ultralytics.models.yolo.detect.train import DetectionTrainer
 
 

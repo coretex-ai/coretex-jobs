@@ -1,95 +1,108 @@
 from pathlib import Path
+from concurrent.futures import ProcessPoolExecutor, Future, as_completed
 
-import json
-import csv
 import logging
+import gc
+import csv
+import multiprocessing as mp
 
+from PIL import Image, ImageDraw
+from coretex import TaskRun, ImageDataset, ImageDatasetClasses, folder_manager, TaskRunStatus
 from ultralytics import YOLO
-from PIL import Image
-from pycocotools import mask as maskCoco
+from ultralytics.engine.results import Results
 from matplotlib import pyplot as plt
-from coretex import TaskRun, ImageDataset, folder_manager, Model, ImageSample, ImageDatasetClasses
 
 import numpy as np
-
-from .dataset import prepareDataset, createYamlFile
-
-
-def fetchCsvDatasetAcc(csvSamplesPath: Path) -> list[float]:
-    with csvSamplesPath.open("r") as file:
-        reader = csv.DictReader(file)
-        csvDatasetAcc = [float(row["accuracy"]) for row in reader]
-
-    return csvDatasetAcc
+import torch
 
 
-def fetchCsvClassesData(labels: list[str], csvSamplesPath: Path) -> dict[str, list[float]]:
-    csvClassesData: dict[str, list[float]] = {}
+def createDatasetResults(taskRun: TaskRun[ImageDataset], sampleResults: list[dict[str, str]]) -> None:
+    datasetResult: list[dict[str, str]] = []
 
-    with csvSamplesPath.open("r") as file:
-        reader = csv.DictReader(file)
-        for label in labels:
-            classAcc = [float(row[label]) for row in reader]
-            csvClassesData[label] = classAcc
-
-    return csvClassesData
-
-
-def generateFieldNamesDataset(labels: list[str]) -> list[str]:
-    fieldNamesDataset: list[str] = []
-
-    for label in labels:
-        fieldNamesDataset.append(f"{label} acc")
-        fieldNamesDataset.append(f'{label} acc STD')
-
-    fieldNamesDataset.extend(["accuracy", "accuracy STD"])
-
-    return fieldNamesDataset
-
-
-def createCsvDatasetResults(taskRun: TaskRun[ImageDataset], csvSamplesPath: Path) -> float:
-    fieldNamesDataset = generateFieldNamesDataset(taskRun.dataset.classes.labels)
-
-    csvDatasetPath = folder_manager.createTempFolder("csv_dataset") / "dataset_results.csv"
-
-    csvClassesData = fetchCsvClassesData(taskRun.dataset.classes.labels, csvSamplesPath)
-    csvDatasetAcc = fetchCsvDatasetAcc(csvSamplesPath)
-
-    csvDatasetResults: dict[str, str] = {}
     for label in taskRun.dataset.classes.labels:
-        csvDatasetResults[f"{label} acc"] = f"{np.mean(csvClassesData[label]):.2f}"
-        csvDatasetResults[f"{label} acc STD"] = f"{np.std(csvClassesData[label]):.2f}"
+        classAcc = [float(result[label]) for result in sampleResults]
+        datasetResult.append({
+            "Class": label,
+            "Accuracy": f"{np.mean(classAcc):.2f}",
+            "Accuracy stdev": f"{np.std(classAcc):.2f}"
+        })
 
-    csvDatasetResults["accuracy"] = f"{np.mean(csvDatasetAcc):.2f}"
-    csvDatasetResults["accuracy STD"] = f"{np.std(csvDatasetAcc):.2f}"
+    datasetAcc = [float(result['accuracy']) for result in sampleResults]
+    datasetResult.append({
+        "Class": "dataset",
+        "Accuracy": f"{np.mean(datasetAcc):.2f}",
+        "Accuracy stdev": f"{np.std(datasetAcc):.2f}"
+    })
 
-    with csvDatasetPath.open("w") as file:
-        writer = csv.DictWriter(file, fieldnames = fieldNamesDataset)
+    datasetResultPath = folder_manager.temp / "dataset_results.csv"
+    with datasetResultPath.open("w") as file:
+        writer = csv.DictWriter(file, fieldnames = datasetResult[0].keys())
         writer.writeheader()
-        writer.writerow(csvDatasetResults)
+        writer.writerows(datasetResult)
 
-    if taskRun.createArtifact(csvDatasetPath, csvDatasetPath.name) is None:
+    if taskRun.createArtifact(datasetResultPath, datasetResultPath.name) is None:
         logging.warning(">> [Image Segmentation] Failed to upload csv file with dataset results as artifact")
     else:
         logging.info(">> [Image Segmentation] The csv file with dataset results has been uploaded as artifact")
 
-    return float(csvDatasetResults["accuracy"])
+
+def createSampleResults(taskRun: TaskRun[ImageDataset], sampleResults: list[dict[str, str]]) -> None:
+    csvSamplesPath = folder_manager.temp / "sample_results.csv"
+
+    resultsForCsv: list[dict[str, str]] = []
+    for result in sampleResults:
+        resultsForCsv.append({index: result[index] for index in ["sample id", "sample name", "accuracy"]})
+
+    with csvSamplesPath.open("w") as file:
+        writer = csv.DictWriter(file, fieldnames = resultsForCsv[0].keys())
+        writer.writeheader()
+        writer.writerows(resultsForCsv)
+
+    if taskRun.createArtifact(csvSamplesPath, csvSamplesPath.name) is None:
+        logging.warning(">> [Image Segmentation] Failed to upload csv file with samples results as artifact")
+    else:
+        logging.info(">> [Image Segmentation] The csv file with samples results has been uploaded as artifact")
+
+
+def createCsvResults(taskRun: TaskRun[ImageDataset], sampleResults: list[dict[str, str]]) -> None:
+    if len(sampleResults) <= 0:
+        raise RuntimeError("There are no processed prediction results")
+
+    createSampleResults(taskRun, sampleResults)
+    createDatasetResults(taskRun, sampleResults)
+
+
+def uploadSampleArtifacts(taskRun: TaskRun[ImageDataset], sampleId: int, plotPath: Path, sampleResult: dict[str, str]) -> None:
+    csvSamplePath = folder_manager.temp.joinpath(f"{sampleId}.csv")
+    with csvSamplePath.open("w") as file:
+        writer = csv.DictWriter(file, fieldnames = sampleResult.keys())
+        writer.writeheader()
+        writer.writerow(sampleResult)
+
+    if taskRun.createArtifact(csvSamplePath, f"sample_results/{sampleId}/{sampleId}.csv") is None:
+        logging.warning(f">> [Image Segmentation] Failed to upload csv file with results for sample {sampleId} as artifact")
+    else:
+        logging.info(f">> [Image Segmentation] The csv file with results for sample {sampleId} has been uploaded as artifact")
+
+    if taskRun.createArtifact(plotPath, f"sample_results/{sampleId}/{plotPath.name}") is None:
+        logging.warning(f">> [Image Segmentation] Failed to upload image \"{plotPath.name}\" with segmentation as artifact")
+    else:
+        logging.info(f">> [Image Segmentation] The segmentation image \"{plotPath.name}\" has been uploaded as artifact")
 
 
 def plotSegmentationImage(
-    sample: ImageSample,
+    imagePath: Path,
+    sampleId: int,
     origSeg: np.ndarray,
     predictedMask: np.ndarray,
-    sampleAcc: float,
-    artifactImagesPath: Path
-) -> None:
+    iou: float
+) -> Path:
 
-    img = Image.open(sample.imagePath)
-
+    img = Image.open(imagePath)
     fig, axes = plt.subplots(1, 3, figsize = (20, 10))
 
     axes[0].imshow(img, cmap = "summer")
-    axes[0].set_title(f"Original image, id: {sample.id}")
+    axes[0].set_title(f"Original image, id: {sampleId}")
     axes[0].axis("off")
 
     axes[1].imshow(origSeg, cmap = "summer")
@@ -97,117 +110,129 @@ def plotSegmentationImage(
     axes[1].axis("off")
 
     axes[2].imshow(predictedMask, cmap = "summer")
-    axes[2].set_title(f"Predicted segmentation\nAcc: {sampleAcc:.2f}")
+    axes[2].set_title(f"Predicted segmentation\nAcc: {iou:.2f}")
     axes[2].axis("off")
 
-    plt.savefig(artifactImagesPath / f"{sample.id}.jpeg")
+    plotPath = folder_manager.temp.joinpath(f"{sampleId}.jpeg")
+    plt.savefig(plotPath)
     plt.close()
+    gc.collect()
+
+    return plotPath
 
 
 def iouScoreClass(testMask: np.ndarray, predictedMask: np.ndarray) -> float:
     intersecrion = np.logical_and(testMask, predictedMask)
     union = np.logical_or(testMask, predictedMask)
 
-    return float(np.sum(intersecrion) / np.sum(union))
+    return float(np.sum(intersecrion) / np.sum(union) * 100)
 
 
-def processPrediction(
+def maskFromPoly(polygons: list[list[tuple[int, int]]], width: int, height: int) -> np.ndarray:
+    image = Image.new("L", (width, height))
+    for polygon in polygons:
+        draw = ImageDraw.Draw(image)
+        draw.polygon(polygon, fill = 1)
+
+    return np.array(image)
+
+
+def processResult(
     taskRun: TaskRun[ImageDataset],
-    predictData: list[dict],
-    csvSamplesPath: Path
-) -> None:
+    result: Results
+) -> dict[str, str]:
 
-    artifactImagesPath = folder_manager.createTempFolder("images")
-
-    fieldNamesSamples = ["sample id", "sample name"]
-    fieldNamesSamples.extend(taskRun.dataset.classes.labels)
-    fieldNamesSamples.append("accuracy")
-
-    with csvSamplesPath.open("w") as file:
-        writer = csv.DictWriter(file, fieldnames = fieldNamesSamples)
-        writer.writeheader()
-
-    for sample in taskRun.dataset.samples:
-        img = Image.open(sample.imagePath)
-        origSeg = sample.load().annotation.extractSegmentationMask(taskRun.dataset.classes)
-
-        predictedMask = np.zeros((img.height, img.width))
-
-        csvSampleValues = [str(sample.id), sample.name]
-
-        iouClasses: list[float] = []
-        for classId, clazz in enumerate(taskRun.dataset.classes):
-            predSampleData = [data for data in predictData if data["image_id"] == sample.id and data["category_id"] == classId]
-
-            if len(predSampleData) <= 0:
-                logging.info(f">> [Image Segmentation] The sample \"{sample.name}\" (sample id: {sample.id}) does not have segmentation for the class \"{clazz.label}\"")
-                continue
-
-            predClassSegmentation = predSampleData[0]
-
-            predClassMask = predClassSegmentation["segmentation"]
-            decodedClassMask = maskCoco.decode(predClassMask)
-            predictedMask = np.logical_or(predictedMask, decodedClassMask).astype(int)
-
-            iouClass = iouScoreClass(sample.load().annotation.extractSegmentationMask(ImageDatasetClasses([clazz])), decodedClassMask)
-            iouClasses.append(iouClass)
-            csvSampleValues.append(f"{iouClass * 100:.2f}")
-
-        if len(iouClasses) > 0:
-            sampleAcc = sum(iouClasses) / len(iouClasses) * 100
-            csvSampleValues.append(f"{sampleAcc:.2f}")
-
-            with csvSamplesPath.open("a") as file:
-                writer = csv.DictWriter(file, fieldnames = fieldNamesSamples)
-                writer.writerow(dict(zip(fieldNamesSamples, csvSampleValues)))
-
-            plotSegmentationImage(sample, origSeg, predictedMask, sampleAcc, artifactImagesPath)
-
-    for path in artifactImagesPath.iterdir():
-        if path.is_file():
-            if taskRun.createArtifact(path, f"images/{path.name}") is None:
-                logging.warning(f">> [Image Segmentation] Failed to upload image \"{path.name}\" with segmentation as artifact")
-            else:
-                logging.info(f">> [Image Segmentation] The segmentation image \"{path.name}\" has been uploaded as artifact")
-
-    if taskRun.createArtifact(csvSamplesPath, csvSamplesPath.name) is None:
-        logging.warning(">> [Image Segmentation] Failed to upload csv file with samples results as artifact")
+    sampleId = int(Path(result.path).parent.name)
+    samples = [sample for sample in taskRun.dataset.samples if sample.id == sampleId]
+    if len(samples) == 1:
+        sample = samples[0]
     else:
-        logging.info(">> [Image Segmentation] The csv file with samples results has been uploaded as artifact")
+        raise RuntimeError()
 
-def validate(taskRun: TaskRun[ImageDataset]) -> float:
-    datasetPath = folder_manager.createTempFolder("dataset_val")
-    trainDatasetPath, validDatasetPath = prepareDataset(taskRun.dataset, datasetPath, 1.0)
+    sampleAnnotation = sample.load().annotation
+    if sampleAnnotation is None:
+        raise RuntimeError()
 
-    yamlFilePath = datasetPath / "config.yaml"
-    createYamlFile(datasetPath, trainDatasetPath, validDatasetPath, taskRun.dataset.classes, yamlFilePath)
+    csvRowResult: dict[str, str] = {}
+    csvRowResult["sample id"] = f"{sampleId}"
+    csvRowResult["sample name"] = sample.name
+    for className in taskRun.dataset.classes.labels:
+        csvRowResult[className] = "0.00"
 
-    ctxModel: Model = taskRun.parameters["trainedModel"]
-    ctxModel.download()
-    model = YOLO(ctxModel.path / "best.pt")
+    polygons: list[list[tuple[int, int]]] = []
+    height = result.orig_shape[0]
+    width = result.orig_shape[1]
+    if result.masks is not None:
+        for mask in result.masks:
+            polygon = mask.xyn
+            for points in polygon:
+                poly = points.tolist()
+                poly = [tuple(point) for point in poly]
+                poly = [(int(x * width), int(y * height)) for (x, y) in poly]
+                polygons.append(poly)
 
-    valResPath = folder_manager.createTempFolder("validation_results")
+        classIds = [int(x) for x in result.boxes.cls.tolist()]
+        classNames: dict[int, str] = result.names
+        setOfClassIds = list(set(classIds))
 
-    logging.info(">> [Image Segmentation] Validating the model")
-    model.val(
-        project = valResPath,
-        data = yamlFilePath,
+        for classId in setOfClassIds:
+            indexes = [i for i, clsId in enumerate(classIds) if clsId == classId]
+            classPolygons = [polygons[i] for i in indexes]
+            predClassMask = maskFromPoly(classPolygons, width, height)
+            iouClass = iouScoreClass(sampleAnnotation.extractSegmentationMask(ImageDatasetClasses([taskRun.dataset.classByName(classNames[classId])])), predClassMask)
+            csvRowResult[classNames[classId]] = f"{iouClass:.2f}"
+
+        predMask = maskFromPoly(polygons, width, height)
+    else:
+        predMask = np.zeros((height, width))
+
+    iou = iouScoreClass(sampleAnnotation.extractSegmentationMask(taskRun.dataset.classes), predMask)
+    csvRowResult["accuracy"] = f"{iou:.2f}"
+
+    plotPath = plotSegmentationImage(result.path, sampleId, sampleAnnotation.extractSegmentationMask(taskRun.dataset.classes), predMask, iou)
+    uploadSampleArtifacts(taskRun, sampleId, plotPath, csvRowResult)
+
+    return csvRowResult
+
+
+def validate(taskRun: TaskRun[ImageDataset], modelPath: Path, imgSize: int) -> float:
+    taskRun.updateStatus(TaskRunStatus.inProgress, "Validating")
+
+    model = YOLO(modelPath)
+    samples = [sample.imagePath for sample in taskRun.dataset.samples]
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    logging.info(f">> [Image Segmentation] The {str(device).upper()} will be used for validating")
+
+    logging.info(">> [Image Segmentation] Validatin the model")
+    results = model.predict(
+        source = samples,
+        save = False,
         batch = taskRun.parameters["batchSize"],
-        imgsz = taskRun.parameters["imageSize"],
-        save_json = True,
+        imgsz = imgSize,
+        plots = False,
+        conf = 0.1
     )
 
-    jsonFiles = valResPath.rglob("predictions.json")
-    for path in jsonFiles:
-        jsonPath = path
+    taskRun.updateStatus(TaskRunStatus.inProgress, "Processing predictions")
+    processedResults: list[dict[str, str]] = []
+    with ProcessPoolExecutor(max_workers = mp.cpu_count()) as executor:
+        futures: list[Future[dict[str, str]]] = []
+        for result in results:
+            future = executor.submit(processResult, taskRun, result)
+            futures.append(future)
 
-    with jsonPath.open("r") as file:
-        predictData = list(json.load(file))
+        for counter, future in enumerate(as_completed(futures)):
+            try:
+                processedResults.append(future.result())
+            except FileNotFoundError as e:
+                logging.warning(e)
 
-    csvSamplesPath = folder_manager.createTempFolder("csv_samples") / "sample_results.csv"
+            logging.info(f">> [Image Segmentation] Processing results for sample {counter + 1}/{taskRun.dataset.count} has been finished")
 
-    processPrediction(taskRun, predictData, csvSamplesPath)
+    taskRun.updateStatus(TaskRunStatus.inProgress, "Creating csv fils with results")
+    createCsvResults(taskRun, processedResults)
+    datasetAcc = [float(result['accuracy']) for result in processedResults]
 
-    accuracy = createCsvDatasetResults(taskRun, csvSamplesPath)
-
-    return accuracy
+    return float(np.mean(datasetAcc))

@@ -11,12 +11,12 @@ from coretex import ImageDataset, ImageSample, CoretexImageAnnotation, ImageData
 
 def isValidationSplitValid(validationSplit: float, datasetSize: int) -> bool:
     if not 0 <= validationSplit < 1:
-        logging.error(f">> [ObjectDetection] validationSplit parameter ({validationSplit}) must be between 0 and 1")
+        logging.error(f">> [Image Segmentation] validationSplit parameter ({validationSplit}) must be between 0 and 1")
         return False
 
     minSamplesForSplit = int(1 / min(validationSplit, 1 - validationSplit))
     if datasetSize < minSamplesForSplit:
-        logging.error(f">> [ObjectDetection] Dataset is too small ({datasetSize}) for validationSplit parameter ({validationSplit}). Minimum number of samples is {minSamplesForSplit}")
+        logging.error(f">> [Image Segmentation] Dataset is too small ({datasetSize}) for validationSplit parameter ({validationSplit}). Minimum number of samples is {minSamplesForSplit}")
         return False
 
     return True
@@ -27,22 +27,22 @@ def createYamlFile(
     trainDatasetPath: Path,
     validDatasetPath: Path,
     classes: ImageDatasetClasses,
-    location: Path
+    path: Path
 ) -> None:
 
-    classesIds: dict[int, str] = {}
+    classesCategorical: dict[int, str] = {}
     for index, clazz in enumerate(classes):
-        classesIds[index] = clazz.label
+        classesCategorical[index] = clazz.label
 
     data = {
         "path": str(datasetPath.absolute()),
         "train": str(trainDatasetPath.relative_to(datasetPath)),
         "val": str(validDatasetPath.relative_to(datasetPath)),
-        "names": classesIds
+        "names": classesCategorical
     }
 
-    with open(location, "w") as yamlFIle:
-        yaml.dump(data, yamlFIle, default_flow_style = False, sort_keys = False)
+    with path.open("w") as yamlFile:
+        yaml.safe_dump(data, yamlFile, default_flow_style = False, sort_keys = False)
 
 
 def loadAnnotation(sample: ImageSample) -> Optional[CoretexImageAnnotation]:
@@ -53,41 +53,31 @@ def loadAnnotation(sample: ImageSample) -> Optional[CoretexImageAnnotation]:
         return CoretexImageAnnotation.decode(json.load(file))
 
 
-def addImagePathForYaml(sample: ImageSample, imagesPath: Path) -> None:
+def saveYoloAnnotation(sample: ImageSample, classes: ImageDatasetClasses, path: Path) -> None:
     sample.unzip()
-    sample.imagePath.link_to(imagesPath / f"{sample.id}{sample.imagePath.suffix}")
 
-
-def addAnnotation(sample: ImageSample, classes: ImageDatasetClasses, location: Path) -> None:
-    sample.unzip()
+    destinationPath = path.joinpath(str(sample.id)).with_suffix(sample.imagePath.suffix)
+    sample.imagePath.link_to(destinationPath)
 
     annotation = loadAnnotation(sample)
     if annotation is not None:
-        normalizedAnnotations: list[tuple[int, list[float]]] = []
+        with path.joinpath(f"{sample.id}.txt").open("w") as txtFile:
+            for instance in annotation.instances:
+                labelId = classes.labelIdForClassId(instance.classId)
 
-        for instance in annotation.instances:
-            labelId = classes.labelIdForClassId(instance.classId)
+                if labelId is None:
+                    continue
 
-            if labelId is None:
-                continue
+                for segmentation in instance.segmentations:
+                    width = annotation.width
+                    height = annotation.height
+                    normalizedSegmentation = [num / width if idx % 2 == 0 else num / height for idx, num in enumerate(segmentation)]
 
-            for segmentation in instance.segmentations:
-                w = annotation.width
-                h = annotation.height
-                normalizedSegmentation = [num / w if idx % 2 == 0 else num / h for idx, num in enumerate(segmentation)]
+                    txtFile.write(str(labelId))
+                    for coordinate in normalizedSegmentation:
+                        txtFile.write(f" {coordinate}")
 
-                normalizedAnnotation = labelId, normalizedSegmentation
-
-                normalizedAnnotations.append(normalizedAnnotation)
-
-        with open(location / f"{sample.id}.txt", "w") as txtFile:
-            for segmentation in normalizedAnnotations:
-                txtFile.write(str(segmentation[0]))
-                coordinates = segmentation[1]
-                for coord in coordinates:
-                    txtFile.write(f" {coord}")
-
-                txtFile.write("\n")
+                    txtFile.write("\n")
 
 
 def prepareDataset(dataset: ImageDataset, destination: Path, validationPct: float) -> tuple[Path, Path]:
@@ -107,11 +97,9 @@ def prepareDataset(dataset: ImageDataset, destination: Path, validationPct: floa
     validSamples = samples[trainCount:]
 
     for sample in trainSamples:
-        addImagePathForYaml(sample, trainDatasetPath)
-        addAnnotation(sample, dataset.classes, trainDatasetPath)
+        saveYoloAnnotation(sample, dataset.classes, trainDatasetPath)
 
     for sample in validSamples:
-        addImagePathForYaml(sample, validDatasetPath)
-        addAnnotation(sample, dataset.classes, validDatasetPath)
+        saveYoloAnnotation(sample, dataset.classes, validDatasetPath)
 
     return trainDatasetPath, validDatasetPath

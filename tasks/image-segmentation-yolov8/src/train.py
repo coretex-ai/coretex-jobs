@@ -1,13 +1,53 @@
 from pathlib import Path
+from typing import Optional
 
 import logging
+import os
+import shutil
+import gc
 
 from ultralytics import YOLO
-from coretex import TaskRun, ImageDataset, folder_manager, Model
+from coretex import TaskRun, TaskRunStatus, ImageDataset, folder_manager, Model
 
-from .dataset import isValidationSplitValid, prepareDataset, createYamlFile
+import torch
+
 from .callback import onTrainStart, onEpochEnd
 from .validate import validate
+from .dataset import createYamlFile
+
+
+def saveModelDescriptor(taskRun:TaskRun[ImageDataset], model: Model, path: Path) -> None:
+    labels = [
+        {
+            "label": clazz.label,
+            "color": clazz.color
+        }
+        for clazz in taskRun.dataset.classes
+    ]
+
+    model.saveModelDescriptor(path, {
+        "taskRunId": taskRun.id,
+        "modelName": model.name,
+        "spaceName": taskRun.projectName,
+        "epochs": taskRun.parameters["epochs"],
+        "batchSize": taskRun.parameters["batchSize"],
+        "labels": labels,
+        "description": taskRun.description,
+        "imageSize": taskRun.parameters["imageSize"],
+
+        "input_description": "RGB image",
+        "input_shape": taskRun.parameters["imageSize"],
+
+        "outputDescription": "Segmentation mask",
+        "outputShape": taskRun.parameters["imageSize"]
+    })
+
+
+def copyToValFolder(sourceFolder: Path, destinationFolder: Path) -> None:
+    for item in os.listdir(sourceFolder):
+        sourcePath = os.path.join(sourceFolder, item)
+        destinationPath = os.path.join(destinationFolder, item)
+        shutil.copy2(sourcePath, destinationPath)
 
 
 def getPatience(taskRun: TaskRun) -> int:
@@ -23,39 +63,65 @@ def getPatience(taskRun: TaskRun) -> int:
     return 2 ** 64
 
 
-def train(taskRun: TaskRun[ImageDataset]) -> None:
-    if not isValidationSplitValid(taskRun.parameters["validationSplit"], taskRun.dataset.count):
-        raise ValueError(f">> [ObjectDetection] validationSplit parameter is invalid")
+def justTrain(taskRun: TaskRun[ImageDataset], yamlFilePath: Path, yoloModelPath: Path) -> Path:
+    ctxModel: Optional[Model] = taskRun.parameters.get("model")
+    if ctxModel is None:
+        # Start training from specified YoloV8 weights
+        weights = taskRun.parameters.get("weights", "yolov8n-seg.pt")
+        logging.info(f">> [Image Segmentation] Using \"{weights}\" for training the model")
 
-    datasetPath = folder_manager.createTempFolder("dataset")
-    trainDatasetPath, validDatasetPath = prepareDataset(taskRun.dataset, datasetPath, taskRun.parameters["validationSplit"])
+        model = YOLO(taskRun.parameters.get("weights", "yolov8n-seg.pt"))
+    else:
+        logging.info(f">> [Image Segmentation] Using \"{ctxModel.name}\" for training the model")
 
-    yamlFilePath = datasetPath / "config.yaml"
-    createYamlFile(datasetPath, trainDatasetPath, validDatasetPath, taskRun.dataset.classes, yamlFilePath)
-
-    model = YOLO("yolov8n-seg.pt")
+        # Start training from specified model checkpoint
+        ctxModel.download()
+        model = YOLO(ctxModel.path / "best.pt")
 
     model.add_callback("on_train_start", onTrainStart)
     model.add_callback("on_train_epoch_end", onEpochEnd)
 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    logging.info(f">> [Image Segmentation] The {str(device).upper()} will be used for training")
+
     logging.info(">> [Image Segmentation] Training the model")
     model.train(
+        project = yoloModelPath,
         data = yamlFilePath,
         epochs = taskRun.parameters["epochs"],
         batch = taskRun.parameters["batchSize"],
         imgsz = taskRun.parameters["imageSize"],
-        patience = getPatience(taskRun)
+        patience = getPatience(taskRun),
+        plots = False,
+        resume = False
     )
+    del model
+    gc.collect()
 
-    logging.info(">> [Image Segmentation] Validating the model")
-    model.val()
+    return yoloModelPath / "train" / "weights" / "best.pt"
 
-    accuracy = validate(taskRun)
+
+def train(taskRun: TaskRun[ImageDataset], datasetPath: Path, trainDatasetPath: Path, validDatasetPath: Path) -> None:
+    taskRun.updateStatus(TaskRunStatus.inProgress, "Training")
+
+    yamlFilePath = datasetPath / "config.yaml"
+    createYamlFile(datasetPath, trainDatasetPath, validDatasetPath, taskRun.dataset.classes, yamlFilePath)
+
+    yoloModelPath = folder_manager.createTempFolder("yolo_model")
+    modelPath = justTrain(taskRun, yamlFilePath, yoloModelPath)
+
+    accuracy = validate(taskRun, modelPath, taskRun.parameters["imageSize"])
+
+    model = YOLO(modelPath)
+    model.export(format = "tflite")
+    model.export(format = "tfjs")
+    model.export(format = "coreml")
 
     modelName = taskRun.generateEntityName()
-    onnxModelPath = model.export(format = "onnx")
     ctxModel = Model.createModel(modelName, taskRun.projectId, accuracy / 100, {})
-    ctxModel.upload(Path(onnxModelPath).parent)
+    saveModelDescriptor(taskRun, ctxModel, modelPath.parent)
+    ctxModel.upload(modelPath.parent)
     logging.info(">> [Image Segmentation] The trained model has been uploaded")
 
     taskRun.submitOutput("outputModel", ctxModel)
