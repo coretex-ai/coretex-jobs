@@ -328,9 +328,15 @@ tryFilterAndTrim <- function(
 }
 
 getSampleName <- function(forward_path, metadata) {
+    forward_name <- basename(forward_path)
+
     for (sampleId in metadata$sampleId) {
-        if (startsWith(basename(forward_path), sampleId)) {
-            return(sampleId)
+        sample_length <- nchar(sampleId)
+        if (substr(forward_name, 1, sample_length) == sampleId) {
+            next_char <- substr(forward_name, sample_length + 1, sample_length + 1)
+            if (!grepl("[[:alnum:]]", next_char)) {
+                return(sampleId)
+            }
         }
     }
 
@@ -454,17 +460,27 @@ main <- function(taskRun) {
     )
 
     for (path in filtered_forward_read_paths) {
-        taskRun$createArtifact(
+        print(paste0("Uploading filtered_reads/", basename(path), " to artifacts..."))
+        artifact <- taskRun$createArtifact(
             path,
             file.path("filtered_reads", basename(path))
         )
+
+        if (is.null(artifact)) {
+            print(paste0("Failed to upload filtered_reads/", basename(path), " to artifacts"))
+        }
     }
 
     for (path in filtered_reverse_read_paths) {
+        print(paste0("Uploading filtered_reads/", basename(path), " to artifacts..."))
         taskRun$createArtifact(
             path,
             file.path("filtered_reads", basename(path))
         )
+
+        if (is.null(artifact)) {
+            print(paste0("Failed to upload filtered_reads/", basename(path), " to artifacts"))
+        }
     }
 
     filtering_results_path <- file.path(output_path, "filtering_results.csv")
