@@ -60,24 +60,27 @@ def saveYoloAnnotation(sample: ImageSample, classes: ImageDatasetClasses, path: 
     sample.imagePath.link_to(destinationPath)
 
     annotation = loadAnnotation(sample)
-    if annotation is not None:
-        with path.joinpath(f"{sample.id}.txt").open("w") as txtFile:
-            for instance in annotation.instances:
-                labelId = classes.labelIdForClassId(instance.classId)
+    if annotation is None:
+        return None
 
-                if labelId is None:
-                    continue
+    with destinationPath.with_suffix(".txt").open("w") as annotationTxtFile:
+        for instance in annotation.instances:
+            labelId = classes.labelIdForClassId(instance.classId)
 
-                for segmentation in instance.segmentations:
-                    width = annotation.width
-                    height = annotation.height
-                    normalizedSegmentation = [num / width if idx % 2 == 0 else num / height for idx, num in enumerate(segmentation)]
+            if labelId is None:
+                continue
 
-                    txtFile.write(str(labelId))
-                    for coordinate in normalizedSegmentation:
-                        txtFile.write(f" {coordinate}")
+            for segmentation in instance.segmentations:
+                width = annotation.width
+                height = annotation.height
+                normalizedSegmentation = [num / width if idx % 2 == 0 else num / height for idx, num in enumerate(segmentation)]
 
-                    txtFile.write("\n")
+                annotationTxtFile.write(str(labelId))
+                for coordinate in normalizedSegmentation:
+                    # The annotation for a single segmentation should look like this: "x1 y1 x2 y2 x3 y3 x4 y4..." where the numbers represent the coordinates of the segmentation polygon.
+                    annotationTxtFile.write(f" {coordinate}")
+
+                annotationTxtFile.write("\n")
 
 
 def prepareDataset(dataset: ImageDataset, destination: Path, validationPct: float) -> tuple[Path, Path]:

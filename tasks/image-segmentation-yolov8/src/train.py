@@ -97,7 +97,7 @@ def justTrain(taskRun: TaskRun[ImageDataset], yamlFilePath: Path, yoloModelPath:
         resume = False
     )
     del model
-    gc.collect()
+    gc.collect()  # The garbage collector is manually invoked to free up memory used for model training.
 
     return yoloModelPath / "train" / "weights" / "best.pt"
 

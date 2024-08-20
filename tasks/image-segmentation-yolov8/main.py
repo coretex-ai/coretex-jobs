@@ -1,10 +1,9 @@
 import logging
 import json
 
-from ultralytics import YOLO
 from coretex import TaskRun, ImageDataset, currentTaskRun, TaskRunStatus, folder_manager, Model
 
-from src.dataset import isValidationSplitValid, prepareDataset, createYamlFile
+from src.dataset import isValidationSplitValid, prepareDataset
 from src.train import train
 from src.validate import validate
 
@@ -13,8 +12,7 @@ def main() -> None:
     taskRun: TaskRun[ImageDataset] = currentTaskRun()
 
     if taskRun.parameters["validation"]:
-        # validating model
-
+        logging.info(">> [Image Segmentation] Validating mode")
         if taskRun.parameters["trainedModel"] is None:
             raise RuntimeError("Model used for image segmentation that needs validation is not valid")
 
@@ -22,8 +20,8 @@ def main() -> None:
         ctxModel.download()
         with (ctxModel.path / ctxModel.modelDescriptorFileName()).open("r") as file:
             modelDesc = dict(json.load(file))
-            imgSize = modelDesc["imageSize"]
-            classLabels = [clazz["label"] for clazz in modelDesc["labels"]]
+            imgSize = int(modelDesc["imageSize"])
+            classLabels = [str(clazz["label"]) for clazz in modelDesc["labels"]]
 
         modelPath = ctxModel.path / "best.pt"
 
@@ -36,7 +34,11 @@ def main() -> None:
 
         validate(taskRun, modelPath, imgSize)
     else:
-        # training model
+        logging.info(">> [Image Segmentation] Training mode")
+        if taskRun.parameters["epochs"] is None:
+            raise RuntimeError(">> [Image Segmentation] The number of training epochs is not defined")
+        if taskRun.parameters["imageSize"] is None:
+            raise RuntimeError(">> [Image Segmentation] imageSize parameter is not defined")
 
         excludedClasses = taskRun.parameters["excludedClasses"]
         logging.info(f">> [Image Segmentation] Excluding classes: {excludedClasses}")
@@ -46,7 +48,7 @@ def main() -> None:
         taskRun.dataset.download()
 
         if not isValidationSplitValid(taskRun.parameters["validationSplit"], taskRun.dataset.count):
-            raise ValueError(f">> [ObjectDetection] validationSplit parameter is invalid")
+            raise ValueError(f">> [Image Segmentation] validationSplit parameter is invalid")
 
         datasetPath = folder_manager.createTempFolder("dataset")
         trainDatasetPath, validDatasetPath = prepareDataset(taskRun.dataset, datasetPath, taskRun.parameters["validationSplit"])

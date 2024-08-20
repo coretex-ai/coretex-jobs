@@ -1,5 +1,5 @@
-from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor, Future, as_completed
+from pathlib import Path
 
 import logging
 import gc
@@ -9,8 +9,8 @@ import multiprocessing as mp
 from PIL import Image, ImageDraw
 from coretex import TaskRun, ImageDataset, ImageDatasetClasses, folder_manager, TaskRunStatus
 from ultralytics import YOLO
-from ultralytics.engine.results import Results
 from matplotlib import pyplot as plt
+from ultralytics.engine.results import Results
 
 import numpy as np
 import torch
@@ -116,7 +116,7 @@ def plotSegmentationImage(
     plotPath = folder_manager.temp.joinpath(f"{sampleId}.jpeg")
     plt.savefig(plotPath)
     plt.close()
-    gc.collect()
+    gc.collect()  # The garbage collector is manually invoked after each plotting to prevent a memory leak
 
     return plotPath
 

@@ -9,7 +9,7 @@ param_groups:
   params:
   - name: dataset
     description: A dataset containing photographs for model training or validation.
-    value: 2023
+    value: null
     data_type: dataset
     required: true
   - name: trainedModel
@@ -53,7 +53,7 @@ param_groups:
     required: false
   - name: epochs
     description: Number of times the data is run throught the model
-    value: 1
+    value: 10
     data_type: int
     required: false
   - name: validationSplit
@@ -69,7 +69,7 @@ param_groups:
     required: false
   - name: excludedClasses
     description: Classes from the dataset which will be excluded from training the model
-    value: ["gender", "date_of_birth", "last_name", "first_name"]
+    value: []
     data_type: list[str]
     required: false
   - name: earlyStopping
