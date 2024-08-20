@@ -4,9 +4,10 @@ from typing import Optional
 import logging
 import random
 import json
-import yaml
 
 from coretex import ImageDataset, ImageSample, CoretexImageAnnotation, ImageDatasetClasses
+
+import yaml
 
 
 def isValidationSplitValid(validationSplit: float, datasetSize: int) -> bool:

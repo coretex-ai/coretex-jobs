@@ -18,6 +18,7 @@ def main() -> None:
 
         ctxModel: Model = taskRun.parameters["trainedModel"]
         ctxModel.download()
+
         with (ctxModel.path / ctxModel.modelDescriptorFileName()).open("r") as file:
             modelDesc = dict(json.load(file))
             imgSize = int(modelDesc["imageSize"])
