@@ -42,7 +42,7 @@ def generateSample(sample: ImageSample, parentClass: Optional[ImageDatasetClass]
                 try:
                     sample.metadataPath.link_to(samplePath / "metadata.json")
                 except AttributeError as e:
-                    samplePath.joinpath("metadata.json").hardlink_to(sample.metadataPath)
+                    samplePath.joinpath("metadata.json").hardlink_to(sample.metadataPath)  # type: ignore[attr-defined]
 
             imagePaths.append(samplePath)
 
