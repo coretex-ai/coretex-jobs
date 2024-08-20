@@ -14,7 +14,7 @@ class DisplayCallback(Callback):
 
         self.epochs = epochs
 
-    def on_epoch_end(self, epoch: int, logs: Optional[dict[str, Any]] = None):
+    def on_epoch_end(self, epoch: int, logs: Optional[dict[str, Any]] = None) -> None:
         if logs is None:
             return
 

@@ -1,41 +1,23 @@
 from pathlib import Path
 
-import logging
 import math
+import logging
 
-from keras import Model as KerasModel
+from coretex import TaskRun, ImageDataset, TaskRunStatus, Model, folder_manager
 from keras.callbacks import History
+from keras import Model as KerasModel
 
 import tensorflow as tf
-import tensorflowjs as tfjs
 import coremltools
+import tensorflowjs as tfjs
 
-from coretex import TaskRunStatus, Model, ImageDataset, TaskRun, Metric, MetricType, folder_manager
+from .dataset import loadDataset, createBatches
+from .model import UNetModel
+from .callbacks import DisplayCallback
 
-from src import validation
-from src.model import UNetModel
-from src.dataset import loadDataset, createBatches
-from src.callbacks import DisplayCallback
-
-
-def saveLiteModel(model: KerasModel, path: Path) -> None:
-    converter = tf.lite.TFLiteConverter.from_keras_model(model)
-    tfLiteModel = converter.convert()
-
-    with path.open("wb") as file:
-        file.write(tfLiteModel)
+from .validate import validate
 
 
-def saveCoremlModel(model: KerasModel, path: Path) -> None:
-    model = coremltools.converters.convert(model)
-    model.save(str(path))
-
-
-def saveTFJSModel(modelPath: Path, path: Path) -> None:
-    tfjs.converters.convert_tf_saved_model(
-        str(modelPath),
-        str(path)
-    )
 
 
 def saveModelDescriptor(
@@ -67,26 +49,28 @@ def saveModelDescriptor(
     })
 
 
-def train(taskRun: TaskRun) -> None:
-    if taskRun.parameters["epochs"] is None:
-        raise RuntimeError("The number of epochs for training the model is not defined")
-    if taskRun.parameters["validationSplit"] is None:
-        raise RuntimeError("The percentage of data from the dataset to be used for validation during model training is not defined")
 
-    taskRun.createMetrics([
-        Metric.create("loss", "epoch", MetricType.int, "value", MetricType.float, [0, taskRun.parameters["epochs"]]),
-        Metric.create("accuracy", "epoch", MetricType.int, "value", MetricType.float, [0, taskRun.parameters["epochs"]], [0, 1]),
-        Metric.create("val_loss", "epoch", MetricType.int, "value", MetricType.float, [0, taskRun.parameters["epochs"]]),
-        Metric.create("val_accuracy", "epoch", MetricType.int, "value", MetricType.float, [0, taskRun.parameters["epochs"]], [0, 1])
-    ])
+def saveTFJSModel(modelPath: Path, path: Path) -> None:
+    tfjs.converters.convert_tf_saved_model(
+        str(modelPath),
+        str(path)
+    )
 
-    taskRun.updateStatus(TaskRunStatus.inProgress, "Downloading dataset")
-    taskRun.dataset.download()
 
-    excludedClasses: list[str] = taskRun.parameters["excludedClasses"]
-    logging.info(f">> [Image Segmentation] Excluding classes: {excludedClasses}")
-    taskRun.dataset.classes.exclude(excludedClasses)
+def saveLiteModel(model: KerasModel, path: Path) -> None:
+    converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    tfLiteModel = converter.convert()
 
+    with path.open("wb") as file:
+        file.write(tfLiteModel)
+
+
+def saveCoremlModel(model: KerasModel, path: Path) -> None:
+    model = coremltools.converters.convert(model)
+    model.save(str(path))
+
+
+def train(taskRun: TaskRun[ImageDataset]) -> None:
     count, dataset = loadDataset(taskRun.dataset, taskRun)
     trainCount, trainBatches, testCount, testBatches = createBatches(
         dataset,
@@ -118,13 +102,12 @@ def train(taskRun: TaskRun) -> None:
     except tf.errors.ResourceExhaustedError:
         raise MemoryError(">> [Image Segmentation] Ran out of memory. Potential solutions: reduce batch size and image size parameters; simplify model architecture")
 
-    #detect.run(taskRun, model, taskRun.dataset)
-    acc = validation.validation(taskRun, model)
+    accuracy = validate(taskRun, model)
 
     coretexModel = Model.createModel(
         taskRun.generateEntityName(),
-        taskRun.id,
-        acc
+        taskRun.projectId,
+        accuracy
     )
 
     logging.info(f">> [Image Segmentation] Model accuracy is: {coretexModel.accuracy}")
