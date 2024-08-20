@@ -5,7 +5,7 @@ library(reticulate)
 builtins <- import_builtins()
 zipfile <- import("zipfile")
 ctx <- import("coretex")
-ctx_folder_manager <- import("coretex.folder_manager")
+ctx_folder_manager <- ctx$folder_manager
 
 # Contents
 # 2. Load packages

@@ -1,3 +1,4 @@
+from typing import Optional, Any
 from pathlib import Path
 
 import random
@@ -39,7 +40,7 @@ def generateSample(
     minImageSize: float,
     maxImageSize: float,
     rotationAngle: int
-) -> tuple[Path, CoretexImageAnnotation]:
+) -> tuple[Path, CoretexImageAnnotation, Optional[dict[str, Any]]]:
 
     sample.unzip()
 
@@ -104,4 +105,9 @@ def generateSample(
     imagePath = folder_manager.temp / f"{identifier}.jpeg"
     backgroundImage.save(imagePath)
 
-    return imagePath, updatedAnnotation
+    try:
+        metadata = sample.loadMetadata()
+    except FileNotFoundError as e:
+        metadata = None
+
+    return imagePath, updatedAnnotation, metadata
