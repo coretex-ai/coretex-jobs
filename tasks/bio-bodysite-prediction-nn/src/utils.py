@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union, Any
 from pathlib import Path
 
 import csv
@@ -6,15 +6,13 @@ import json
 import shutil
 import logging
 
-from numpy.typing import ArrayLike
-
 import numpy as np
 import matplotlib.pyplot as plt
 
 from coretex import CustomDataset, TaskRun, Model, folder_manager
 
 
-def jsonPretty(data, savePath) -> None:
+def jsonPretty(data: dict[str, Any], savePath: Path) -> None:
     with open(savePath, "w") as write_file:
         json.dump(data, write_file, indent=4)
 
@@ -97,7 +95,7 @@ def saveFeatureTable(taskRun: TaskRun[CustomDataset], featureTablePath: str, tab
 def savePlotFig(
     taskRun: TaskRun[CustomDataset],
     distributionDict: dict,
-    savePath: str,
+    savePath: Path,
     fileName: str,
     xLabelRotation: bool,
     xLabel: str,
@@ -127,15 +125,15 @@ def savePlotFig(
 
 def savePredictionFile(
     taskRun: TaskRun[CustomDataset],
-    savePath: str,
+    savePath: Path,
     trainCount: int,
     testCount: int,
     sampleIds: list,
     uniqueBodySite: dict,
-    yTrain: list,
-    yTest: list,
-    yPred: list,
-    zPred: list
+    yTrain: np.ndarray,
+    yTest: np.ndarray,
+    yPred: np.ndarray,
+    zPred: np.ndarray
 ) -> None:
 
     with folder_manager.temp.joinpath("body_site_predictions.csv").open("a+") as f:
@@ -220,7 +218,7 @@ def plots(taskRun: TaskRun[CustomDataset], classDistribution: dict[str, int], ta
     logging.info(f">> [MicrobiomeForensics] Loading data and matching finished. Successfully matched {datasetLen} samples")
 
 
-def oneHotEncoding(vector: ArrayLike, num_classes: Optional[int] = None) -> np.ndarray:
+def oneHotEncoding(vector: Union[np.ndarray, int], numClasses: Optional[int] = None) -> np.ndarray:
 
     """
         Converts an input 1-D vector of integers into an output
@@ -232,7 +230,7 @@ def oneHotEncoding(vector: ArrayLike, num_classes: Optional[int] = None) -> np.n
         ----------
         vector : ArrayLike
             A vector of integers
-        num_classes : int
+        numClasses : int
             Optionally declare the number of classes (can not exceed the maximum value of the vector)
 
         Returns
@@ -242,7 +240,7 @@ def oneHotEncoding(vector: ArrayLike, num_classes: Optional[int] = None) -> np.n
 
         Example
         -------
-        >>> v = np.array((1, 0, 4))
+        >>> v = np.array([1, 0, 4])
         >>> one_hot_v = oneHotEncoding(v)
         >>> print one_hot_v
         [[0 1 0 0 0]
@@ -250,15 +248,21 @@ def oneHotEncoding(vector: ArrayLike, num_classes: Optional[int] = None) -> np.n
         [0 0 0 0 1]]
     """
 
-    vecLen = 1 if isinstance(vector, int) else len(vector)
+    if isinstance(vector, int):
+        vector = np.array([vector])
 
-    result = np.zeros(shape = (vecLen, num_classes))
+    vecLen = vector.shape[0]
+
+    if numClasses is None:
+        numClasses = vector.max() + 1
+
+    result = np.zeros(shape = (vecLen, numClasses))
     result[np.arange(vecLen), vector] = 1
     return result.astype(int)
 
 
 def convertFromOneHot(matrix: np.ndarray) -> np.ndarray:
-    numOfRows = len(matrix) if isinstance(matrix, list) else matrix.shape[0]
+    numOfRows = matrix.shape[0]
     if not numOfRows > 0:
         raise RuntimeError(f">> [MicrobiomeForensics] Encountered array with {numOfRows} rows when decoding one hot vector")
 

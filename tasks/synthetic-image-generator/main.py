@@ -1,3 +1,4 @@
+from typing import Any, Optional
 from pathlib import Path
 from contextlib import ExitStack
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, Future
@@ -19,7 +20,11 @@ def getRandomSamples(dataset: ImageDataset, count: int) -> list[ImageSample]:
     return [dataset.samples[i] for i in indexes]
 
 
-def didGenerateSample(dataset: ImageDataset, future: Future[tuple[Path, CoretexImageAnnotation]]) -> None:
+def didGenerateSample(
+    dataset: ImageDataset,
+    future: Future[tuple[Path, CoretexImageAnnotation, Optional[dict[str, Any]]]]
+) -> None:
+
     try:
         imagePath, annotation, metadata = future.result()
         generatedSample = dataset.add(imagePath)

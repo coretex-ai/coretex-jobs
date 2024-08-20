@@ -18,7 +18,7 @@ def trainEpoch(
     trainLoader: DataLoader,
     model: OrientationClassifier,
     optimizer: optim.Adam,
-    criterion: nn.MSELoss,
+    criterion: nn.CrossEntropyLoss,
     device: torch.device
 ) -> tuple[float, float]:
 
@@ -90,7 +90,7 @@ def runTraining(
 
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode = "min", factor = 0.3, patience = max(5, int(epochs * 0.05)))
     earlyStopping = EarlyStopping(max(10, int(epochs * 0.1)))
-    bestLoss: Optional[torch.Tensor] = None
+    bestLoss: Optional[float] = None
     exampleInput = torch.randn(1, 3, imageSize, imageSize)
 
     for epoch in range(epochs):
@@ -117,13 +117,13 @@ def runTraining(
             bestLoss = validationLoss
 
             # Save the best model
-            tsModel = torch.jit.trace(model, exampleInput)
+            tsModel = torch.jit.trace(model, exampleInput)  # type: ignore[no-untyped-call]
             tsModel.save(modelPath / "best.pt")
 
         # Save the latest model
-        tsModel = torch.jit.trace(model, exampleInput)
+        tsModel = torch.jit.trace(model, exampleInput)  # type: ignore[no-untyped-call]
         tsModel.save(modelPath / "last.pt")
 
         if not modelPath.joinpath("best.pt").exists():
-            tsModel = torch.jit.trace(model, exampleInput)
+            tsModel = torch.jit.trace(model, exampleInput)  # type: ignore[no-untyped-call]
             tsModel.save(modelPath / "best.pt")

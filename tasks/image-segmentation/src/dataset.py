@@ -12,9 +12,9 @@ from coretex import TaskRun, TaskRunStatus, ImageDataset, folder_manager
 from .utils import hasDotAnnotation
 
 
-class Augment(tf.keras.layers.Layer):
+class Augment(tf.keras.layers.Layer):  # type: ignore[misc]
 
-    def __init__(self, seed=42):
+    def __init__(self, seed: int = 42) -> None:
         super().__init__()
 
         self.augmentInputs = RandomFlip(
@@ -27,7 +27,7 @@ class Augment(tf.keras.layers.Layer):
             seed=seed
         )
 
-    def call(self, inputs, labels):
+    def call(self, inputs: tf.Tensor, labels: tf.Tensor) -> tuple[tf.Tensor, tf.Tensor]:
         inputs = self.augmentInputs(inputs)
         labels = self.augmentLabels(labels)
 

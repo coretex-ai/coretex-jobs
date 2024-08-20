@@ -19,7 +19,7 @@ def classByLabelId(labelId: int, classes: ImageDatasetClasses) -> Optional[Image
     return classes.classByLabel(classes.labels[labelId])
 
 
-def processResult(result: Results, classes: list[ImageDatasetClasses], savePath: Path) -> None:
+def processResult(result: Results, classes: ImageDatasetClasses, savePath: Path) -> None:
     fig = plt.figure(num = 1, clear = True)
     plt.imshow(result.orig_img)
 
@@ -45,11 +45,11 @@ def processResult(result: Results, classes: list[ImageDatasetClasses], savePath:
 
 def isSampleValid(sample: ImageSample) -> bool:
     try:
-        instances = sample.load().annotation.instances
-        if instances is None:
+        annotation = sample.load().annotation
+        if annotation is None:
             return False
 
-        for instance in instances:
+        for instance in annotation.instances:
             if any(len(segmentation) < DIMENSION_THRESHOLD for segmentation in instance.segmentations):
                 return False
     except Exception as e:

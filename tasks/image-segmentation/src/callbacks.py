@@ -7,14 +7,14 @@ from keras.callbacks import Callback
 from coretex import currentTaskRun
 
 
-class DisplayCallback(Callback):
+class DisplayCallback(Callback):  # type: ignore[misc]
 
     def __init__(self, epochs: int) -> None:
         super().__init__()
 
         self.epochs = epochs
 
-    def on_epoch_end(self, epoch: int, logs: Optional[dict[str, Any]] = None):
+    def on_epoch_end(self, epoch: int, logs: Optional[dict[str, Any]] = None) -> None:
         if logs is None:
             return
 

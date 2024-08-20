@@ -37,7 +37,7 @@ def processSample(
     outputDataset: CustomDataset,
     outputDir: Path,
     threads: Optional[int]
-):
+) -> None:
 
     sample.unzip()
     metadataSample.unzip()

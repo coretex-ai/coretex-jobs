@@ -28,7 +28,7 @@ def createMask(predictionMask: np.ndarray) -> tf.Tensor:
 def saveDatasetPredictions(group: str, model: KerasModel, dataset: tf.data.Dataset, classes: ImageDatasetClasses) -> None:
     predictions = model.predict(dataset)
     for index, prediction in enumerate(predictions):
-        mask: np.ndarray = createMask([prediction]).numpy()
+        mask: np.ndarray = createMask(np.array([prediction])).numpy()
         coloredMask = np.empty(shape = (mask.shape[0], mask.shape[1], 3))
 
         for h, row in enumerate(mask):

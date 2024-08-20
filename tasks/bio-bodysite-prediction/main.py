@@ -10,8 +10,8 @@ from src.load_data_std import loadDataStd, prepareForTrainingStd
 
 
 def validation(taskRun: TaskRun[CustomDataset]) -> None:
-    trainedModel: Model = taskRun.parameters.get("trainedModel")
-    if trainedModel is None:
+    trainedModel= taskRun.parameters.get("trainedModel")
+    if not isinstance(trainedModel, Model):
         raise RuntimeError(">> [MicrobiomeForensics] In order to start the validation process You have to type in \"trainedModel\" in TaskRun parameters")
 
     trainedModel.download()

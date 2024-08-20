@@ -18,9 +18,9 @@ MODEL_ID = "stabilityai/stable-diffusion-2-1"
 
 def loadModel(device: str) -> StableDiffusionPipeline:
     dtype = torch.float16 if device == "cuda" else torch.float32
-    pipe = StableDiffusionPipeline.from_pretrained(MODEL_ID, torch_dtype = dtype)
-    pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
-    return pipe.to(device)
+    pipe = StableDiffusionPipeline.from_pretrained(MODEL_ID, torch_dtype = dtype)  # type: ignore[no-untyped-call]
+    pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)  # type: ignore[no-untyped-call]
+    return pipe.to(device)  # type: ignore[no-any-return]
 
 
 def getDefault(taskRun: TaskRun, name: str, default: Any) -> Any:
@@ -53,14 +53,14 @@ def generateImages(
         # Create an array equal to number of input prompts
         negativePrompts = [negativePrompt] * len(prompts)
 
-    images = model(
+    images = model(  # type: ignore[operator]
         prompts,
         negative_prompt = negativePrompts,
         num_inference_steps = steps,
         width = width,
         height = height,
         seed = seed
-    ).images  # type: ignore
+    ).images
 
     imagePaths: list[Path] = []
 

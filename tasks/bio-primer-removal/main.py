@@ -8,7 +8,7 @@ from coretex import TaskRun, folder_manager, SequenceDataset, SequenceSample, cu
 from coretex.bioinformatics import cutadaptTrim
 
 
-def uploadTrimmedReads(sampleName: str, dataset: SequenceDataset, forwardFile: Path, reverseFile: Optional[Path] = None):
+def uploadTrimmedReads(sampleName: str, dataset: SequenceDataset, forwardFile: Path, reverseFile: Optional[Path] = None) -> None:
     zipPath = folder_manager.temp / f"{sampleName}.zip"
     with ZipFile(zipPath, 'w', ZIP_DEFLATED) as archive:
         archive.write(forwardFile, forwardFile.name)

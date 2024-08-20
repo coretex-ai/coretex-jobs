@@ -6,6 +6,8 @@ import json
 
 from coretex import folder_manager, functions
 
+import numpy as np
+
 from load_data import loadDataAtlas
 from load_data_std import loadDataStd
 
@@ -29,7 +31,7 @@ def unzip(inputPath: Path, dataFormat: int) -> Path:
     return inputPath
 
 
-def inference(modelInput: Path, model: Model, uniqueTaxons: dict[str, int]) -> list[str]:
+def inference(modelInput: Path, model: Model, uniqueTaxons: dict[str, int]) -> np.ndarray:
     BATCHE_SIZE = 562
     sampleCount = len(list(modelInput.iterdir()))
 
@@ -45,7 +47,11 @@ def response(requestData: dict[str, Any]) -> dict[str, Any]:
     with open(modelDir / "model_descriptor.json", "r") as jsonFile:
         modelDescriptor = json.load(jsonFile)
 
-    dataFormat = int(requestData.get("dataFormat"))  # 0 - MBA, 1 - Microbiome Forensics Institute Zuric
+    dataFormatRaw = requestData.get("dataFormat")
+    if not isinstance(dataFormatRaw, str) and not isinstance(dataFormatRaw, int):
+        return functions.badRequest("Invalid dataFormat. (0 - MBA, 1 - Microbiome Forensics Institute Zuric)")
+
+    dataFormat = int(dataFormatRaw)  # 0 - MBA, 1 - Microbiome Forensics Institute Zuric
     inputPath = requestData.get("inputFile")
 
     if not isinstance(inputPath, Path):

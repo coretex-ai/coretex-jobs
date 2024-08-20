@@ -41,7 +41,7 @@ def main() -> None:
             modelName = model.name
 
         logging.info(">> [Coretex] Creating Model...")
-        destinationModel = Model.createProjectModel(
+        destinationModel = Model.createModel(
             modelName,
             taskRun.parameters["destinationProject"],
             model.accuracy,

@@ -25,6 +25,9 @@ def loadJsonCache(cacheName: str) -> JsonTuple:
     logging.info(">> [MicrobiomeForensics] Loading assembled dataset from cache")
 
     cache = getJsonCache(cacheName)
+    if cache is None:
+        raise ValueError(">> [MicrobiomeForensics] Failed to retrieve cache")
+
     cache.download()
     cache.samples[0].unzip()
     cachePath = Path(cache.samples[0].path)

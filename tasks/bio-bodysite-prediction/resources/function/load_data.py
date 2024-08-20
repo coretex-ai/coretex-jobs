@@ -10,6 +10,8 @@ import pickle
 from scipy import sparse
 from sklearn.feature_selection import SelectPercentile
 
+import numpy as np
+
 from objects import Sample, Taxon
 
 
@@ -93,14 +95,17 @@ def loadDataAtlas(
     inputPath: Path,
     modelDir: Path,
     percentile: int
-) -> tuple[list[Sample], dict[str, int], dict[str, int]]:
+) -> tuple[np.ndarray, dict[str, int], list[str]]:
 
     workerCount = os.cpu_count()  # This value should not exceed the total number of CPU cores
+    if workerCount is None:
+        workerCount = 1
+
     logging.info(f">> [MicrobiomeForensics] Using {workerCount} CPU cores to read the file")
 
     fileSize = inputPath.stat().st_size
     # Smaller file size - used for testing
-    # fileSize = 100 * 1024 * 1024
+    fileSize = 100 * 1024 * 1024
 
     step = fileSize // workerCount
     remainder = fileSize % workerCount
@@ -124,8 +129,9 @@ def loadDataAtlas(
                 The future object of the process from ProcessPoolExecutor
         """
 
-        if future.exception() is not None:
-            raise future.exception()
+        exception = future.exception()
+        if exception is not None:
+            raise exception
 
         processSampleData = future.result()
         sampleData.extend(processSampleData)
@@ -160,7 +166,7 @@ def prepareForInferenceAtlas(
     uniqueTaxons: dict[str, int],
     uniqueBodySites: dict[str, int],
     percentile: Optional[int]
-) -> tuple[sparse.csr_matrix, dict[str, int], list[str]]:
+) -> tuple[np.ndarray, dict[str, int], list[str]]:
 
     sampleIdList: list[str] = []
     rowIndices: list[int] = []

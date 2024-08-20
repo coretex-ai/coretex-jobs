@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any
 from pathlib import Path
 
 import csv
@@ -16,7 +16,7 @@ from coretex import CustomDataset, TaskRun, Model, folder_manager
 from .objects import Sample
 
 
-def jsonPretty(data, savePath) -> None:
+def jsonPretty(data: dict[str, Any], savePath: Path) -> None:
     with open(savePath, "w") as write_file:
         json.dump(data, write_file, indent=4)
 
@@ -103,7 +103,7 @@ def saveFeatureTable(featureTablePath: str, tableInput: np.ndarray, taskRun: Tas
 def savePlotFig(
     taskRun: TaskRun[CustomDataset],
     distributionDict: dict,
-    savePath: str,
+    savePath: Path,
     fileName: str,
     xLabelRotation: bool,
     xLabel: str,
@@ -133,7 +133,7 @@ def savePlotFig(
 
 def savePredictionFile(
     taskRun: TaskRun[CustomDataset],
-    savePath: str,
+    savePath: Path,
     xTrain: csr_matrix,
     xTest: csr_matrix,
     sampleIdList: list,
