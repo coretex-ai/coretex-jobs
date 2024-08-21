@@ -2,7 +2,7 @@ from typing import Generator
 
 import logging
 
-from keras.layers import RandomFlip
+from keras.layers import RandomFlip, Layer
 
 import numpy as np
 import tensorflow as tf
@@ -12,26 +12,26 @@ from coretex import TaskRun, TaskRunStatus, ImageDataset, folder_manager
 from .utils import hasDotAnnotation
 
 
-class Augment(tf.keras.layers.Layer):  # type: ignore
+class Augment(Layer):  # type: ignore
 
-    def __init__(self, seed=42):  # type: ignore
+    def __init__(self, seed: int = 42) -> None:
         super().__init__()
 
         self.augmentInputs = RandomFlip(
-            mode="horizontal",
-            seed=seed
+            mode = "horizontal",
+            seed = seed
         )
 
         self.augmentLabels = RandomFlip(
-            mode="horizontal",
-            seed=seed
+            mode = "horizontal",
+            seed = seed
         )
 
-    def call(self, inputs, labels):  # type: ignore
-        inputs = self.augmentInputs(inputs)
-        labels = self.augmentLabels(labels)
+    def call(self, inputs: RandomFlip, labels: RandomFlip) -> tuple[RandomFlip, RandomFlip]:
+        rfInputs: RandomFlip = self.augmentInputs(inputs)
+        rfLabels: RandomFlip = self.augmentLabels(labels)
 
-        return inputs, labels
+        return rfInputs, rfLabels
 
 
 def loadDataset(coretexDataset: ImageDataset, coretexTaskRun: TaskRun) -> tuple[int, tf.data.Dataset]:
@@ -58,10 +58,10 @@ def loadDataset(coretexDataset: ImageDataset, coretexTaskRun: TaskRun) -> tuple[
             }
 
     dataset = tf.data.Dataset.from_generator(
-        generator=datasetElementProvider,
-        output_signature={
-            "image": tf.TensorSpec(shape=(None, None, 3), dtype=tf.uint8),
-            "segmentation_mask": tf.TensorSpec(shape=(None, None, 1), dtype=tf.uint8)
+        generator = datasetElementProvider,
+        output_signature = {
+            "image": tf.TensorSpec(shape = (None, None, 3), dtype = tf.uint8),
+            "segmentation_mask": tf.TensorSpec(shape = (None, None, 1), dtype = tf.uint8)
         }
     )
 
@@ -108,7 +108,7 @@ def createBatches(
         .shuffle(trainCount)
         .batch(batchSize)
         .repeat()
-        .map(Augment())  # type: ignore
+        .map(Augment())
         .prefetch(buffer_size = tf.data.AUTOTUNE)
     )
     testBatches = testImages.batch(batchSize).repeat()

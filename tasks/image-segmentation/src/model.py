@@ -6,7 +6,6 @@ from keras.layers import Conv2DTranspose, BatchNormalization, ReLU, Concatenate,
 from keras.losses import SparseCategoricalCrossentropy
 from keras.applications.mobilenet_v2 import MobileNetV2
 
-
 class UpSampler(Sequential):  # type: ignore
 
     def __init__(self, filters: int, size: int):
@@ -16,10 +15,10 @@ class UpSampler(Sequential):  # type: ignore
             Conv2DTranspose(
                 filters,
                 size,
-                strides=2,
-                padding='same',
-                kernel_initializer=random_normal_initializer(0., 0.02),
-                use_bias=False
+                strides = 2,
+                padding = 'same',
+                kernel_initializer = random_normal_initializer(0., 0.02),
+                use_bias = False
             )
         )
 
@@ -30,8 +29,8 @@ class UpSampler(Sequential):  # type: ignore
 def UNetModel(classCount: int, imageSize: int) -> KerasModel:
     def buildDownStack() -> KerasModel:
         baseModel: KerasModel = MobileNetV2(
-            input_shape=(imageSize, imageSize, 3),
-            include_top=False
+            input_shape = (imageSize, imageSize, 3),
+            include_top = False
         )
 
         layerNames = [
@@ -45,8 +44,8 @@ def UNetModel(classCount: int, imageSize: int) -> KerasModel:
         baseModelOutputs = [baseModel.get_layer(name).output for name in layerNames]
 
         downStack = KerasModel(
-            inputs=baseModel.input,
-            outputs=baseModelOutputs
+            inputs = baseModel.input,
+            outputs = baseModelOutputs
         )
         downStack.trainable = False
 
@@ -79,20 +78,20 @@ def UNetModel(classCount: int, imageSize: int) -> KerasModel:
 
         # This is the last layer of the model
         last = Conv2DTranspose(
-            filters=output_channels,
-            kernel_size=3,
-            strides=2,
-            padding='same'
+            filters = output_channels,
+            kernel_size = 3,
+            strides = 2,
+            padding = 'same'
         )  # 64x64 -> 128x128
 
         x = last(x)
-        return KerasModel(inputs=inputs, outputs=x)
+        return KerasModel(inputs = inputs, outputs = x)
 
-    model = unet_model(output_channels=classCount)
+    model = unet_model(output_channels = classCount)
     model.compile(
-        optimizer='adam',
-        loss=SparseCategoricalCrossentropy(from_logits=True),
-        metrics=['accuracy']
+        optimizer = 'adam',
+        loss = SparseCategoricalCrossentropy(from_logits = True),
+        metrics = ['accuracy']
     )
 
     return model
