@@ -10,6 +10,8 @@ from src.validate import validate
 
 def main() -> None:
     taskRun: TaskRun[ImageDataset] = currentTaskRun()
+    if not 0 <= taskRun.parameters["confidenceTreshold"] <= 1:
+        raise ValueError(f">> [Image Segmentation] The \"confidenceThreshold\" must be between 0 and 1. The current value is: {taskRun.parameters['confidenceTreshold']}.")
 
     if taskRun.parameters["validation"]:
         logging.info(">> [Image Segmentation] Validating mode")
@@ -39,7 +41,7 @@ def main() -> None:
         if taskRun.parameters["epochs"] is None:
             raise RuntimeError(">> [Image Segmentation] The number of training epochs is not defined")
         if taskRun.parameters["imageSize"] is None:
-            raise RuntimeError(">> [Image Segmentation] imageSize parameter is not defined")
+            raise RuntimeError(">> [Image Segmentation] The \"imageSize\" parameter is not defined")
 
         excludedClasses = taskRun.parameters["excludedClasses"]
         logging.info(f">> [Image Segmentation] Excluding classes: {excludedClasses}")

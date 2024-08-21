@@ -2,8 +2,6 @@ from pathlib import Path
 from typing import Optional
 
 import logging
-import os
-import shutil
 import gc
 
 from ultralytics import YOLO
@@ -43,20 +41,13 @@ def saveModelDescriptor(taskRun:TaskRun[ImageDataset], model: Model, path: Path)
     })
 
 
-def copyToValFolder(sourceFolder: Path, destinationFolder: Path) -> None:
-    for item in os.listdir(sourceFolder):
-        sourcePath = os.path.join(sourceFolder, item)
-        destinationPath = os.path.join(destinationFolder, item)
-        shutil.copy2(sourcePath, destinationPath)
-
-
 def getPatience(taskRun: TaskRun) -> int:
     epochs = taskRun.parameters["epochs"]
     earlyStopping = taskRun.parameters["earlyStopping"]
 
     if earlyStopping:
-        # 10% of epochs or 10, whichever is higher
-        return max(int(epochs * 0.1), 10)
+        # 10% of epochs or 50, whichever is higher
+        return max(int(epochs * 0.1), 50)
 
     # To disable early stopping we have to set patience to a very high value
     # https://github.com/ultralytics/ultralytics/issues/7609
@@ -70,7 +61,7 @@ def justTrain(taskRun: TaskRun[ImageDataset], yamlFilePath: Path, yoloModelPath:
         weights = taskRun.parameters.get("weights", "yolov8n-seg.pt")
         logging.info(f">> [Image Segmentation] Using \"{weights}\" for training the model")
 
-        model = YOLO(taskRun.parameters.get("weights", "yolov8n-seg.pt"))
+        model = YOLO(weights)
     else:
         logging.info(f">> [Image Segmentation] Using \"{ctxModel.name}\" for training the model")
 
@@ -120,7 +111,9 @@ def train(taskRun: TaskRun[ImageDataset], datasetPath: Path, trainDatasetPath: P
 
     modelName = taskRun.generateEntityName()
     ctxModel = Model.createModel(modelName, taskRun.projectId, accuracy / 100, {})
+
     saveModelDescriptor(taskRun, ctxModel, modelPath.parent)
+
     ctxModel.upload(modelPath.parent)
     logging.info(">> [Image Segmentation] The trained model has been uploaded")
 

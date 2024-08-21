@@ -37,10 +37,15 @@ param_groups:
     value: 16
     data_type: int
     required: true
+  - name: confidenceTreshold
+    description: The minimum confidence value that a prediction must have to be accepted as valid
+    value: 0.1
+    data_type: float
+    required: true
 - name: trainParameters
   params:
   - name: weights
-    description: "YoloV8 weights which are used for training the model."
+    description: YoloV8 weights which are used for training the model
     value:
       selected: 0
       options:
