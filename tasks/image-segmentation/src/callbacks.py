@@ -7,7 +7,7 @@ from keras.callbacks import Callback
 from coretex import currentTaskRun
 
 
-class DisplayCallback(Callback):
+class DisplayCallback(Callback):  # type: ignore
 
     def __init__(self, epochs: int) -> None:
         super().__init__()

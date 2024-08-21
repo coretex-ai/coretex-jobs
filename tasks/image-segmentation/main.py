@@ -8,8 +8,6 @@ from src.train import train
 from src.validate import validate
 
 
-
-
 def main() -> None:
     taskRun: TaskRun[ImageDataset] = currentTaskRun()
 
@@ -27,7 +25,7 @@ def main() -> None:
 
 
     if taskRun.parameters["validation"]:
-        # validating model
+        logging.info(f">> [Image Segmentation] Validating mode")
 
         if taskRun.parameters["trainedModel"] is None:
             raise RuntimeError("Model used for image segmentation that needs validation is not valid")
@@ -36,7 +34,6 @@ def main() -> None:
         ctxModel.download()
         with (ctxModel.path / ctxModel.modelDescriptorFileName()).open("r") as file:
             modelDesc = dict(json.load(file))
-            #imgSize = modelDesc["imageSize"]
             classLabels = [clazz["label"] for clazz in modelDesc["labels"]]
 
         excludedClasses = [label for label in taskRun.dataset.classes.labels if label not in classLabels]
@@ -49,9 +46,9 @@ def main() -> None:
         validate(taskRun, model)
 
     else:
-        # training model
+        logging.info(f">> [Image Segmentation] Training mode")
 
-        excludedClasses: list[str] = taskRun.parameters["excludedClasses"]
+        excludedClasses = taskRun.parameters["excludedClasses"]
         logging.info(f">> [Image Segmentation] Excluding classes: {excludedClasses}")
         taskRun.dataset.classes.exclude(excludedClasses)
 

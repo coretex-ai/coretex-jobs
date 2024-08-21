@@ -105,7 +105,7 @@ def train(taskRun: TaskRun[ImageDataset]) -> None:
     coretexModel = Model.createModel(
         taskRun.generateEntityName(),
         taskRun.projectId,
-        accuracy
+        accuracy / 100
     )
 
     logging.info(f">> [Image Segmentation] Model accuracy is: {coretexModel.accuracy}")

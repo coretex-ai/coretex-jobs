@@ -27,9 +27,13 @@ def predict(taskRun: TaskRun[ImageDataset], model: KerasModel, samples: list[Ima
 
         sampleData = sample.load()
 
-        if hasDotAnnotation(sampleData.annotation):
-            logging.warning(f">> [Image Segmentation] Sample \"{sample.name}\" (ID: {sample.id}) has invalid annotation (too few coordinates). Skipping Sample")
+        if sampleData.annotation is None:
+            logging.warning(f">> [Image Segmentation] Sample \"{sample.name}\" (ID: {sample.id}) has no annotation. Skipping Sample")
             continue
+        else:
+            if hasDotAnnotation(sampleData.annotation):
+                logging.warning(f">> [Image Segmentation] Sample \"{sample.name}\" (ID: {sample.id}) has invalid annotation (too few coordinates). Skipping Sample")
+                continue
 
         resized, _, _ = resizeWithPadding(sampleData.image, imageSize, imageSize)
         normalized = resized / 255
@@ -57,7 +61,6 @@ def predict(taskRun: TaskRun[ImageDataset], model: KerasModel, samples: list[Ima
         iou = iouScoreClass(groundtruth, prediction)
         result["accuracy"] = f"{iou:.2f}"
         batchResult.append(result)
-        logging.warning(result)
 
         fig, axes = plt.subplots(1, 3, figsize = (15, 5))
 
