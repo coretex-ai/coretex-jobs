@@ -186,8 +186,12 @@ def processSampleResult(
         classNames: dict[int, str] = result.names
 
         for classId in list(set(classIds)):
-            origClassSeg = sampleAnnotation.extractSegmentationMask(ImageDatasetClasses([taskRun.dataset.classByName(classNames[classId])]))
-            csvRowResult[classNames[classId]] = f"{calculateSingleClassAccuracy(classId, classIds, polygons, width, height, origClassSeg):.2f}"
+            clazz = taskRun.dataset.classByName(classNames[classId])
+            if clazz is not None:
+                origClassSeg = sampleAnnotation.extractSegmentationMask(ImageDatasetClasses([clazz]))
+                csvRowResult[classNames[classId]] = f"{calculateSingleClassAccuracy(classId, classIds, polygons, width, height, origClassSeg):.2f}"
+            else:
+                csvRowResult[classNames[classId]] = "0.00"
 
         predMask = maskFromPoly(polygons, width, height)
     else:

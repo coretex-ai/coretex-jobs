@@ -1,9 +1,11 @@
 torch
 coretex
 pillow
+types-Pillow
 ultralytics
 numpy
 pyyaml
+types-PyYAML
 tensorflow
 tensorflowjs
 tflite_support
