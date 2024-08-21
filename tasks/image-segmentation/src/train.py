@@ -4,7 +4,6 @@ import math
 import logging
 
 from coretex import TaskRun, ImageDataset, TaskRunStatus, Model, folder_manager
-from keras.callbacks import History
 from keras import Model as KerasModel
 
 import tensorflow as tf
@@ -47,7 +46,6 @@ def saveModelDescriptor(
     })
 
 
-
 def saveTFJSModel(modelPath: Path, path: Path) -> None:
     tfjs.converters.convert_tf_saved_model(
         str(modelPath),
@@ -87,7 +85,7 @@ def train(taskRun: TaskRun[ImageDataset]) -> None:
     epochs: int = taskRun.parameters["epochs"]
 
     try:
-        history: History = model.fit(
+        model.fit(
             trainBatches,
             epochs = epochs,
             steps_per_epoch = math.ceil(trainCount / taskRun.parameters["batchSize"]),

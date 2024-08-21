@@ -2,12 +2,11 @@ from typing import Generator
 
 import logging
 
+from coretex import TaskRun, TaskRunStatus, ImageDataset, folder_manager
 from keras.layers import RandomFlip, Layer
 
 import numpy as np
 import tensorflow as tf
-
-from coretex import TaskRun, TaskRunStatus, ImageDataset, folder_manager
 
 from .utils import hasDotAnnotation
 

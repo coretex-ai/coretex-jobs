@@ -3,7 +3,6 @@ from typing import Optional, Any
 import logging
 
 from keras.callbacks import Callback
-
 from coretex import currentTaskRun
 
 

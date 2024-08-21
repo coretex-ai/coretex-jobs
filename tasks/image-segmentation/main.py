@@ -21,9 +21,6 @@ def main() -> None:
     taskRun.updateStatus(TaskRunStatus.inProgress, "Downloading dataset")
     taskRun.dataset.download()
 
-
-
-
     if taskRun.parameters["validation"]:
         logging.info(f">> [Image Segmentation] Validating mode")
 
@@ -53,7 +50,6 @@ def main() -> None:
         taskRun.dataset.classes.exclude(excludedClasses)
 
         train(taskRun)
-
 
 
 if __name__ == "__main__":

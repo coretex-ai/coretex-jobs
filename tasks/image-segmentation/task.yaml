@@ -1,6 +1,7 @@
 id: image-segmentation
 name: Image Segmentation
-description: TODO
+description: A task for training and validating a model that determines segmentation for
+  selected classes
 is_active: true
 project_type: 1
 param_groups:
@@ -8,12 +9,12 @@ param_groups:
   params:
   - name: dataset
     description: Dataset id that is used for fetching dataset from coretex.
-    value: 2023
+    value: null
     data_type: dataset
     required: true
   - name: trainedModel
     description: Model used for image segmentation that needs validation
-    value: 870
+    value: null
     data_type: model
     required: false
 - name: outputs
@@ -55,6 +56,6 @@ param_groups:
   - name: excludedClasses
     description: Classes from the dataset which will be excluded from training the
       model
-    value: ["gender", "date_of_birth", "last_name", "first_name"]
+    value: []
     data_type: list[str]
     required: false
