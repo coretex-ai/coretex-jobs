@@ -18,8 +18,6 @@ from .callbacks import DisplayCallback
 from .validate import validate
 
 
-
-
 def saveModelDescriptor(
     model: KerasModel,
     taskRun: TaskRun[ImageDataset],
