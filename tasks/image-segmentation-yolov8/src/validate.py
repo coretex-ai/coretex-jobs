@@ -36,10 +36,10 @@ def createDatasetResults(taskRun: TaskRun[ImageDataset], sampleResults: list[dic
             })
 
         writer.writerow({
-        "Class": "dataset",
-        "Accuracy": f"{np.mean(datasetAcc):.2f}",
-        "Accuracy stdev": f"{np.std(datasetAcc):.2f}"
-    })
+            "Class": "dataset",
+            "Accuracy": f"{np.mean(datasetAcc):.2f}",
+            "Accuracy stdev": f"{np.std(datasetAcc):.2f}"
+        })
 
     if taskRun.createArtifact(datasetResultPath, datasetResultPath.name) is None:
         logging.warning(">> [Image Segmentation] Failed to upload csv file with dataset results as artifact")
@@ -167,15 +167,12 @@ def processSampleResult(
 ) -> dict[str, str]:
 
     sampleAnnotation = sample.load().annotation
-    if sampleAnnotation is None:
-        raise RuntimeError(f">> [Image Segmentation] The sample named \"{sample.name}\" (id: \"{sample.id}\") has no annotation.")
 
     csvRowResult: dict[str, str] = {}
     csvRowResult["sample id"] = f"{sample.id}"
     csvRowResult["sample name"] = sample.name
     for className in taskRun.dataset.classes.labels:
         csvRowResult[className] = "0.00"
-
 
     height = result.orig_shape[0]
     width = result.orig_shape[1]
@@ -188,8 +185,11 @@ def processSampleResult(
         for classId in list(set(classIds)):
             clazz = taskRun.dataset.classByName(classNames[classId])
             if clazz is not None:
-                origClassSeg = sampleAnnotation.extractSegmentationMask(ImageDatasetClasses([clazz]))
-                csvRowResult[classNames[classId]] = f"{calculateSingleClassAccuracy(classId, classIds, polygons, width, height, origClassSeg):.2f}"
+                if sampleAnnotation is not None:
+                    groundtruthClassMask = sampleAnnotation.extractSegmentationMask(ImageDatasetClasses([clazz]))
+                else:
+                    groundtruthClassMask = np.zeros((height, width))
+                csvRowResult[classNames[classId]] = f"{calculateSingleClassAccuracy(classId, classIds, polygons, width, height, groundtruthClassMask):.2f}"
             else:
                 csvRowResult[classNames[classId]] = "0.00"
 
@@ -197,10 +197,14 @@ def processSampleResult(
     else:
         predMask = np.zeros((height, width))
 
-    iou = iouScoreClass(sampleAnnotation.extractSegmentationMask(taskRun.dataset.classes), predMask)
+    if sampleAnnotation is not None:
+        groundtruthMask = sampleAnnotation.extractSegmentationMask(taskRun.dataset.classes)
+    else:
+        groundtruthMask = np.zeros((height, width))
+    iou = iouScoreClass(groundtruthMask, predMask)
     csvRowResult["accuracy"] = f"{iou:.2f}"
 
-    plotPath = plotSegmentationImage(result.path, sample.id, sampleAnnotation.extractSegmentationMask(taskRun.dataset.classes), predMask, iou)
+    plotPath = plotSegmentationImage(result.path, sample.id, groundtruthMask, predMask, iou)
     uploadSampleArtifacts(taskRun, sample.id, plotPath, csvRowResult)
 
     return csvRowResult
@@ -228,25 +232,28 @@ def validate(taskRun: TaskRun[ImageDataset], modelPath: Path, imgSize: int) -> f
 
     taskRun.updateStatus(TaskRunStatus.inProgress, "Processing predictions")
     processedResults: list[dict[str, str]] = []
+
     with ProcessPoolExecutor(max_workers = mp.cpu_count()) as executor:
         futures: list[Future[dict[str, str]]] = []
         for result, sample in zip(results, taskRun.dataset.samples):
             future = executor.submit(processSampleResult, taskRun, result, sample)
             futures.append(future)
 
-
         for counter, future in enumerate(as_completed(futures)):
             try:
-                processedResults.append(future.result())
+                processedSampleResult = future.result()
+                processedResults.append(processedSampleResult)
             except FileNotFoundError as e:
                 logging.warning(e)
 
-            logging.info(f">> [Image Segmentation] Processing results for sample {counter + 1}/{taskRun.dataset.count} has been finished")
+            logging.info(f">> [Image Segmentation] Processing results for sample {counter + 1}/{taskRun.dataset.count} has been finished. Sample id: {processedSampleResult['sample id']}, accuracy: {processedSampleResult['accuracy']}")
 
     taskRun.updateStatus(TaskRunStatus.inProgress, "Creating csv fils with results")
     createSampleResults(taskRun, processedResults)
     createDatasetResults(taskRun, processedResults)
 
     datasetAcc = [float(result['accuracy']) for result in processedResults]
+    accuracy = float(np.mean(datasetAcc))
+    logging.info(f">> [Image Segmentation] Dataset accuracy is: {accuracy}")
 
-    return float(np.mean(datasetAcc))
+    return accuracy

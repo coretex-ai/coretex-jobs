@@ -43,7 +43,7 @@ def saveModelDescriptor(taskRun:TaskRun[ImageDataset], model: Model, path: Path)
 
 def getPatience(taskRun: TaskRun) -> int:
     epochs = taskRun.parameters["epochs"]
-    earlyStopping = taskRun.parameters["earlyStopping"]
+    earlyStopping = taskRun.parameters.get("earlyStopping")
 
     if earlyStopping:
         # 10% of epochs or 50, whichever is higher
