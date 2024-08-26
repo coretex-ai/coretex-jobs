@@ -7,7 +7,7 @@ from keras.losses import SparseCategoricalCrossentropy
 from keras.applications.mobilenet_v2 import MobileNetV2
 
 
-class UpSampler(Sequential):
+class UpSampler(Sequential):  # type: ignore[misc]
 
     def __init__(self, filters: int, size: int):
         super(UpSampler, self).__init__()

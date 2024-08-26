@@ -1,3 +1,4 @@
+from typing import Optional, Any
 from pathlib import Path
 
 import random
@@ -39,7 +40,7 @@ def generateSample(
     minImageSize: float,
     maxImageSize: float,
     rotationAngle: int
-) -> tuple[Path, CoretexImageAnnotation]:
+) -> tuple[Path, CoretexImageAnnotation, Optional[dict[str, Any]]]:
 
     sample.unzip()
 
@@ -51,6 +52,8 @@ def generateSample(
 
     image = Image.fromarray(data.image)
     backgroundImage = ImageOps.exif_transpose(Image.open(backgroundImagePath))
+    if backgroundImage is None:
+        raise ValueError(f"Failed to open background image. ID: {backgroundImagePath.parent.name}")
 
     # Resize image
     parentAnnotationWidth = int(backgroundImage.width * random.uniform(minImageSize, maxImageSize))
@@ -102,4 +105,9 @@ def generateSample(
     imagePath = folder_manager.temp / f"{identifier}.jpeg"
     backgroundImage.save(imagePath)
 
-    return imagePath, updatedAnnotation
+    try:
+        metadata = sample.loadMetadata()
+    except FileNotFoundError as e:
+        metadata = None
+
+    return imagePath, updatedAnnotation, metadata

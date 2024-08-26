@@ -1,3 +1,5 @@
+from typing import Optional
+
 import time
 import logging
 import subprocess
@@ -38,7 +40,7 @@ def checkOllamaServer() -> bool:
         return False
 
 
-def launchOllamaServer() -> subprocess.Popen[bytes]:
+def launchOllamaServer() -> Optional[subprocess.Popen[bytes]]:
     if not isOllamaInstalled():
         installOllama()
 

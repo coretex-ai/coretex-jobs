@@ -17,6 +17,8 @@ def getModelName(modelVersion: str) -> str:
     if modelVersion == "70b-chat":
         return "NousResearch/Llama-2-70b-chat-hf"
 
+    raise ValueError("Invalid model version")
+
 
 def loadTokenizer(modelName:  str, context: Optional[int] = None) -> AutoTokenizer:
     tokenizer = AutoTokenizer.from_pretrained(modelName, trust_remote_code=True, model_max_length = context)
@@ -48,7 +50,7 @@ def uploadModel(taskRun: TaskRun, trainer: SFTTrainer, accuracy: float) -> None:
     newModelPath = modelFolder / f"{taskRun.id}-fine-tuned-llama2-{modelVersion}-lora-adapters"
 
     trainer.model.save_pretrained(newModelPath)
-    coretexModel = Model.createModel(newModelPath.name, taskRun.id, accuracy, {})
+    coretexModel = Model.createModel(newModelPath.name, taskRun.projectId, accuracy)
     coretexModel.upload(modelFolder)
 
     taskRun.submitOutput("outputModel", coretexModel)

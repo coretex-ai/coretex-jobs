@@ -9,7 +9,7 @@ py_config()
 # Import python modules
 builtins <- import_builtins()
 ctx <- import("coretex")
-ctx_folder_manager <- import("coretex.folder_manager")
+ctx_folder_manager <- ctx$folder_manager
 
 #Contents
 # 1. Set working directory
@@ -81,6 +81,28 @@ loadData <- function(dataset) {
     return(loadRData(rdataInSample[1]))
 }
 
+isSampleIdColumnName <- function(columnName) {
+    caseInsensitiveColumnNames <- c(
+        "id", "sampleid", "sample id", "sample-id", "sample_id", "sample.id", "featureid", "feature id", "feature-id"
+    )
+    # Make sure caseInsensitiveColumnNames is always lowercase
+    lapply(caseInsensitiveColumnNames, tolower)
+
+    caseSensitiveColumnNames <- c(
+        "#SampleID", "#Sample ID", "#OTUID", "#OTU ID", "sample_name"
+    )
+
+    if (tolower(columnName) %in% caseInsensitiveColumnNames) {
+        return(TRUE)
+    }
+
+    if (columnName %in% caseSensitiveColumnNames) {
+        return(TRUE)
+    }
+
+    return(FALSE)
+}
+
 getSampleIdColumnName <- function(metadata) {
     caseInsensitiveColumnNames <- c(
         "id", "sampleid", "sample id", "sample-id", "sample_id", "sample.id", "featureid", "feature id", "feature-id"
@@ -102,7 +124,7 @@ getSampleIdColumnName <- function(metadata) {
         }
     }
 
-    for (caseSensitiveColumnName in caseInsensitiveColumnNames) {
+    for (caseSensitiveColumnName in caseSensitiveColumnNames) {
         if (caseSensitiveColumnName %in% metadataColumns) {
             return(caseSensitiveColumnName)
         }
@@ -127,17 +149,18 @@ perpareSampleData <- function(phyloseqObject, targetColumn) {
     print("Renaming metadata sample ID/name column to \"sampleId\"")
     names(metadata)[names(metadata) == sampleIdColumn] <- "sampleId"
 
-    print("Checking body site column name")
-    if (!targetColumn %in% columnNames) {
-        stop(paste(
-            "Entered column name is not present in the phyloseq object. Column names:",
-            paste(c(columnNames), collapse = ", ")
-        ))
-    }
-
-    if (targetColumn == "sampleId") {
+    if (isSampleIdColumnName(targetColumn)) {
         metadata$target <- metadata$sampleId
     } else {
+        print("Checking target column name")
+
+        if (!targetColumn %in% columnNames) {
+            stop(paste(
+                "Entered column name is not present in the phyloseq object. Column names:",
+                paste(c(columnNames), collapse = ", ")
+            ))
+        }
+
         colnames(metadata)[which(columnNames == targetColumn)] <- "target"
     }
 
@@ -147,13 +170,12 @@ perpareSampleData <- function(phyloseqObject, targetColumn) {
     print(colnames(metadata))
     print(head(metadata))
 
-    return(phyloseqObject)
+    return(list(phyloseqObject, metadata))
 }
 
 subset_samples_custom <- function(pseq, targetColumnValue) {
     metadata <- data.frame(sample_data(pseq))
     if (!targetColumnValue %in% unique(metadata$target)) {
-        print(paste("Could not find", targetColumnValue, "among the samples"))
         return(NULL)
     }
 
@@ -187,10 +209,13 @@ validateTargetValues <- function(sampleDataFrame, targetValues) {
 }
 
 genusAbundancePlot <- function(pseq_bac, target_column_value, output_path, taskRun) {
-    print(sprintf("Creating abundance plot for %s", target_column_value))
-
-    genus_col_index <- which(rank_names(pseq_bac) == "genus")
     sa <- subset_samples_custom(pseq_bac, target_column_value)
+    if (is.null(sa)) {
+        return()
+    }
+
+    print(sprintf("Creating abundance plot for %s", target_column_value))
+    genus_col_index <- which(rank_names(pseq_bac) == "genus")
 
     genus_sum = tapply(taxa_sums(sa), tax_table(sa)[, "genus"], sum, na.rm = FALSE)
     topgenera = names(sort(genus_sum, TRUE))[1:30]
@@ -246,7 +271,7 @@ validatePhyoseq <- function(phyloseqObject) {
         sampleName <- rownames(metadata)[counter + 1]
         if (asvCount == 0) {
             sample_data(phyloseqObject) <- subset(metadata, metadata$sampleId != sampleName)
-            print(paste0("Sample ", sampleName, " has 0 ASVs in the OTU table!"))
+            print(paste0("Sample ", sampleName, " has 0 ASVs in the OTU table! This sample will be skipped during processing!"))
         }
         counter <- counter + 1
     }
@@ -254,7 +279,7 @@ validatePhyoseq <- function(phyloseqObject) {
     return (phyloseqObject)
 }
 
-alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path) {
+alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, metadata, output_path) {
     ########### 4. Plot read depths ##########
     print("4. Plot read depths")
 
@@ -482,7 +507,15 @@ alphaDiversity <- function(taskRun, pseq, pseq_bac, pseq_bac_normal, output_path
 
     ############### TF: Abundance Plots per sample and bodysite  ##################
 
-    target_column_values <- lapply(taskRun$parameters[["targetColumnValues"]], trimws)
+    target_column_values <- taskRun$parameters[["targetColumnValues"]]
+    if (is.null(target_column_values) || length(target_column_values) == 0) {
+        target_column_values <- unique(metadata$target)
+
+        print("Target column values not specified. Using all unique values from target column:")
+        print(target_column_values)
+    }
+
+    target_column_values <- lapply(target_column_values, trimws)
 
     # Control
     seq_controls <- pseq_bac
@@ -728,7 +761,9 @@ main <- function(taskRun) {
     pseq <- loadData(taskRun$dataset)
 
     targetColumn <- trimws(taskRun$parameters[["targetColumn"]])
-    pseq <- perpareSampleData(pseq, targetColumn)
+    prepareResult <- perpareSampleData(pseq, targetColumn)
+    pseq <- prepareResult[[1]]
+    metadata <- prepareResult[[2]]
 
     ########## 3. Process phyloseq object ##########
     print("3. Process phyloseq object")
@@ -757,7 +792,7 @@ main <- function(taskRun) {
     print(sprintf("Uploaded %s", basename(file_path)))
 
     print("Running: Alpha diversity")
-    alphaDiversity(taskRun, pseq, pseq_bac, pseq_bac_normal, ctx_folder_manager$createTempFolder("alpha_diversity"))
+    alphaDiversity(taskRun, pseq, pseq_bac, pseq_bac_normal, metadata, ctx_folder_manager$createTempFolder("alpha_diversity"))
 
     print("Running: Beta diversity")
     betaDiversity(taskRun, pseq, pseq_bac, pseq_bac_normal, ctx_folder_manager$createTempFolder("beta_diversity"))

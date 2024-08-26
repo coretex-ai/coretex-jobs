@@ -119,7 +119,7 @@ def main() -> None:
 
     coretexModel = Model.createModel(
         taskRun.generateEntityName(),
-        taskRun.id,
+        taskRun.projectId,
         history.history["val_accuracy"][-1]  # gets the validation accuracy after last epoch
     )
 

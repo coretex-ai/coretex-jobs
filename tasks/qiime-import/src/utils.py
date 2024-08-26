@@ -27,7 +27,7 @@ def detectFileEncoding(path: Path) -> Optional[str]:
         raise ValueError(">> [Qiime: Import] Metadate file is too small")
 
     with path.open("rb") as file:
-        encoding = cchardet.detect(file.read())["encoding"]
+        encoding: Optional[str] = cchardet.detect(file.read())["encoding"]
 
     if encoding is None:
         logging.warning(">> [Qiime: Import] Could not determine metadata encoding")

@@ -3,7 +3,7 @@ from typing import Optional
 import logging
 
 from coretex import CustomDataset, TaskRun, currentTaskRun
-from coretex.nlp import AudioTranscriber
+from coretex.nlp import AudioTranscriber  # type: ignore[attr-defined]
 
 from src import text_search
 from src.utils import createTranscriptionArtfacts, fetchModelFile

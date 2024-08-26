@@ -5,7 +5,7 @@ import logging
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import LabelEncoder
-from pandas import DataFrame
+from pandas import DataFrame, Series
 
 import pandas as pd
 
@@ -68,14 +68,14 @@ def loadDataset(coretexDataset: CustomDataset, validationSplit: float, labelColu
     return train, test, labels
 
 
-def extractXY(df: DataFrame, labelColumn: str) -> tuple[DataFrame, DataFrame]:
+def extractXY(df: DataFrame, labelColumn: str) -> tuple[DataFrame, Series]:
     x = df.drop(labelColumn, axis = 1)
     y = df[labelColumn]
 
     return x, y
 
 
-def extractTestTrainData(train: DataFrame, test: DataFrame, labelColumn: str) -> tuple[DataFrame, DataFrame, DataFrame, DataFrame]:
+def extractTestTrainData(train: DataFrame, test: DataFrame, labelColumn: str) -> tuple[DataFrame, DataFrame, Series, Series]:
     logging.info(f">> [Tabular Data Diagnostics] Extracting test and train data...")
     xTrain, yTrain = extractXY(train, labelColumn)
     xTest, yTest = extractXY(test, labelColumn)

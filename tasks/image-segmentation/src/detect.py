@@ -18,7 +18,12 @@ def run(taskRun: TaskRun, model: KerasModel, dataset: ImageDataset) -> None:
 
         sampleData = sample.load()
 
-        if hasDotAnnotation(sampleData.annotation):
+        annotation = sampleData.annotation
+        if annotation is None:
+            logging.warning(f">> [Image Segmentation] Sample \"{sample.name}\" (ID: {sample.id}) has no annotation. Skipping Sample")
+            continue
+
+        if hasDotAnnotation(annotation):
             logging.warning(f">> [Image Segmentation] Sample \"{sample.name}\" (ID: {sample.id}) has invalid annotation (too few coordinates). Skipping Sample")
             continue
 

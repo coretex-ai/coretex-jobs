@@ -1,3 +1,4 @@
+from typing import Any, Optional
 from pathlib import Path
 from contextlib import ExitStack
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, Future
@@ -19,15 +20,22 @@ def getRandomSamples(dataset: ImageDataset, count: int) -> list[ImageSample]:
     return [dataset.samples[i] for i in indexes]
 
 
-def didGenerateSample(dataset: ImageDataset, future: Future[tuple[Path, CoretexImageAnnotation]]) -> None:
+def didGenerateSample(
+    dataset: ImageDataset,
+    future: Future[tuple[Path, CoretexImageAnnotation, Optional[dict[str, Any]]]]
+) -> None:
+
     try:
-        imagePath, annotation = future.result()
+        imagePath, annotation, metadata = future.result()
         generatedSample = dataset.add(imagePath)
 
         if not generatedSample.saveAnnotation(annotation):
             logging.error(f">> [SyntheticImageGenerator] Failed to save annotation for generated sample \"{generatedSample.name}\"")
         else:
             logging.info(f">> [SyntheticImageGenerator] Generated sample \"{generatedSample.name}\"")
+
+        if metadata is not None:
+            generatedSample.saveMetadata(metadata)
     except BaseException as exception:
         logging.error(f">> [SyntheticImageGenerator] Failed to generate sample. Reason: {exception}")
         logging.debug(exception, exc_info = exception)

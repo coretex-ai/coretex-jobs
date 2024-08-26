@@ -24,4 +24,4 @@ param_groups:
       column.
     value: null
     data_type: list[str]
-    required: true
+    required: false

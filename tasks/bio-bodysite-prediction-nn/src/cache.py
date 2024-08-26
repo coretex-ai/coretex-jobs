@@ -69,7 +69,7 @@ def cacheDataset(
         logging.info(">> [MicrobiomeForensics] Successfuly cached assembled dataset")
 
 
-def loadCache(taskRun: TaskRun[CustomDataset], cacheName: str) -> tuple[Path, dict[str, int], dict[str, int]]:
+def loadCache(taskRun: TaskRun[CustomDataset], cacheName: str) -> tuple[dict[str, int], dict[str, int], int]:
     logging.info(">> [MicrobiomeForensics] Loading assembled dataset to cache")
     start = time.time()
 
@@ -77,6 +77,9 @@ def loadCache(taskRun: TaskRun[CustomDataset], cacheName: str) -> tuple[Path, di
     datasetPath.mkdir(parents = True, exist_ok = True)
 
     cache = getCache(cacheName)
+    if cache is None:
+        raise ValueError(">> [MicrobiomeForensics] Failed to retrieve cache")
+
     cache.download()
 
     samples = cache.getSamples(lambda sample: sample.name != "taxonDistribution" and sample.name != "classDistribution")
@@ -89,15 +92,23 @@ def loadCache(taskRun: TaskRun[CustomDataset], cacheName: str) -> tuple[Path, di
         with datasetPath.joinpath(sample.name).open("wb") as file:
             pickle.dump(content, file)
 
-    taxonDistribution = cache.getSample("taxonDistribution")
-    classDistribution = cache.getSample("classDistribution")
+    taxonDistributionCache = cache.getSample("taxonDistribution")
+    classDistributionCache = cache.getSample("classDistribution")
 
-    if taxonDistribution is None and classDistribution is None:
+    if taxonDistributionCache is None and classDistributionCache is None:
         raise RuntimeError(">> [MicrobiomeForensics] Could not find taxonDistribution and classDistribution files in cache")
-    elif taxonDistribution is None:
+    elif taxonDistributionCache is None:
         raise RuntimeError(">> [MicrobiomeForensics] Could not find taxonDistribution file in cache")
-    elif classDistribution is None:
+    elif classDistributionCache is None:
         raise RuntimeError(">> [MicrobiomeForensics] Could not find classDistribution file in cache")
+
+    taxonDistributionCache.unzip()
+    with taxonDistributionCache.path.joinpath("taxonDistribution.pkl").open("rb") as file:
+        taxonDistribution: dict[str, int] = pickle.load(file)
+
+    classDistributionCache.unzip()
+    with classDistributionCache.path.joinpath("classDistribution.pkl").open("rb") as file:
+        classDistribution: dict[str, int] = pickle.load(file)
 
     uniqueTaxons = generateTaxonEncoding(taxonDistribution)
     uniqueBodySites = generateClassEncodings(classDistribution)
@@ -108,7 +119,7 @@ def loadCache(taskRun: TaskRun[CustomDataset], cacheName: str) -> tuple[Path, di
 
     plots(taskRun, classDistribution, taxonDistribution, datasetLen)
 
-    return datasetPath, uniqueBodySites, uniqueTaxons, datasetLen
+    return uniqueBodySites, uniqueTaxons, datasetLen
 
 
 def generateTaxonEncoding(taxonDistribution: dict[str, int]) -> dict[str, int]:

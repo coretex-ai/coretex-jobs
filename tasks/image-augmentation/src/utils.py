@@ -1,3 +1,5 @@
+from typing import Optional
+
 import logging
 
 from numpy import ndarray
@@ -10,7 +12,8 @@ from coretex import CoretexImageAnnotation, ImageDataset, folder_manager, ImageS
 def uploadAugmentedImage(
     imageName: str,
     augmentedImage: ndarray,
-    annotation: CoretexImageAnnotation,
+    annotation: Optional[CoretexImageAnnotation],
+    originalSample: ImageSample,
     outputDataset: ImageDataset
 ) -> None:
 
@@ -23,8 +26,17 @@ def uploadAugmentedImage(
         logging.error(f">> [Image Augmentation] Failed to upload sample {imagePath} - \"{ex}\"")
         return
 
-    if not augmentedSample.saveAnnotation(annotation):
-        logging.error(f">> [Image Augmentation] Failed to update sample annotation {imagePath}")
+    if annotation is not None:
+        if not augmentedSample.saveAnnotation(annotation):
+            logging.error(f">> [Image Augmentation] Failed to update sample annotation {imagePath}")
+
+    try:
+        metadata = originalSample.loadMetadata()
+        augmentedSample.saveMetadata(metadata)
+    except FileNotFoundError:
+        logging.info(f">> [Image Augmentation] The metadata for sample \"{originalSample.name}\" was not found")
+    except ValueError:
+        logging.info(f">> [Image Augmentation] Invalid metadata type for sample \"{originalSample.name}\"")
 
 
 def copySample(sample: ImageSample, dataset: ImageDataset) -> None:
@@ -43,3 +55,11 @@ def copySample(sample: ImageSample, dataset: ImageDataset) -> None:
 
             if not copy.delete():
                 logging.error("\tFailed to delete sample")
+
+    try:
+        metadata = sample.loadMetadata()
+        copy.saveMetadata(metadata)
+    except FileNotFoundError:
+        logging.info(f">> [Image Augmentation] The metadata for sample \"{sample.name}\" was not found")
+    except ValueError:
+        logging.info(f">> [Image Augmentation] Invalid metadata type for sample \"{sample.name}\"")

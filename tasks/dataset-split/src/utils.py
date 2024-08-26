@@ -1,10 +1,9 @@
 from typing import TypeVar
 
-from coretex import NetworkSample, NetworkDataset
+from coretex import NetworkSample
 
 
 SampleType = TypeVar("SampleType", bound = NetworkSample)
-DatasetType = TypeVar("DatasetType", bound = NetworkDataset)
 
 
 def splitOriginalSamples(originalSamples: list[SampleType], datasetCount: int) -> list[list[SampleType]]:
