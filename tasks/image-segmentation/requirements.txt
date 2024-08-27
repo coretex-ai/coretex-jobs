@@ -1,7 +1,7 @@
-tensorflow
-numpy
+tensorflow==2.8
+numpy==1.23.1
 matplotlib
-protobuf
+protobuf~=3.19.0
 opencv-python
 coremltools==6.3.0
 coretex
