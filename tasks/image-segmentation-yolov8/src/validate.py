@@ -109,7 +109,7 @@ def plotSegmentationImage(
     plotPath = folder_manager.temp.joinpath(f"{sampleId}.jpeg")
     plt.savefig(plotPath)
     plt.close()
-    gc.collect()  # The garbage collector is manually invoked after each plotting to prevent a memory leak
+    #gc.collect()  # The garbage collector is manually invoked after each plotting to prevent a memory leak
 
     return plotPath
 
@@ -204,40 +204,72 @@ def processSampleResult(
     iou = iouScoreClass(groundtruthMask, predMask)
     csvRowResult["accuracy"] = f"{iou:.2f}"
 
-    plotPath = plotSegmentationImage(result.path, sample.id, groundtruthMask, predMask, iou)
+    plotPath = plotSegmentationImage(sample.imagePath, sample.id, groundtruthMask, predMask, iou)
     uploadSampleArtifacts(taskRun, sample.id, plotPath, csvRowResult)
+
+    logging.warning(csvRowResult)
 
     return csvRowResult
 
 
-def validate(taskRun: TaskRun[ImageDataset], modelPath: Path, imgSize: int) -> float:
-    taskRun.updateStatus(TaskRunStatus.inProgress, "Validating")
-
+def batchPredict(modelPath: Path, batchSamplesPaths: list[Path], imgSize: int, confTreshold: float) -> Results:
     model = YOLO(modelPath)
-    samples = [sample.imagePath for sample in taskRun.dataset.samples]
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     logging.info(f">> [Image Segmentation] The {str(device).upper()} will be used for validating")
 
-    logging.info(">> [Image Segmentation] Validatin the model")
     results = model.predict(
-        source = samples,
+        source = batchSamplesPaths,
         save = False,
-        batch = taskRun.parameters["batchSize"],
         imgsz = imgSize,
         plots = False,
-        conf = taskRun.parameters["confidenceTreshold"]
+        conf = confTreshold
     )
 
-    taskRun.updateStatus(TaskRunStatus.inProgress, "Processing predictions")
-    processedResults: list[dict[str, str]] = []
+    return results
 
+
+
+def validate(taskRun: TaskRun[ImageDataset], modelPath: Path, imgSize: int) -> float:
+    taskRun.updateStatus(TaskRunStatus.inProgress, "Validating")
+
+
+
+    #samples = [sample.imagePath for sample in taskRun.dataset.samples]
+    samples = taskRun.dataset.samples
+
+
+
+    logging.info(">> [Image Segmentation] Validatin the model")
+
+    futures: list[Future[dict[str, str]]] = []
+    processedResults: list[dict[str, str]] = []
     with ProcessPoolExecutor(max_workers = mp.cpu_count()) as executor:
-        futures: list[Future[dict[str, str]]] = []
-        for result, sample in zip(results, taskRun.dataset.samples):
-            future = executor.submit(processSampleResult, taskRun, result, sample)
-            futures.append(future)
+
+        for startIndex in range(0, taskRun.dataset.count, taskRun.parameters["batchSize"]):
+            batchSamples = samples[startIndex:startIndex + taskRun.parameters["batchSize"]]
+            batchSamplesPaths = [sample.imagePath for sample in batchSamples]
+
+            logging.warning("radim predikciju")
+            results = batchPredict(modelPath, batchSamplesPaths, imgSize, taskRun.parameters["confidenceTreshold"])
+
+
+
+
+            logging.warning("obradjujem batch")
+
+
+            # for result, sample in zip(results, batchSamples):
+            #     processedSampleResult = processSampleResult(taskRun, result, sample)
+            #     processedBatchResults.append(processedSampleResult)
+
+
+
+
+            for result, sample in zip(results, batchSamples):
+                future = executor.submit(processSampleResult, taskRun, result, sample)
+                futures.append(future)
 
         for counter, future in enumerate(as_completed(futures)):
             try:
@@ -246,7 +278,9 @@ def validate(taskRun: TaskRun[ImageDataset], modelPath: Path, imgSize: int) -> f
             except FileNotFoundError as e:
                 logging.warning(e)
 
-            logging.info(f">> [Image Segmentation] Processing results for sample {counter + 1}/{taskRun.dataset.count} has been finished. Sample id: {processedSampleResult['sample id']}, accuracy: {processedSampleResult['accuracy']}")
+
+
+
 
     taskRun.updateStatus(TaskRunStatus.inProgress, "Creating csv fils with results")
     createSampleResults(taskRun, processedResults)
