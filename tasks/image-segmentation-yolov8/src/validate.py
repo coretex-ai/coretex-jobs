@@ -2,7 +2,6 @@ from concurrent.futures import ProcessPoolExecutor, Future, as_completed
 from pathlib import Path
 
 import logging
-import gc
 import csv
 import multiprocessing as mp
 
@@ -11,6 +10,7 @@ from coretex import TaskRun, ImageDataset, ImageDatasetClasses, folder_manager, 
 from ultralytics import YOLO
 from matplotlib import pyplot as plt
 from ultralytics.engine.results import Results, Masks
+from coretex.networking.network_manager import networkManager
 
 import numpy as np
 import torch
@@ -74,42 +74,40 @@ def uploadSampleArtifacts(taskRun: TaskRun[ImageDataset], sampleId: int, plotPat
 
     if taskRun.createArtifact(csvSamplePath, f"sample_results/{sampleId}/results.csv") is None:
         logging.warning(f">> [Image Segmentation] Failed to upload csv file with results for sample {sampleId} as artifact")
-    else:
-        logging.info(f">> [Image Segmentation] The csv file with results for sample {sampleId} has been uploaded as artifact")
 
     if taskRun.createArtifact(plotPath, f"sample_results/{sampleId}/{plotPath.name}") is None:
         logging.warning(f">> [Image Segmentation] Failed to upload image \"{plotPath.name}\" with segmentation as artifact")
-    else:
-        logging.info(f">> [Image Segmentation] The segmentation image \"{plotPath.name}\" has been uploaded as artifact")
 
 
 def plotSegmentationImage(
-    imagePath: Path,
+    image: np.ndarray,
     sampleId: int,
     origSeg: np.ndarray,
     predictedMask: np.ndarray,
     iou: float
 ) -> Path:
 
-    img = Image.open(imagePath)
     fig, axes = plt.subplots(1, 3, figsize = (20, 10))
 
-    axes[0].imshow(img, cmap = "summer")
-    axes[0].set_title(f"Original image, id: {sampleId}")
-    axes[0].axis("off")
+    ax1 = axes[0]
+    ax1.imshow(image, cmap = "summer")
+    ax1.set_title(f"Original image, id: {sampleId}")
+    ax1.axis("off")
 
-    axes[1].imshow(origSeg, cmap = "summer")
-    axes[1].set_title(f"Original segmentation")
-    axes[1].axis("off")
+    ax2 = axes[1]
+    ax2.imshow(origSeg, cmap = "summer")
+    ax2.set_title(f"Original segmentation")
+    ax2.axis("off")
 
-    axes[2].imshow(predictedMask, cmap = "summer")
-    axes[2].set_title(f"Predicted segmentation\nAcc: {iou:.2f}")
-    axes[2].axis("off")
+    ax3 = axes[2]
+    ax3.imshow(predictedMask, cmap = "summer")
+    ax3.set_title(f"Predicted segmentation\nAcc: {iou:.2f}")
+    ax3.axis("off")
 
     plotPath = folder_manager.temp.joinpath(f"{sampleId}.jpeg")
     plt.savefig(plotPath)
+    fig.clear()
     plt.close()
-    #gc.collect()  # The garbage collector is manually invoked after each plotting to prevent a memory leak
 
     return plotPath
 
@@ -163,8 +161,11 @@ def extractPolygonsFromResultsMasks(masks: Masks, height: int, width: int) -> li
 def processSampleResult(
     taskRun: TaskRun[ImageDataset],
     result: Results,
-    sample: ImageSample
+    sample: ImageSample,
+    refreshedToken: str
 ) -> dict[str, str]:
+
+    networkManager.authenticateWithRefreshToken(refreshedToken)
 
     sampleAnnotation = sample.load().annotation
 
@@ -201,86 +202,65 @@ def processSampleResult(
         groundtruthMask = sampleAnnotation.extractSegmentationMask(taskRun.dataset.classes)
     else:
         groundtruthMask = np.zeros((height, width))
+
     iou = iouScoreClass(groundtruthMask, predMask)
     csvRowResult["accuracy"] = f"{iou:.2f}"
 
-    plotPath = plotSegmentationImage(sample.imagePath, sample.id, groundtruthMask, predMask, iou)
+    plotPath = plotSegmentationImage(result.orig_img, sample.id, groundtruthMask, predMask, iou)
     uploadSampleArtifacts(taskRun, sample.id, plotPath, csvRowResult)
-
-    logging.warning(csvRowResult)
 
     return csvRowResult
 
 
-def batchPredict(modelPath: Path, batchSamplesPaths: list[Path], imgSize: int, confTreshold: float) -> Results:
+def validate(taskRun: TaskRun[ImageDataset], modelPath: Path, imgSize: int) -> float:
+    taskRun.updateStatus(TaskRunStatus.inProgress, "Validating")
+
     model = YOLO(modelPath)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     logging.info(f">> [Image Segmentation] The {str(device).upper()} will be used for validating")
 
-    results = model.predict(
-        source = batchSamplesPaths,
-        save = False,
-        imgsz = imgSize,
-        plots = False,
-        conf = confTreshold
-    )
-
-    return results
-
-
-
-def validate(taskRun: TaskRun[ImageDataset], modelPath: Path, imgSize: int) -> float:
-    taskRun.updateStatus(TaskRunStatus.inProgress, "Validating")
-
-
-
-    #samples = [sample.imagePath for sample in taskRun.dataset.samples]
     samples = taskRun.dataset.samples
+    batchSize = taskRun.parameters["batchSize"]
 
+    logging.info(f">> [Image Segmentation] Validating the model with batch size {batchSize}")
 
-
-    logging.info(">> [Image Segmentation] Validatin the model")
-
-    futures: list[Future[dict[str, str]]] = []
     processedResults: list[dict[str, str]] = []
-    with ProcessPoolExecutor(max_workers = mp.cpu_count()) as executor:
+    context = mp.get_context("spawn")
 
-        for startIndex in range(0, taskRun.dataset.count, taskRun.parameters["batchSize"]):
-            batchSamples = samples[startIndex:startIndex + taskRun.parameters["batchSize"]]
+    with ProcessPoolExecutor(max_workers = mp.cpu_count(), mp_context = context) as executor:
+        counter = 1
+        for startIndex in range(0, taskRun.dataset.count, batchSize):
+            batchSamples = samples[startIndex:startIndex + batchSize]
             batchSamplesPaths = [sample.imagePath for sample in batchSamples]
 
-            logging.warning("radim predikciju")
-            results = batchPredict(modelPath, batchSamplesPaths, imgSize, taskRun.parameters["confidenceTreshold"])
+            results = model.predict(
+                source = batchSamplesPaths,
+                save = False,
+                imgsz = imgSize,
+                plots = False,
+                conf = taskRun.parameters["confidenceTreshold"]
+            )
 
+            futures: list[Future[dict[str, str]]] = []
 
-
-
-            logging.warning("obradjujem batch")
-
-
-            # for result, sample in zip(results, batchSamples):
-            #     processedSampleResult = processSampleResult(taskRun, result, sample)
-            #     processedBatchResults.append(processedSampleResult)
-
-
-
+            refreshedToken = networkManager._refreshToken
+            if refreshedToken is None:
+                raise RuntimeError(">> [Image Segmentation] Refreshing the authentication token failed.")
 
             for result, sample in zip(results, batchSamples):
-                future = executor.submit(processSampleResult, taskRun, result, sample)
+                future = executor.submit(processSampleResult, taskRun, result, sample, refreshedToken)
                 futures.append(future)
 
-        for counter, future in enumerate(as_completed(futures)):
-            try:
-                processedSampleResult = future.result()
-                processedResults.append(processedSampleResult)
-            except FileNotFoundError as e:
-                logging.warning(e)
-
-
-
-
+            for future in as_completed(futures):
+                try:
+                    processedSampleResult = future.result()
+                    processedResults.append(processedSampleResult)
+                    logging.info(f"Postprocessing for sample {counter}/{taskRun.dataset.count} is finished. Sample ID: {processedSampleResult['sample id']} -> accuracy: {processedSampleResult['accuracy']}")
+                    counter += 1
+                except FileNotFoundError as e:
+                    logging.warning(e)
 
     taskRun.updateStatus(TaskRunStatus.inProgress, "Creating csv fils with results")
     createSampleResults(taskRun, processedResults)

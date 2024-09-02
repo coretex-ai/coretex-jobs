@@ -34,6 +34,7 @@ param_groups:
     required: true
   - name: batchSize
     description: Number of segments into which dataset is split during the training or validating
+    value: 18
     data_type: int
     required: true
   - name: confidenceTreshold
@@ -57,7 +58,7 @@ param_groups:
     required: false
   - name: epochs
     description: Number of times the data is run throught the model
-    value: 10
+    value: 1
     data_type: int
     required: false
   - name: validationSplit
