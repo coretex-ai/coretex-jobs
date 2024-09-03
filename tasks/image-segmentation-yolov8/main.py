@@ -15,16 +15,25 @@ def main() -> None:
 
     if taskRun.parameters["validation"]:
         logging.info(">> [Image Segmentation] Validating mode")
-        if taskRun.parameters["trainedModel"] is None:
+        if taskRun.parameters.get("trainedModel") is None:
             raise RuntimeError("Model used for image segmentation that needs validation is not valid")
 
         ctxModel: Model = taskRun.parameters["trainedModel"]
         ctxModel.download()
 
-        with (ctxModel.path / ctxModel.modelDescriptorFileName()).open("r") as file:
-            modelDesc = dict(json.load(file))
-            imgSize = int(modelDesc["imageSize"])
-            classLabels = [str(clazz["label"]) for clazz in modelDesc["labels"]]
+        with ctxModel.path.joinpath(ctxModel.modelDescriptorFileName()).open("r") as file:
+            modelDesc = json.load(file)
+            if not isinstance(modelDesc, dict):
+                raise ValueError(">> [Image Segmentation] The expected type of objects from the JSON file is \"dict\", but a different type was read.")
+
+            imgSize = modelDesc["imageSize"]
+            if not isinstance(imgSize, int):
+                raise ValueError(">> [Image Segmentation] The expected type of the object for the \"imageSize\" key in the dictionary from the JSON file is \"int\", but a different type was read.")
+
+            classLabels = [clazz["label"] for clazz in modelDesc["labels"]]
+            for label in classLabels:
+                if not isinstance(label, str):
+                    raise ValueError(">> [Image Segmentation] The expected type of the object for the \"labels\" key in the dictionary from the JSON file is \"dict[str, str]\", but a different type was read.")
 
         modelPath = ctxModel.path / "best.pt"
 
@@ -38,10 +47,12 @@ def main() -> None:
         validate(taskRun, modelPath, imgSize)
     else:
         logging.info(">> [Image Segmentation] Training mode")
-        if taskRun.parameters["epochs"] is None:
+        if taskRun.parameters.get("epochs") is None:
             raise RuntimeError(">> [Image Segmentation] The number of training epochs is not defined")
-        if taskRun.parameters["imageSize"] is None:
+        if taskRun.parameters.get("imageSize") is None:
             raise RuntimeError(">> [Image Segmentation] The \"imageSize\" parameter is not defined")
+        if taskRun.parameters.get("earlyStopping") is None:
+            raise RuntimeError(">> [Image Segmentation] The \"earlyStopping\" parameter is not defined")
 
         excludedClasses = taskRun.parameters["excludedClasses"]
         logging.info(f">> [Image Segmentation] Excluding classes: {excludedClasses}")
@@ -50,7 +61,7 @@ def main() -> None:
         taskRun.updateStatus(TaskRunStatus.inProgress, "Downloading dataset")
         taskRun.dataset.download()
 
-        if not isValidationSplitValid(taskRun.parameters["validationSplit"], taskRun.dataset.count):
+        if not isValidationSplitValid(taskRun.parameters.get("validationSplit", 0.2), taskRun.dataset.count):
             raise ValueError(f">> [Image Segmentation] validationSplit parameter is invalid")
 
         datasetPath = folder_manager.createTempFolder("dataset")
