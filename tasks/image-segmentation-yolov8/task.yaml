@@ -13,14 +13,14 @@ param_groups:
     data_type: dataset
     required: true
   - name: trainedModel
-    description: Model used for image segmentation that needs validation
+    description: Model used for image segmentation that needs validation.
     value: null
     data_type: model
     required: false
 - name: outputs
   params:
   - name: outputModel
-    description: Model trained by this Task
+    description: Model trained by this Task.
     value: null
     data_type: model
     required: false
@@ -28,24 +28,24 @@ param_groups:
   params:
   - name: validation
     description: Whether to perform training or validation for image segmentation. If true, only validation
-      will be performed; if false, only training will be performed
+      will be performed; if false, only training will be performed.
     value: false
     data_type: bool
     required: true
   - name: batchSize
-    description: Number of segments into which dataset is split during the training or validating
+    description: Number of segments into which dataset is split during the training or validating.
     value: 18
     data_type: int
     required: true
   - name: confidenceTreshold
-    description: The minimum confidence value that a prediction must have to be accepted as valid
+    description: The minimum confidence value that a prediction must have to be accepted as valid.
     value: 0.1
     data_type: float
     required: true
 - name: trainParameters
   params:
   - name: weights
-    description: YoloV8 weights which are used for training the model
+    description: YoloV8 weights which are used for training the model.
     value:
       selected: 0
       options:
@@ -62,24 +62,24 @@ param_groups:
     data_type: int
     required: false
   - name: validationSplit
-    description: Percentage of data from the dataset which will be used as validation
+    description: Percentage of data from the dataset which will be used as validation.
       data
     value: 0.2
     data_type: float
     required: false
   - name: imageSize
-    description: Size to which the images from the dataset will be resized for training
+    description: Size to which the images from the dataset will be resized for training.
     value: 128
     data_type: int
     required: false
   - name: excludedClasses
-    description: Classes from the dataset which will be excluded from training the model
+    description: Classes from the dataset which will be excluded from training the model.
     value: []
     data_type: list[str]
     required: false
   - name: earlyStopping
     description: Enable/disable early stopping of Run if loss hasn't decreased after
-      multiple epochs
+      multiple epochs.
     value: true
     data_type: bool
     required: false
