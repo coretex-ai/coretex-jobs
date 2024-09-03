@@ -8,7 +8,7 @@ param_groups:
   - name: inputs
     params:
       - name: datasets
-        value: [1915, 1228]
+        value: null
         required: true
         data_type: list[dataset]
         description: A list of datasets of the same type that need to be merged into one dataset
