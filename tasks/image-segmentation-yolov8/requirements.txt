@@ -1,0 +1,9 @@
+torch>=2.2.2
+coretex
+pillow>=10.2.0
+ultralytics>=8.2.79
+numpy<2.0.0
+pyyaml>=6.0.1
+tensorflow
+tensorflowjs
+coremltools

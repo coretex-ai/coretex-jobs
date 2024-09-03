@@ -1,0 +1,85 @@
+id: image-segmentation-yolov8
+name: image-segmentation-yolov8
+description: A task for training and validating a model that determines segmentation for
+  selected classes using the YOLO v8 model.
+is_active: true
+project_type: 1
+param_groups:
+- name: inputs
+  params:
+  - name: dataset
+    description: A dataset containing photographs for model training or validation.
+    value: null
+    data_type: dataset
+    required: true
+  - name: trainedModel
+    description: Model used for image segmentation that needs validation.
+    value: null
+    data_type: model
+    required: false
+- name: outputs
+  params:
+  - name: outputModel
+    description: Model trained by this Task.
+    value: null
+    data_type: model
+    required: false
+- name: sharedParameters
+  params:
+  - name: validation
+    description: Whether to perform training or validation for image segmentation. If true, only validation
+      will be performed; if false, only training will be performed.
+    value: false
+    data_type: bool
+    required: true
+  - name: batchSize
+    description: Number of segments into which dataset is split during the training or validating.
+    value: 18
+    data_type: int
+    required: true
+  - name: confidenceTreshold
+    description: The minimum confidence value that a prediction must have to be accepted as valid.
+    value: 0.1
+    data_type: float
+    required: true
+- name: trainParameters
+  params:
+  - name: weights
+    description: YoloV8 weights which are used for training the model.
+    value:
+      selected: 0
+      options:
+      - yolov8n-seg.pt
+      - yolov8s-seg.pt
+      - yolov8m-seg.pt
+      - yolov8l-seg.pt
+      - yolov8x-seg.pt
+    data_type: enum
+    required: false
+  - name: epochs
+    description: Number of times the data is run throught the model
+    value: 1
+    data_type: int
+    required: false
+  - name: validationSplit
+    description: Percentage of data from the dataset which will be used as validation.
+      data
+    value: 0.2
+    data_type: float
+    required: false
+  - name: imageSize
+    description: Size to which the images from the dataset will be resized for training.
+    value: 128
+    data_type: int
+    required: false
+  - name: excludedClasses
+    description: Classes from the dataset which will be excluded from training the model.
+    value: []
+    data_type: list[str]
+    required: false
+  - name: earlyStopping
+    description: Enable/disable early stopping of Run if loss hasn't decreased after
+      multiple epochs.
+    value: true
+    data_type: bool
+    required: false
