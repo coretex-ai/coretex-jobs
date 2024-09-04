@@ -25,7 +25,7 @@ if rag:
 
 with Path.cwd().parent.joinpath("metadata.json").open("r") as file:
     metadata = json.load(file)
-    streaming = metadata.get("streaming", False)
+    isStreaming = metadata.get("streaming", False)
 
 
 def saveChatHistory(messages: list[dict[str, str]], sessionPath: Path) -> None:
@@ -88,8 +88,8 @@ def response(requestData: dict[str, Any]) -> Union[dict[str, Any], Generator[dic
         "content": query
     })
 
-    logging.debug(f">>> Running {'streaming' if streaming else 'batch'} inference on LLM")
-    if streaming:
+    logging.debug(f">>> Running {'streaming' if isStreaming else 'batch'} inference on LLM")
+    if isStreaming:
         return streamingChat(messages, sessionPath)
 
     response = ollama.chat(

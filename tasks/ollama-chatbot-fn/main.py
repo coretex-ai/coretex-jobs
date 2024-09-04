@@ -25,21 +25,21 @@ def main() -> None:
     model = Model.createModel(f"{taskRun.id}-rag-chatbot", taskRun.projectId, 1.0)
 
     modelFunction = Path(".", "resources", "function")
-    resDir = folder_manager.createTempFolder("resDir")
+    resourcesDir = folder_manager.createTempFolder("resourcesDir")
 
-    copyDir(modelFunction, resDir, "function")
+    copyDir(modelFunction, resourcesDir, "function")
 
     if taskRun.parameters["dataset"] is not None:
         taskRun.dataset.download()
         sample = taskRun.dataset.samples[0]
         sample.unzip()
 
-        copyDir(sample.path, resDir, "corpus-index")
+        copyDir(sample.path, resourcesDir, "corpus-index")
 
-    with resDir.joinpath("metadata.json").open("w") as file:
+    with resourcesDir.joinpath("metadata.json").open("w") as file:
         json.dump({"streaming": taskRun.parameters["streaming"]}, file)
 
-    model.upload(resDir)
+    model.upload(resourcesDir)
 
     logging.info(">> [DocumentOCR] Model deployed \U0001F680\U0001F680\U0001F680")
 
