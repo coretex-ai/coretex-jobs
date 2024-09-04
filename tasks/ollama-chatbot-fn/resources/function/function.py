@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Generator, Union
 from pathlib import Path
 
 import uuid
@@ -28,12 +28,12 @@ with Path.cwd().parent.joinpath("metadata.json").open("r") as file:
     streaming = metadata.get("streaming", False)
 
 
-def saveChatHistory(messages: list[dict[str, str]], sessionPath: Path):
+def saveChatHistory(messages: list[dict[str, str]], sessionPath: Path) -> None:
     with sessionPath.open("w") as file:
         json.dump(messages, file)
 
 
-def streamingChat(messages: list[dict[str, str]], sessionPath: Path):
+def streamingChat(messages: list[dict[str, str]], sessionPath: Path)  -> Generator[dict[str, Any], Any, None]:
     fullResponse = ""
     response = ollama.chat(
         model = "llama3",
@@ -50,7 +50,7 @@ def streamingChat(messages: list[dict[str, str]], sessionPath: Path):
     saveChatHistory(messages, sessionPath)
 
 
-def response(requestData: dict[str, Any]) -> dict[str, Any]:
+def response(requestData: dict[str, Any]) -> Union[dict[str, Any], Generator[dict[str, Any], Any, None]]:
     inputSessionId = requestData.get("session_id")
     sessionId = str(uuid.uuid1()) if inputSessionId is None else inputSessionId
     sessionPath =  memoryFolder / f"{sessionId}.json"
