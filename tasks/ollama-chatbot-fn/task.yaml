@@ -11,3 +11,10 @@ param_groups:
     value: null
     data_type: dataset
     required: false
+- name: parameters
+  params:
+  - name: streaming
+    description: If the chatbot will return a streaming response (streaming node)
+    value: true
+    data_type: bool
+    required: true
