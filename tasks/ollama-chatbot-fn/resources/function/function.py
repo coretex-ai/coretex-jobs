@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Generator, Union
 from pathlib import Path
 
 import uuid
@@ -23,8 +23,34 @@ rag = indexDir.exists()
 if rag:
     corpus, index = loadCorpusAndIndex(indexDir)
 
+with Path.cwd().parent.joinpath("metadata.json").open("r") as file:
+    metadata = json.load(file)
+    streaming = metadata.get("streaming", False)
 
-def response(requestData: dict[str, Any]) -> dict[str, Any]:
+
+def saveChatHistory(messages: list[dict[str, str]], sessionPath: Path) -> None:
+    with sessionPath.open("w") as file:
+        json.dump(messages, file)
+
+
+def streamingChat(messages: list[dict[str, str]], sessionPath: Path)  -> Generator[dict[str, Any], Any, None]:
+    fullResponse = ""
+    response = ollama.chat(
+        model = "llama3",
+        messages = messages,
+        stream = True
+    )
+
+    for chunk in response:
+        content = chunk["message"]["content"]
+        fullResponse += content
+        yield functions.success({"result": content})
+
+    messages.append({"role": "assistant", "content": fullResponse})
+    saveChatHistory(messages, sessionPath)
+
+
+def response(requestData: dict[str, Any]) -> Union[dict[str, Any], Generator[dict[str, Any], Any, None]]:
     inputSessionId = requestData.get("session_id")
     sessionId = str(uuid.uuid1()) if inputSessionId is None else inputSessionId
     sessionPath =  memoryFolder / f"{sessionId}.json"
@@ -62,16 +88,17 @@ def response(requestData: dict[str, Any]) -> dict[str, Any]:
         "content": query
     })
 
-    logging.debug(">>> Running inference on LLM")
+    logging.debug(f">>> Running {'streaming' if streaming else 'batch'} inference on LLM")
+    if streaming:
+        return streamingChat(messages, sessionPath)
+
     response = ollama.chat(
         model = LLM,
         messages = messages
     )
 
     messages.append(response["message"])
-
-    with sessionPath.open("w") as file:
-        json.dump(messages, file)
+    saveChatHistory(messages, sessionPath)
 
     answer = response["message"]["content"]
     logging.debug(f">>> Returning response:\n{answer}")

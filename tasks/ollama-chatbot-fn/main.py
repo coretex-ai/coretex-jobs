@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import os
+import json
 import shutil
 import logging
 
@@ -21,7 +22,7 @@ def getIndexPath(dataset: CustomDataset) ->  Path:
 def main() -> None:
     taskRun = currentTaskRun()
 
-    model = Model.createModel(f"{taskRun.id}-rag-chatbot", taskRun.id, 1.0)
+    model = Model.createModel(f"{taskRun.id}-rag-chatbot", taskRun.projectId, 1.0)
 
     modelFunction = Path(".", "resources", "function")
     resDir = folder_manager.createTempFolder("resDir")
@@ -34,6 +35,9 @@ def main() -> None:
         sample.unzip()
 
         copyDir(sample.path, resDir, "corpus-index")
+
+    with resDir.joinpath("metadata.json").open("w") as file:
+        json.dump({"streaming": taskRun.parameters["streaming"]}, file)
 
     model.upload(resDir)
 
